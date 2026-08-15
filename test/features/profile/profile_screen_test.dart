@@ -1,0 +1,120 @@
+import 'dart:convert';
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
+import 'package:nivasaos_tenant_app/core/api_client.dart';
+import 'package:nivasaos_tenant_app/core/session_store.dart';
+import 'package:nivasaos_tenant_app/features/auth/auth_repository.dart';
+import 'package:nivasaos_tenant_app/features/profile/profile_repository.dart';
+import 'package:nivasaos_tenant_app/features/profile/profile_screen.dart';
+import 'package:nivasaos_tenant_app/theme/nivasa_theme.dart';
+
+class _InMemorySecureStore implements SecureStore {
+  final _values = <String, String>{};
+
+  @override
+  Future<void> write(String key, String value) async => _values[key] = value;
+  @override
+  Future<String?> read(String key) async => _values[key];
+  @override
+  Future<void> delete(String key) async => _values.remove(key);
+}
+
+http.Response _json(Map<String, dynamic> body, int status) =>
+    http.Response(jsonEncode(body), status, headers: {'content-type': 'application/json'});
+
+Widget _wrap(Widget child) => MaterialApp(theme: NivasaTheme.light(), home: child);
+
+Map<String, dynamic> _profileJson({String phone = '+919876543210', String language = 'en'}) => {
+  'tenant_id': 'tenant-1',
+  'property_id': 'prop-1',
+  'name': 'Amit Kumar',
+  'phone': phone,
+  'email': 'amit@example.com',
+  'language': language,
+  'status': 'active',
+  'account_full_name': 'Amit Kumar',
+  'account_email': 'amit@nivasa.app',
+};
+
+Future<AuthRepository> _connectedAuth() async {
+  final store = _InMemorySecureStore();
+  await store.write('nivasaos.access_token', 'access-token');
+  await store.write('nivasaos.refresh_token', 'refresh-token');
+  await store.write(
+    'nivasaos.user',
+    jsonEncode({
+      'user_id': 'account-1',
+      'name': 'Amit Kumar',
+      'role': 'tenant',
+      'connected': true,
+      'org_id': 'org-1',
+      'property_id': 'prop-1',
+      'tenant_id': 'tenant-1',
+    }),
+  );
+  return AuthRepository(sessionStore: SessionStore(storage: store));
+}
+
+void main() {
+  testWidgets('loads and displays the profile', (tester) async {
+    final auth = await _connectedAuth();
+    final client = MockClient((request) async {
+      expect(request.headers['Authorization'], 'Bearer access-token');
+      if (request.url.path == '/api/tenants/v1/tenant/me' && request.method == 'GET') {
+        return _json(_profileJson(), 200);
+      }
+      throw StateError('unexpected request: ${request.method} ${request.url.path}');
+    });
+
+    await tester.pumpWidget(
+      _wrap(ProfileScreen(authRepository: auth, profileRepository: ProfileRepository(apiClient: ApiClient(httpClient: client)))),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Amit Kumar'), findsOneWidget);
+    expect(find.text('amit@example.com'), findsOneWidget);
+    expect(find.widgetWithText(TextField, '+919876543210'), findsOneWidget);
+  });
+
+  testWidgets('saves an updated phone and language', (tester) async {
+    final auth = await _connectedAuth();
+    var patchedBody = <String, dynamic>{};
+    final client = MockClient((request) async {
+      if (request.url.path == '/api/tenants/v1/tenant/me' && request.method == 'GET') {
+        return _json(_profileJson(), 200);
+      }
+      if (request.url.path == '/api/tenants/v1/tenant/me' && request.method == 'PATCH') {
+        patchedBody = jsonDecode(request.body) as Map<String, dynamic>;
+        return _json(_profileJson(phone: '+919999999999', language: 'ml'), 200);
+      }
+      throw StateError('unexpected request: ${request.method} ${request.url.path}');
+    });
+
+    await tester.pumpWidget(
+      _wrap(ProfileScreen(authRepository: auth, profileRepository: ProfileRepository(apiClient: ApiClient(httpClient: client)))),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField), '+919999999999');
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+
+    expect(patchedBody['phone'], '+919999999999');
+    expect(find.text('Profile updated'), findsOneWidget);
+  });
+
+  testWidgets('shows an error state when the fetch fails', (tester) async {
+    final auth = await _connectedAuth();
+    final client = MockClient((request) async => _json({'error': 'internal_error', 'message': 'boom'}, 500));
+
+    await tester.pumpWidget(
+      _wrap(ProfileScreen(authRepository: auth, profileRepository: ProfileRepository(apiClient: ApiClient(httpClient: client)))),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('boom'), findsOneWidget);
+    expect(find.text('Try again'), findsOneWidget);
+  });
+}

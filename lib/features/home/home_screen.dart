@@ -6,18 +6,26 @@ import '../../theme/nivasa_text_styles.dart';
 import '../../widgets/nivasa_logo.dart';
 import '../auth/auth_repository.dart';
 import '../auth/login_screen.dart';
+import '../profile/profile_screen.dart';
+import '../rental/rental_screen.dart';
+import '../renewal/renewal_screen.dart';
+import '../complaints/complaints_screen.dart';
+
+typedef _ScreenBuilder = Widget Function(AuthRepository auth);
 
 class _MenuItem {
-  const _MenuItem(this.icon, this.label);
+  const _MenuItem(this.icon, this.label, {this.screenBuilder});
   final IconData icon;
   final String label;
+  final _ScreenBuilder? screenBuilder;
 }
 
-const _menuItems = [
-  _MenuItem(Icons.payments_outlined, 'Pay rent'),
-  _MenuItem(Icons.report_problem_outlined, 'Complaints'),
-  _MenuItem(Icons.autorenew, 'Renewal'),
-  _MenuItem(Icons.person_outline, 'Profile'),
+final _menuItems = [
+  const _MenuItem(Icons.payments_outlined, 'Pay rent'),
+  _MenuItem(Icons.home_work_outlined, 'My rental', screenBuilder: (auth) => RentalScreen(authRepository: auth)),
+  _MenuItem(Icons.report_problem_outlined, 'Complaints', screenBuilder: (auth) => ComplaintsScreen(authRepository: auth)),
+  _MenuItem(Icons.autorenew, 'Renewal', screenBuilder: (auth) => RenewalScreen(authRepository: auth)),
+  _MenuItem(Icons.person_outline, 'Profile', screenBuilder: (auth) => ProfileScreen(authRepository: auth)),
 ];
 
 /// Renter's home — always shows the menu shell regardless of connection status. An
@@ -82,13 +90,17 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _onMenuTap(_MenuItem item) {
     final connected = _user?.connected ?? false;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          connected ? '${item.label} is coming soon' : 'Connect with your property manager first to use ${item.label.toLowerCase()}',
-        ),
-      ),
-    );
+    if (!connected) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Connect with your property manager first to use ${item.label.toLowerCase()}')));
+      return;
+    }
+    if (item.screenBuilder != null) {
+      Navigator.of(context).push(MaterialPageRoute(builder: (_) => item.screenBuilder!(_auth)));
+      return;
+    }
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${item.label} is coming soon')));
   }
 
   @override
