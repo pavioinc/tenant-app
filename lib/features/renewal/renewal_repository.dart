@@ -13,6 +13,8 @@ class RenewalRequest {
     createdAt: shortDate(json['created_at'] as String),
     requestedEndDate: json['requested_end_date'] != null ? shortDate(json['requested_end_date'] as String) : null,
   );
+
+  Map<String, dynamic> toJson() => {'status': status, 'created_at': createdAt, 'requested_end_date': ?requestedEndDate};
 }
 
 /// tenant-service's `/tenant/me/renewal-requests` — a lightweight request-and-notify

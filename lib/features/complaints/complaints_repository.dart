@@ -17,6 +17,8 @@ class Complaint {
     status: json['status'] as String,
     createdAt: shortDate(json['created_at'] as String),
   );
+
+  Map<String, dynamic> toJson() => {'category': category, 'description': description, 'status': status, 'created_at': createdAt};
 }
 
 /// tenant-service's `/tenant/me/complaints` — ownership-scoped, same pattern as

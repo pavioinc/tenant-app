@@ -10,6 +10,8 @@ class BedInfo {
 
   factory BedInfo.fromJson(Map<String, dynamic> json) =>
       BedInfo(label: json['label'] as String, roomName: json['room_name'] as String, floorName: json['floor_name'] as String);
+
+  Map<String, dynamic> toJson() => {'label': label, 'room_name': roomName, 'floor_name': floorName};
 }
 
 class Allocation {
@@ -17,6 +19,8 @@ class Allocation {
   final String checkInDate;
 
   factory Allocation.fromJson(Map<String, dynamic> json) => Allocation(checkInDate: shortDate(json['check_in_date'] as String));
+
+  Map<String, dynamic> toJson() => {'check_in_date': checkInDate};
 }
 
 /// Mirrors tenant-service's `Agreement` schema (src/routes/agreements.ts's serializeAgreement).
@@ -42,6 +46,14 @@ class Agreement {
     startDate: shortDate(json['start_date'] as String),
     endDate: json['end_date'] != null ? shortDate(json['end_date'] as String) : null,
   );
+
+  Map<String, dynamic> toJson() => {
+    'status': status,
+    'monthly_rent': monthlyRent,
+    'security_deposit': securityDeposit,
+    'start_date': startDate,
+    'end_date': ?endDate,
+  };
 }
 
 class BillingProfile {
@@ -51,6 +63,8 @@ class BillingProfile {
 
   factory BillingProfile.fromJson(Map<String, dynamic> json) =>
       BillingProfile(amount: json['amount'] as int, cycleType: json['cycle_type'] as String);
+
+  Map<String, dynamic> toJson() => {'amount': amount, 'cycle_type': cycleType};
 }
 
 class RentalInfo {
@@ -60,6 +74,20 @@ class RentalInfo {
   final BedInfo? bed;
   final Agreement? agreement;
   final BillingProfile? billingProfile;
+
+  factory RentalInfo.fromJson(Map<String, dynamic> json) => RentalInfo(
+    allocation: json['allocation'] != null ? Allocation.fromJson(json['allocation'] as Map<String, dynamic>) : null,
+    bed: json['bed'] != null ? BedInfo.fromJson(json['bed'] as Map<String, dynamic>) : null,
+    agreement: json['agreement'] != null ? Agreement.fromJson(json['agreement'] as Map<String, dynamic>) : null,
+    billingProfile: json['billing_profile'] != null ? BillingProfile.fromJson(json['billing_profile'] as Map<String, dynamic>) : null,
+  );
+
+  Map<String, dynamic> toJson() => {
+    'allocation': allocation?.toJson(),
+    'bed': bed?.toJson(),
+    'agreement': agreement?.toJson(),
+    'billing_profile': billingProfile?.toJson(),
+  };
 }
 
 /// Combines tenant-service's `/tenant/me/rental` (allocation/bed/agreement) with

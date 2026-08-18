@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import '../../core/api_client.dart';
+import '../../core/cache_store.dart';
+import '../../core/cached_fetch.dart';
 import '../../theme/nivasa_colors.dart';
 import '../../theme/nivasa_spacing.dart';
 import '../../theme/nivasa_text_styles.dart';
+import '../../widgets/nivasa_stale_banner.dart';
 import '../auth/auth_repository.dart';
 import 'rental_repository.dart';
 
@@ -11,10 +14,11 @@ const _cycleLabels = {'monthly': '/month', 'weekly': '/week', 'daily': '/day'};
 String _formatInr(int amountMinor) => '₹${(amountMinor / 100).toStringAsFixed(0)}';
 
 class RentalScreen extends StatefulWidget {
-  const RentalScreen({super.key, this.authRepository, this.rentalRepository});
+  const RentalScreen({super.key, this.authRepository, this.rentalRepository, this.cacheStore});
 
   final AuthRepository? authRepository;
   final RentalRepository? rentalRepository;
+  final CacheStore? cacheStore;
 
   @override
   State<RentalScreen> createState() => _RentalScreenState();
@@ -23,9 +27,12 @@ class RentalScreen extends StatefulWidget {
 class _RentalScreenState extends State<RentalScreen> {
   late final AuthRepository _auth = widget.authRepository ?? AuthRepository();
   late final RentalRepository _rentals = widget.rentalRepository ?? RentalRepository();
+  late final CacheStore _cache = widget.cacheStore ?? const SharedPreferencesCacheStore();
 
   RentalInfo? _rental;
   bool _loading = true;
+  bool _stale = false;
+  DateTime? _lastSyncedAt;
   String? _error;
 
   @override
@@ -42,9 +49,19 @@ class _RentalScreenState extends State<RentalScreen> {
     try {
       final session = await _auth.currentSession();
       if (session == null) throw StateError('no active session');
-      final rental = await _rentals.fetch(session.accessToken);
+      final result = await fetchWithCache<RentalInfo>(
+        cache: _cache,
+        cacheKey: 'rental_info',
+        fetchNetwork: () => _rentals.fetch(session.accessToken),
+        toJson: (r) => r.toJson(),
+        fromJson: (json) => RentalInfo.fromJson(json as Map<String, dynamic>),
+      );
       if (!mounted) return;
-      setState(() => _rental = rental);
+      setState(() {
+        _rental = result.data;
+        _stale = result.stale;
+        _lastSyncedAt = result.lastSyncedAt;
+      });
     } on ApiException catch (e) {
       setState(() => _error = e.message);
     } catch (_) {
@@ -68,6 +85,10 @@ class _RentalScreenState extends State<RentalScreen> {
                 child: ListView(
                   padding: const EdgeInsets.all(NivasaSpacing.s24),
                   children: [
+                    if (_stale) ...[
+                      NivasaStaleBanner(lastSyncedAt: _lastSyncedAt),
+                      const SizedBox(height: NivasaSpacing.s16),
+                    ],
                     _SectionCard(
                       title: 'Room & bed',
                       sub: _rental!.allocation != null ? 'Checked in ${_rental!.allocation!.checkInDate}' : null,

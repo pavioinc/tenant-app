@@ -1,9 +1,11 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:nivasaos_tenant_app/core/api_client.dart';
+import 'package:nivasaos_tenant_app/core/cache_store.dart';
 import 'package:nivasaos_tenant_app/core/session_store.dart';
 import 'package:nivasaos_tenant_app/features/auth/auth_repository.dart';
 import 'package:nivasaos_tenant_app/features/renewal/renewal_repository.dart';
@@ -12,6 +14,17 @@ import 'package:nivasaos_tenant_app/features/rental/rental_repository.dart';
 import 'package:nivasaos_tenant_app/theme/nivasa_theme.dart';
 
 class _InMemorySecureStore implements SecureStore {
+  final _values = <String, String>{};
+
+  @override
+  Future<void> write(String key, String value) async => _values[key] = value;
+  @override
+  Future<String?> read(String key) async => _values[key];
+  @override
+  Future<void> delete(String key) async => _values.remove(key);
+}
+
+class _InMemoryCacheStore implements CacheStore {
   final _values = <String, String>{};
 
   @override
@@ -76,6 +89,7 @@ void main() {
         authRepository: auth,
         renewalRepository: RenewalRepository(apiClient: ApiClient(httpClient: client)),
         rentalRepository: RentalRepository(apiClient: ApiClient(httpClient: client)),
+        cacheStore: _InMemoryCacheStore(),
       )),
     );
     await tester.pumpAndSettle();
@@ -129,6 +143,7 @@ void main() {
         authRepository: auth,
         renewalRepository: RenewalRepository(apiClient: ApiClient(httpClient: client)),
         rentalRepository: RentalRepository(apiClient: ApiClient(httpClient: client)),
+        cacheStore: _InMemoryCacheStore(),
       )),
     );
     await tester.pumpAndSettle();
@@ -139,5 +154,36 @@ void main() {
     expect(posted, isTrue);
     expect(find.text('A renewal request is pending — your property manager has been notified.'), findsOneWidget);
     expect(find.text('Pending'), findsOneWidget);
+  });
+
+  testWidgets('shows cached data with a stale banner and disables the renewal button when offline', (tester) async {
+    final auth = await _connectedAuth();
+    final cache = _InMemoryCacheStore();
+    await cache.write(
+      'rental_info',
+      jsonEncode({'data': _rentalWithAgreement, 'cached_at': DateTime(2026, 8, 1, 9, 15).toIso8601String()}),
+    );
+    await cache.write(
+      'renewal_requests',
+      jsonEncode({'data': <dynamic>[], 'cached_at': DateTime(2026, 8, 1, 9, 15).toIso8601String()}),
+    );
+    final client = MockClient((request) async => throw const SocketException('no route to host'));
+
+    await tester.pumpWidget(
+      _wrap(RenewalScreen(
+        authRepository: auth,
+        renewalRepository: RenewalRepository(apiClient: ApiClient(httpClient: client)),
+        rentalRepository: RentalRepository(apiClient: ApiClient(httpClient: client)),
+        cacheStore: cache,
+      )),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Ends 2027-07-01'), findsOneWidget);
+    expect(find.textContaining('Showing saved data from'), findsOneWidget);
+    expect(find.text('Reconnect to request a renewal'), findsOneWidget);
+
+    final button = tester.widget<ElevatedButton>(find.widgetWithText(ElevatedButton, 'Reconnect to request a renewal'));
+    expect(button.onPressed, isNull);
   });
 }

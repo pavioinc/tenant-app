@@ -39,6 +39,9 @@ dependencies:
   # Access tokens/refresh tokens live in the platform keystore/keychain, not
   # SharedPreferences — see lib/core/session_store.dart.
   flutter_secure_storage: ^9.2.2
+  # Non-secret last-known-good API responses, for read-only offline caching — see
+  # lib/core/cache_store.dart.
+  shared_preferences: ^2.3.2
 
 dev_dependencies:
   flutter_test:

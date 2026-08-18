@@ -1,19 +1,23 @@
 import 'package:flutter/material.dart';
 import '../../core/api_client.dart';
+import '../../core/cache_store.dart';
+import '../../core/cached_fetch.dart';
 import '../../theme/nivasa_colors.dart';
 import '../../theme/nivasa_spacing.dart';
 import '../../theme/nivasa_text_styles.dart';
 import '../../widgets/nivasa_button.dart';
+import '../../widgets/nivasa_stale_banner.dart';
 import '../auth/auth_repository.dart';
 import '../rental/rental_repository.dart';
 import 'renewal_repository.dart';
 
 class RenewalScreen extends StatefulWidget {
-  const RenewalScreen({super.key, this.authRepository, this.renewalRepository, this.rentalRepository});
+  const RenewalScreen({super.key, this.authRepository, this.renewalRepository, this.rentalRepository, this.cacheStore});
 
   final AuthRepository? authRepository;
   final RenewalRepository? renewalRepository;
   final RentalRepository? rentalRepository;
+  final CacheStore? cacheStore;
 
   @override
   State<RenewalScreen> createState() => _RenewalScreenState();
@@ -23,6 +27,7 @@ class _RenewalScreenState extends State<RenewalScreen> {
   late final AuthRepository _auth = widget.authRepository ?? AuthRepository();
   late final RenewalRepository _renewals = widget.renewalRepository ?? RenewalRepository();
   late final RentalRepository _rentals = widget.rentalRepository ?? RentalRepository();
+  late final CacheStore _cache = widget.cacheStore ?? const SharedPreferencesCacheStore();
 
   String? _token;
   Agreement? _agreement;
@@ -30,6 +35,8 @@ class _RenewalScreenState extends State<RenewalScreen> {
   DateTime? _preferredEndDate;
   bool _loading = true;
   bool _requesting = false;
+  bool _stale = false;
+  DateTime? _lastSyncedAt;
   String? _error;
 
   bool get _hasPending => _requests.any((r) => r.status == 'pending');
@@ -49,11 +56,31 @@ class _RenewalScreenState extends State<RenewalScreen> {
       final session = await _auth.currentSession();
       if (session == null) throw StateError('no active session');
       _token = session.accessToken;
-      final results = await Future.wait([_rentals.fetch(_token!), _renewals.list(_token!)]);
+      final results = await Future.wait([
+        fetchWithCache<RentalInfo>(
+          cache: _cache,
+          cacheKey: 'rental_info',
+          fetchNetwork: () => _rentals.fetch(_token!),
+          toJson: (r) => r.toJson(),
+          fromJson: (json) => RentalInfo.fromJson(json as Map<String, dynamic>),
+        ),
+        fetchWithCache<List<RenewalRequest>>(
+          cache: _cache,
+          cacheKey: 'renewal_requests',
+          fetchNetwork: () => _renewals.list(_token!),
+          toJson: (items) => items.map((r) => r.toJson()).toList(),
+          fromJson: (json) => (json as List).map((r) => RenewalRequest.fromJson(r as Map<String, dynamic>)).toList(),
+        ),
+      ]);
       if (!mounted) return;
+      final rentalResult = results[0] as CachedFetch<RentalInfo>;
+      final renewalResult = results[1] as CachedFetch<List<RenewalRequest>>;
+      final syncTimes = [rentalResult.lastSyncedAt, renewalResult.lastSyncedAt].whereType<DateTime>();
       setState(() {
-        _agreement = (results[0] as RentalInfo).agreement;
-        _requests = results[1] as List<RenewalRequest>;
+        _agreement = rentalResult.data.agreement;
+        _requests = renewalResult.data;
+        _stale = rentalResult.stale || renewalResult.stale;
+        _lastSyncedAt = syncTimes.isEmpty ? null : syncTimes.reduce((a, b) => a.isBefore(b) ? a : b);
       });
     } on ApiException catch (e) {
       setState(() => _error = e.message);
@@ -116,6 +143,10 @@ class _RenewalScreenState extends State<RenewalScreen> {
                 child: ListView(
                   padding: const EdgeInsets.all(NivasaSpacing.s24),
                   children: [
+                    if (_stale) ...[
+                      NivasaStaleBanner(lastSyncedAt: _lastSyncedAt),
+                      const SizedBox(height: NivasaSpacing.s16),
+                    ],
                     if (_agreement != null)
                       Container(
                         padding: const EdgeInsets.all(NivasaSpacing.s16),
@@ -163,10 +194,10 @@ class _RenewalScreenState extends State<RenewalScreen> {
                       ),
                       const SizedBox(height: NivasaSpacing.s8),
                       NivasaPrimaryButton(
-                        label: 'Request renewal',
+                        label: _stale ? 'Reconnect to request a renewal' : 'Request renewal',
                         loading: _requesting,
                         loadingLabel: 'Sending…',
-                        onPressed: _requestRenewal,
+                        onPressed: _stale ? null : _requestRenewal,
                       ),
                     ],
                     if (_error != null) ...[

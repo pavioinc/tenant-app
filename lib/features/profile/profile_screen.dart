@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import '../../core/api_client.dart';
+import '../../core/cache_store.dart';
+import '../../core/cached_fetch.dart';
 import '../../theme/nivasa_colors.dart';
 import '../../theme/nivasa_spacing.dart';
 import '../../theme/nivasa_text_styles.dart';
 import '../../widgets/nivasa_button.dart';
+import '../../widgets/nivasa_stale_banner.dart';
 import '../auth/auth_repository.dart';
 import 'profile_repository.dart';
 
@@ -11,10 +14,11 @@ import 'profile_repository.dart';
 /// editable here (2026-08-14 scope call, see tenant-service/README.md's
 /// "Tenant self-service" section).
 class ProfileScreen extends StatefulWidget {
-  const ProfileScreen({super.key, this.authRepository, this.profileRepository});
+  const ProfileScreen({super.key, this.authRepository, this.profileRepository, this.cacheStore});
 
   final AuthRepository? authRepository;
   final ProfileRepository? profileRepository;
+  final CacheStore? cacheStore;
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -23,6 +27,7 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   late final AuthRepository _auth = widget.authRepository ?? AuthRepository();
   late final ProfileRepository _profiles = widget.profileRepository ?? ProfileRepository();
+  late final CacheStore _cache = widget.cacheStore ?? const SharedPreferencesCacheStore();
   final _phoneController = TextEditingController();
 
   String? _token;
@@ -30,6 +35,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String? _language;
   bool _loading = true;
   bool _saving = false;
+  bool _stale = false;
+  DateTime? _lastSyncedAt;
   String? _error;
 
   @override
@@ -53,12 +60,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
       final session = await _auth.currentSession();
       if (session == null) throw StateError('no active session');
       _token = session.accessToken;
-      final profile = await _profiles.fetch(_token!);
+      final result = await fetchWithCache<TenantProfile>(
+        cache: _cache,
+        cacheKey: 'profile',
+        fetchNetwork: () => _profiles.fetch(_token!),
+        toJson: (p) => p.toJson(),
+        fromJson: (json) => TenantProfile.fromJson(json as Map<String, dynamic>),
+      );
       if (!mounted) return;
       setState(() {
-        _profile = profile;
-        _phoneController.text = profile.phone;
-        _language = profile.language;
+        _profile = result.data;
+        _stale = result.stale;
+        _lastSyncedAt = result.lastSyncedAt;
+        _phoneController.text = result.data.phone;
+        _language = result.data.language;
       });
     } on ApiException catch (e) {
       setState(() => _error = e.message);
@@ -103,6 +118,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    if (_stale) ...[
+                      NivasaStaleBanner(lastSyncedAt: _lastSyncedAt),
+                      const SizedBox(height: NivasaSpacing.s16),
+                    ],
                     Text(_profile!.name, style: NivasaText.h1),
                     const SizedBox(height: NivasaSpacing.s4),
                     Text(_profile!.email ?? 'No email on file', style: NivasaText.body.copyWith(color: NivasaColors.ink500)),

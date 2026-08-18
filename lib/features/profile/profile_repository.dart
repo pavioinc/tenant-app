@@ -40,6 +40,18 @@ class TenantProfile {
     accountFullName: json['account_full_name'] as String?,
     accountEmail: json['account_email'] as String?,
   );
+
+  Map<String, dynamic> toJson() => {
+    'tenant_id': tenantId,
+    'property_id': propertyId,
+    'name': name,
+    'phone': phone,
+    'email': ?email,
+    'language': language,
+    'status': status,
+    'account_full_name': ?accountFullName,
+    'account_email': ?accountEmail,
+  };
 }
 
 /// Talks to tenant-service's `/api/tenants/v1/tenant/me` via api-gateway. Every call needs
