@@ -66,11 +66,14 @@ class TenantUser {
 }
 
 class Session {
-  const Session({required this.accessToken, required this.refreshToken, required this.user});
+  const Session({required this.accessToken, required this.refreshToken, required this.user, this.accessTokenExpiresAt});
 
   final String accessToken;
   final String refreshToken;
   final TenantUser user;
+  /// Null for sessions saved before this field existed — treated as "unknown, refresh
+  /// to be safe" by AuthRepository.currentSession(), not as "definitely still valid".
+  final DateTime? accessTokenExpiresAt;
 }
 
 /// Tokens live in the platform keystore/keychain (flutter_secure_storage), not
@@ -85,11 +88,17 @@ class SessionStore {
   static const _accessTokenKey = 'nivasaos.access_token';
   static const _refreshTokenKey = 'nivasaos.refresh_token';
   static const _userKey = 'nivasaos.user';
+  static const _accessTokenExpiresAtKey = 'nivasaos.access_token_expires_at';
 
   Future<void> save(Session session) async {
     await _storage.write(_accessTokenKey, session.accessToken);
     await _storage.write(_refreshTokenKey, session.refreshToken);
     await _storage.write(_userKey, jsonEncode(session.user.toJson()));
+    if (session.accessTokenExpiresAt != null) {
+      await _storage.write(_accessTokenExpiresAtKey, session.accessTokenExpiresAt!.toIso8601String());
+    } else {
+      await _storage.delete(_accessTokenExpiresAtKey);
+    }
   }
 
   Future<Session?> read() async {
@@ -97,10 +106,12 @@ class SessionStore {
     final refreshToken = await _storage.read(_refreshTokenKey);
     final userJson = await _storage.read(_userKey);
     if (accessToken == null || refreshToken == null || userJson == null) return null;
+    final expiresAtRaw = await _storage.read(_accessTokenExpiresAtKey);
     return Session(
       accessToken: accessToken,
       refreshToken: refreshToken,
       user: TenantUser.fromJson(jsonDecode(userJson) as Map<String, dynamic>),
+      accessTokenExpiresAt: expiresAtRaw != null ? DateTime.parse(expiresAtRaw) : null,
     );
   }
 
@@ -108,5 +119,6 @@ class SessionStore {
     await _storage.delete(_accessTokenKey);
     await _storage.delete(_refreshTokenKey);
     await _storage.delete(_userKey);
+    await _storage.delete(_accessTokenExpiresAtKey);
   }
 }

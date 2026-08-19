@@ -56,11 +56,16 @@ void main() {
         return _json({
           'access_token': 'access-token',
           'refresh_token': 'refresh-token',
+          'expires_at': DateTime.now().add(const Duration(minutes: 30)).toIso8601String(),
           'user': {'user_id': 'account-1', 'name': 'Amit Kumar', 'role': 'tenant', 'connected': false},
         }, 201);
       }
       if (request.url.path == '/api/auth/v1/refresh') {
-        return _json({'access_token': 'access-token', 'refresh_token': 'refresh-token'}, 200);
+        return _json({
+          'access_token': 'access-token',
+          'refresh_token': 'refresh-token',
+          'expires_at': DateTime.now().add(const Duration(minutes: 30)).toIso8601String(),
+        }, 200);
       }
       if (request.url.path == '/api/auth/v1/tenant/me') {
         return _json({'user_id': 'account-1', 'name': 'Amit Kumar', 'role': 'tenant', 'connected': false}, 200);

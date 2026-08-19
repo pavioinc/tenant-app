@@ -55,6 +55,7 @@ Future<AuthRepository> _connectedAuth() async {
   final store = _InMemorySecureStore();
   await store.write('nivasaos.access_token', 'access-token');
   await store.write('nivasaos.refresh_token', 'refresh-token');
+  await store.write('nivasaos.access_token_expires_at', DateTime.now().add(const Duration(minutes: 30)).toIso8601String());
   await store.write(
     'nivasaos.user',
     jsonEncode({

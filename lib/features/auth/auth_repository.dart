@@ -31,12 +31,77 @@ class AuthRepository {
       accessToken: body['access_token'] as String,
       refreshToken: body['refresh_token'] as String,
       user: TenantUser.fromJson(body['user'] as Map<String, dynamic>),
+      accessTokenExpiresAt: DateTime.parse(body['expires_at'] as String),
     );
     await _sessions.save(session);
     return session;
   }
 
-  Future<Session?> currentSession() => _sessions.read();
+  Future<Session?>? _refreshInFlight;
+
+  /// The one method every screen calls before making its own API requests — this is
+  /// where access-token expiry is handled for the whole app, not per-screen. Access
+  /// tokens live 30 minutes (auth-service's ACCESS_TOKEN_TTL_SECONDS); before this
+  /// existed, every screen just read whatever token secure storage had and sent it
+  /// as-is, so any session older than 30 minutes surfaced "jwt expired" from
+  /// api-gateway's JWT verification on essentially every request (the real bug this
+  /// fixes — see auth-service's jwt.ts / api-gateway's requireAuth). A session with no
+  /// recorded expiry (saved before this field existed) is treated as needing a refresh
+  /// too, not as "assume still valid" — the whole point is to heal already-broken
+  /// sessions, not just protect new ones. Concurrent callers during the same expiry
+  /// window share one in-flight refresh via [_refreshInFlight] rather than each
+  /// triggering their own — `/refresh` rotates the refresh token itself, so two
+  /// simultaneous calls would make the second one fail with an "already used" refresh
+  /// token if they weren't deduped.
+  Future<Session?> currentSession() async {
+    final session = await _sessions.read();
+    if (session == null) return null;
+    if (_isFresh(session)) return session;
+    return _refreshInFlight ??= _refreshStaleSession().whenComplete(() => _refreshInFlight = null);
+  }
+
+  bool _isFresh(Session session) {
+    final expiresAt = session.accessTokenExpiresAt;
+    if (expiresAt == null) return false;
+    return DateTime.now().isBefore(expiresAt.subtract(const Duration(seconds: 30)));
+  }
+
+  Future<Session?> _refreshStaleSession() async {
+    try {
+      return await rotateTokens();
+    } on ApiException {
+      // auth-service rejected the refresh token outright (expired/revoked/reused,
+      // e.g. past its 7-day TTL) — the session is genuinely gone. Clear it so
+      // callers' existing "no active session" handling takes over, instead of
+      // retrying forever with tokens that will never work.
+      await _sessions.clear();
+      return null;
+    }
+    // Any other exception (connectivity failure mid-refresh) intentionally
+    // propagates, leaving the stale session in storage untouched — same as this
+    // app's existing offline-handling convention, a network hiccup shouldn't force
+    // a real logout.
+  }
+
+  /// Calls POST /refresh and persists the new token pair against the *current*
+  /// session's user — does not re-check connection status (that needs a follow-up
+  /// GET /tenant/me, since /refresh alone only returns tokens). See
+  /// [refreshConnectionStatus] for the version that also does that.
+  Future<Session> rotateTokens() async {
+    final current = await _sessions.read();
+    if (current == null) {
+      throw StateError('no active session to refresh');
+    }
+    final refreshed = await _api.post('/api/auth/v1/refresh', {'refresh_token': current.refreshToken});
+    final session = Session(
+      accessToken: refreshed['access_token'] as String,
+      refreshToken: refreshed['refresh_token'] as String,
+      user: current.user,
+      accessTokenExpiresAt: DateTime.parse(refreshed['expires_at'] as String),
+    );
+    await _sessions.save(session);
+    return session;
+  }
 
   /// Rotates the refresh token (which re-checks the connection fresh server-side, see
   /// auth-service's tokens.ts /refresh handler) and then reads the up-to-date profile via
@@ -44,15 +109,14 @@ class AuthRepository {
   /// property/tenant fields. Call this from the home screen's "check connection" action
   /// and on app resume, since the backend never pushes this — the client has to ask.
   Future<Session> refreshConnectionStatus() async {
-    final current = await _sessions.read();
-    if (current == null) {
-      throw StateError('no active session to refresh');
-    }
-    final refreshed = await _api.post('/api/auth/v1/refresh', {'refresh_token': current.refreshToken});
-    final newAccessToken = refreshed['access_token'] as String;
-    final newRefreshToken = refreshed['refresh_token'] as String;
-    final me = await _api.get('/api/auth/v1/tenant/me', token: newAccessToken);
-    final session = Session(accessToken: newAccessToken, refreshToken: newRefreshToken, user: TenantUser.fromJson(me));
+    final rotated = await rotateTokens();
+    final me = await _api.get('/api/auth/v1/tenant/me', token: rotated.accessToken);
+    final session = Session(
+      accessToken: rotated.accessToken,
+      refreshToken: rotated.refreshToken,
+      user: TenantUser.fromJson(me),
+      accessTokenExpiresAt: rotated.accessTokenExpiresAt,
+    );
     await _sessions.save(session);
     return session;
   }

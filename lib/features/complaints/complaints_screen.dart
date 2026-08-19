@@ -85,7 +85,7 @@ class _ComplaintsScreenState extends State<ComplaintsScreen> {
     } on ApiException catch (e) {
       setState(() => _error = e.message);
     } catch (_) {
-      setState(() => _error = 'Could not load your complaints — try again');
+      setState(() => _error = 'Could not load your maintenance requests — try again');
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -106,10 +106,10 @@ class _ComplaintsScreenState extends State<ComplaintsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Complaints')),
+      appBar: AppBar(title: const Text('Maintenance')),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _openNewComplaintSheet,
-        label: const Text('New complaint'),
+        label: const Text('New request'),
         icon: const Icon(Icons.add),
       ),
       body: SafeArea(
@@ -161,7 +161,7 @@ class _ComplaintsScreenState extends State<ComplaintsScreen> {
                                     NivasaSpacing.s24,
                                   ),
                                   child: Text(
-                                    'No complaints yet — tap "New complaint" to raise one.',
+                                    'No maintenance requests yet — tap "New request" to raise one.',
                                     style: NivasaText.body.copyWith(
                                       color: NivasaColors.ink500,
                                     ),
@@ -326,7 +326,7 @@ class _NewComplaintSheetState extends State<_NewComplaintSheet> {
                 color: NivasaColors.line,
               ),
             ),
-            Text('New complaint', style: NivasaText.h2),
+            Text('New request', style: NivasaText.h2),
             const SizedBox(height: NivasaSpacing.s16),
             Text('Category', style: NivasaText.label),
             const SizedBox(height: NivasaSpacing.s8),

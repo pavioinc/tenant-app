@@ -43,6 +43,7 @@ Future<AuthRepository> _connectedAuth() async {
   final store = _InMemorySecureStore();
   await store.write('nivasaos.access_token', 'access-token');
   await store.write('nivasaos.refresh_token', 'refresh-token');
+  await store.write('nivasaos.access_token_expires_at', DateTime.now().add(const Duration(minutes: 30)).toIso8601String());
   await store.write(
     'nivasaos.user',
     jsonEncode({
@@ -59,7 +60,7 @@ Future<AuthRepository> _connectedAuth() async {
 }
 
 void main() {
-  testWidgets('shows an empty state with no complaints', (tester) async {
+  testWidgets('shows an empty state with no maintenance requests', (tester) async {
     final auth = await _connectedAuth();
     final client = MockClient((request) async => _json({'complaints': []}, 200));
 
@@ -74,7 +75,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.textContaining('No complaints yet'), findsOneWidget);
+    expect(find.textContaining('No maintenance requests yet'), findsOneWidget);
   });
 
   testWidgets('lists existing complaints with status', (tester) async {
@@ -103,7 +104,7 @@ void main() {
     expect(find.text('Open'), findsOneWidget);
   });
 
-  testWidgets('submits a new complaint and reloads the list', (tester) async {
+  testWidgets('submits a new maintenance request and reloads the list', (tester) async {
     final auth = await _connectedAuth();
     var posted = false;
     var listCount = 0;
@@ -132,7 +133,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('New complaint'));
+    await tester.tap(find.text('New request'));
     await tester.pumpAndSettle();
 
     await tester.enterText(find.byType(TextField), 'Leaky tap');

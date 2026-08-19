@@ -50,6 +50,7 @@ void main() {
       return _json({
         'access_token': 'access-token',
         'refresh_token': 'refresh-token',
+        'expires_at': DateTime.now().add(const Duration(minutes: 30)).toIso8601String(),
         'user': {'user_id': 'account-1', 'name': 'Amit Kumar', 'role': 'tenant', 'connected': true, 'org_id': 'org-1', 'property_id': 'prop-1'},
       }, 200);
     });

@@ -72,6 +72,12 @@ SDK or a browser-launch flow — decision deferred):
   four original menu tiles plus the Rentals-view addition; only **Pay Rent** remains,
   deliberately deferred to a later arc.
 
+  *(The Home screen tiles and screen names described in this section reflect how they
+  first shipped. The "Resident Hub redesign" section below describes the current
+  structure — My rental/Renewal were later merged into one Lease screen, and Complaints'
+  UI is now labeled Maintenance — the code and backend behind them are otherwise
+  unchanged from what's described here.)*
+
 Every phase was verified two ways beyond `flutter analyze`/`flutter test`: the existing
 mocked widget-test suite, and a real, unmocked run against the live docker-compose stack
 through the actual api-gateway (a temporary integration test under `test/integration/`,
@@ -123,6 +129,201 @@ sharing the same cache instance — confirmed the real `400 missing_org_context`
 came through untouched rather than being masked by the other tenant's stale cache entry
 sitting under the same key.
 
+## Resident Hub redesign (2026-08-18)
+
+The home screen was rebuilt against a reference screenshot the user provided (a
+competing property-management app), using only NivasaOS's existing design tokens — no
+new colors, no image assets (none exist in this app; the payment banner below is a
+gradient, not a photo).
+
+- **Header**: the old bare "Log out" `TextButton` is gone — a person-icon `IconButton`
+  now opens `ProfileScreen`, which itself gained a settings-gear action opening a new
+  `lib/features/profile/settings_screen.dart` (just a "Log out" row for now — the
+  `AuthRepository.logout()` + `pushAndRemoveUntil`-to-`LoginScreen` logic moved here
+  verbatim). No bell/notification icon was added — there's no notification system in
+  this app, so it would be a dead affordance.
+- **Payment banner**: a static "Pay Rent — Coming soon" gradient card above the grid.
+  Deliberately not wired to a real balance — no tenant-facing "amount due" endpoint
+  exists anywhere in `billing-service` or `payment-service` (only a billing *profile* —
+  rent amount + cycle — not an outstanding-balance figure). Shares its `_MenuItem` with
+  the grid's Payments tile, so tapping either goes through the same connected-gating /
+  coming-soon logic.
+- **Resident Hub grid**: a 2-column `GridView` replacing the old single-column tile
+  list — Contacts, Documents, Guest Manager, Maintenance, Lease, Vehicles, Payments.
+  Contacts/Documents/Guest Manager/Vehicles have **no backend yet** — same "coming soon"
+  placeholder pattern the old Pay Rent tile used, now generalized. Profile is no longer
+  a grid tile — it's reachable only via the header icon now.
+- **Lease** (`lib/features/lease/lease_screen.dart`, new) — merges the former **My
+  rental** and **Renewal** screens into one, reusing both `RentalRepository` and
+  `RenewalRepository` completely unchanged (only the screen files were replaced —
+  `lib/features/rental/rental_screen.dart` and `lib/features/renewal/renewal_screen.dart`
+  are deleted, the repositories are not). Sections top to bottom: Room & bed, Rent,
+  Agreement, a "Rental offers" placeholder (named in the user's request, no backend
+  behind it), then the Renewal request/history UI, unchanged. Same dual `fetchWithCache`
+  pattern the old Renewal screen already had (`rental_info` + `renewal_requests` cache
+  keys), same stale-banner and "Reconnect to request a renewal" action-gating.
+- **Maintenance**: a **UI relabel only**, not a rename. `ComplaintsScreen`,
+  `ComplaintsRepository`, the `Complaint` model, `tenant-service`'s `complaints`
+  table/routes, and `owner-dashboard`'s Complaints sidebar view all keep their original
+  names — renaming those would've been a purely cosmetic change across backend,
+  frontend, and tests for no functional benefit. Only the strings a renter sees changed:
+  the AppBar title, the "New request" button/sheet title (was "New complaint"), and the
+  empty-state copy.
+
+Verified: `flutter analyze` + `flutter test` (39 tests — net down from 41 since the
+former `rental_screen_test.dart`/`renewal_screen_test.dart` files were replaced by one
+consolidated `test/features/lease/lease_screen_test.dart`, plus a new
+`settings_screen_test.dart`), and a live, deleted-after-use integration test hitting the
+real docker-compose stack as the seeded `amit@example.com` tenant, confirming
+`RentalRepository`/`RenewalRepository` — the exact calls `LeaseScreen` makes — return
+correct data post-merge. `LeaseScreen`'s actual on-screen rendering is not independently
+live-verified beyond that (no way to make a real network call from inside a
+`testWidgets()` test — `TestWidgetsFlutterBinding` intercepts `dart:io`'s `HttpClient`
+globally and synthesizes a 400 for anything not going through a mocked `http.Client`,
+confirmed the hard way on a first attempt) — the mocked widget-test suite covers
+rendering correctness instead.
+
+Every backend-touching change here is zero: this arc changed **no backend files** —
+purely Flutter UI/navigation.
+
+## Real backends for Contacts, Vehicles, Guest Manager, Documents (2026-08-18)
+
+Direct follow-up to the Resident Hub redesign — the four non-Payments placeholder
+tiles all got real `tenant-service` backends and full Flutter screens this pass
+(Payments is its own, larger arc — see the section below). No new microservice: all
+four are natural extensions of `tenant-service`'s existing `src/routes/tenantSelf.ts`
+ownership-scoped self-service pattern (see `tenant-service/README.md` for the backend
+side of each).
+
+- **Contacts** (`lib/features/contacts/`) — read-only list of the org's managers/
+  owners (name, email, phone), from the new `GET /tenant/me/contacts`. No new
+  dependency; phone/email are shown as plain text, not tap-to-call/email (would need
+  `url_launcher`, added in this same pass for Documents but not wired up here too —
+  left as a clean, obvious future add rather than bundled in without being asked).
+- **Vehicles** (`lib/features/vehicles/`) — add/list/delete, a bottom-sheet form
+  (plate number, type, optional color), same shape as the existing Maintenance
+  ("Complaints") bottom sheet. Backend: `POST`/`GET /tenant/me/vehicles`, `DELETE
+  /tenant/me/vehicles/:vehicleId` — tenant-service's **first ownership-checked
+  DELETE** (verifies the row's `tenant_id` before removing it, not just org-scoped).
+- **Guest Manager** (`lib/features/guests/`) — add/list/delete expected visitors
+  (name, optional phone, visit date via a date picker, optional notes). Same CRUD
+  shape as Vehicles. No approval workflow, no notification to the property
+  manager — this is tenant recordkeeping, per the user's own description of the tile.
+- **Documents** (`lib/features/documents/`) — upload (via `file_picker`, base64-
+  encoded client-side same as tenant-service's existing agreement e-sign upload),
+  list (metadata only), download (opens a 900s presigned S3 URL via `url_launcher`),
+  delete (DB row only — S3 object cleanup is a small, deliberately deferred follow-up,
+  matching tenant-service's README). **Two new dependencies** — `file_picker` and
+  `url_launcher` — the one phase in this arc where new Flutter deps were unavoidable.
+  Both wrapped in thin injectable seams (`lib/core/file_picker_service.dart`,
+  `lib/core/url_opener.dart`, same shape as `SecureStore`/`CacheStore`) so widget
+  tests can fake the picker's selection and the launched URL instead of touching real
+  platform channels.
+- All four wired into `home_screen.dart`'s `_menuItems` with real `screenBuilder`s,
+  replacing their "coming soon" placeholders; each has its own offline read-cache
+  (`fetchWithCache`, same convention as every other screen) and a full mocked test
+  suite.
+
+Verified: `flutter analyze`/`flutter test` (63 tests, up from 39) and `tenant-service`
+(110 tests, up from 71) both green, plus a live end-to-end pass against the real
+docker-compose stack for every new endpoint — including, for Documents, actually
+downloading the uploaded bytes back through the presigned URL and confirming they
+matched exactly, not just checking for a 200.
+
+## Payments — native Razorpay checkout (2026-08-18)
+
+The fifth and largest piece of the same follow-up arc, built last and given the most
+scrutiny since it's the one that moves real money. Per the user's explicit choice
+(over a browser-launch alternative): a **native Razorpay Checkout SDK** integration,
+not a hosted payment page.
+
+- **Backend** (`payment-service`) — new ownership-scoped `GET /tenant/me/invoices`
+  (the caller's own pending invoices + a `total_due` sum) and `POST /tenant/me/orders`
+  (creates a real Razorpay order, reusing the exact same order-creation/persistence
+  logic the existing manager-facing route already had — refactored into a shared
+  `createOrderRecord()` rather than duplicated, with the manager route's own tests
+  confirmed still passing unchanged against the refactor). The one thing the tenant
+  route adds beyond the manager route: verifying the invoice actually belongs to the
+  caller before creating an order against it. **No webhook code changed at all** —
+  `payment.captured` confirmation was already correct and is reused as-is. See
+  `payment-service/README.md`'s "Tenant-facing payments" section for the full detail,
+  including how live verification confirmed the real webhook path without needing an
+  actual Razorpay account (a correctly HMAC-signed payload, constructed by hand).
+- **`lib/core/razorpay_checkout.dart`** (new) — a `RazorpayCheckout` seam around the
+  new `razorpay_flutter` dependency, same shape as `FilePickerService`/`UrlOpener`:
+  the real implementation wraps the SDK's `Razorpay()`/`.open()`/event-callback API,
+  and widget tests inject a fake that can simulate a success or failure callback
+  without touching a real platform channel.
+- **`lib/features/payments/`** — lists pending invoices with a total-due summary card
+  and a "Pay" button per invoice. Tapping creates an order, then opens the native
+  checkout with the returned `order_id`/`key_id`/amount. On the SDK's own success
+  callback, the screen shows "Payment submitted — pull to refresh in a moment to
+  confirm" rather than assuming success — **the SDK's callback is optimistic, not
+  authoritative; payment-service's webhook is the real source of truth**, and
+  reconciliation happens asynchronously, same as it always has for the manager-
+  collected-payment flow. Same offline read-cache (`fetchWithCache`, cache key
+  `'payments_invoices'`) and stale-banner/action-gating treatment as every other
+  screen — "Pay" relabels to "Reconnect" and disables while showing stale data.
+- **Home screen banner**: now navigates to the real `PaymentsScreen` (it used to be a
+  dead "coming soon" tap target) and its subtitle changed from "Coming soon" to "View
+  & pay." It still doesn't pre-fetch and show the real `total_due` on the Home screen
+  itself — that would mean `HomeScreen` doing its own tenant-specific data fetch on
+  load, which nothing else on this screen does today. The real number shows once
+  inside `PaymentsScreen`, where it belongs with the rest of that screen's own fetch.
+- Every Resident Hub tile now has a real screen — none of the seven are "coming soon"
+  placeholders anymore. The `_MenuItem`/`screenBuilder` mechanism itself stays in
+  home_screen.dart unchanged for whatever the next unbuilt feature turns out to be.
+
+Verified: `flutter analyze`/`flutter test` (70 tests, up from 63) and `payment-service`
+(32 tests, up from 28) both green. Live verification against the real docker-compose
+stack necessarily stopped short of actually opening a native checkout sheet (no real
+Razorpay account exists in this dev environment — `RAZORPAY_KEY_ID`/`_SECRET` are
+unset, so the mock gateway handles order creation) but did confirm, against the seeded
+`amit@example.com` tenant's two real pending invoices (₹3,300 total): the invoice list
+and its `total_due` sum are correct, order creation succeeds and correctly rejects a
+different tenant's invoice id (`404 invoice_not_found`), and — the one that actually
+matters — POSTing a hand-signed `payment.captured` webhook payload flips the real
+invoice to `paid` and it disappears from the pending list, exercising every line of
+backend logic this arc added without needing a live Razorpay account to do it.
+
+## Fixed: "jwt expired" on most view clicks (2026-08-18)
+
+**Root cause**: access tokens live 30 minutes
+(auth-service's `ACCESS_TOKEN_TTL_SECONDS`). Every screen's `_load()` called
+`AuthRepository.currentSession()` and used whatever access token secure storage had,
+with no check on whether it was still valid — `currentSession()` was a pure local
+read, nothing more. Once 30 minutes passed, api-gateway's JWT verification started
+rejecting every request with `401 {message: "jwt expired"}` (the literal string
+`jsonwebtoken` throws — see `api-gateway/src/jwt.ts`), and that message surfaced
+straight to the UI on every screen, since nothing anywhere refreshed the token before
+use. `HomeScreen`'s existing "check connection" flow (`refreshConnectionStatus`) did
+rotate tokens, but only from that one explicit call site, not as something every
+screen benefited from.
+
+**Fix**: `Session` now carries `accessTokenExpiresAt` (parsed from `expires_at`,
+already returned by signup/login/refresh — nothing new needed server-side),
+persisted by `SessionStore`. `AuthRepository.currentSession()` — the one method every
+screen already calls — now proactively rotates the token (a real call to `POST
+/api/auth/v1/refresh`, using the still-valid 7-day refresh token) whenever the
+access token is within 30 seconds of expiring or its expiry is unknown (a session
+saved before this fix), before returning it. **No screen had to change** — the fix
+lives entirely in `currentSession()`'s contract. Concurrent calls during the same
+expiry window share one in-flight refresh (`/refresh` itself rotates the refresh
+token, so two simultaneous calls would otherwise make the second one fail with an
+"already used" refresh token). If the refresh token itself is rejected (expired past
+its 7-day TTL, revoked, etc.) the stored session is cleared so "no active session"
+handling takes over cleanly; a network failure *during* the proactive refresh instead
+leaves the stale session untouched and propagates the error, so a connectivity
+hiccup doesn't force a real logout — same offline-handling posture as the rest of
+this app.
+
+Live-verified against the real docker-compose stack (temporary, deleted-after-use
+test): logged in for real, then hand-set the stored session's expiry into the past
+(reproducing exactly what a session looks like ~30 minutes after login) while
+keeping the real refresh token — confirmed `currentSession()` rotated to a new
+access token via a real `/refresh` call, and that new token successfully
+authenticated a real API call that would otherwise have 401'd.
+
 ## Architecture
 
 - `lib/core/api_client.dart` — thin HTTP wrapper around api-gateway. Accepts an
@@ -134,12 +335,18 @@ sitting under the same key.
 - `lib/core/cache_store.dart` / `lib/core/cached_fetch.dart` — non-secret,
   `SharedPreferences`-backed response caching for the offline read-fallback described
   above.
+- `lib/core/file_picker_service.dart` / `lib/core/url_opener.dart` — thin injectable
+  seams over `file_picker`/`url_launcher`, same shape as `SecureStore`/`CacheStore`,
+  used by Documents.
+- `lib/core/razorpay_checkout.dart` — same seam shape, over `razorpay_flutter`'s
+  native checkout SDK, used by Payments.
 - `lib/features/auth/` — `SignupScreen`, `LoginScreen`, `AuthRepository` (signup,
   login, `refreshConnectionStatus`, logout).
 - `lib/features/home/home_screen.dart` — the renter's nav shell: always visible
-  regardless of connection status, with a connect-prompt banner and locked/disabled menu
-  tiles when unconnected. `_MenuItem.screenBuilder` is null for screens not built yet
-  (tapping says so rather than pretending to work) and a real widget builder once wired.
+  regardless of connection status, with a connect-prompt banner, a payment banner, and a
+  2-column Resident Hub grid, locked/disabled when unconnected. `_MenuItem.screenBuilder`
+  is null for tiles not built yet (tapping says so rather than pretending to work) and a
+  real widget builder once wired.
 - `lib/theme/` — design tokens ported by hand from `design_handoff_nivasaos/`, the
   same source `owner-dashboard/app/tokens.css` encodes for the web. No shared package
   between Dart and TypeScript; keep both in sync manually.
@@ -170,15 +377,19 @@ flutter analyze
 flutter test
 ```
 
-41 tests. Widget tests use `package:http/testing.dart`'s `MockClient` (no real network
+70 tests. Widget tests use `package:http/testing.dart`'s `MockClient` (no real network
 calls) and in-memory fakes implementing `SecureStore` and `CacheStore` (no platform-
 channel calls to real secure storage or `SharedPreferences`) — every screen test injects
 both, even ones not specifically about caching, since the real `SharedPreferences`
 platform channel isn't available in the widget-test environment and hangs
-`pumpAndSettle` rather than failing fast if a screen falls back to its default. Covers:
-signup/login validation and error surfacing, the unconnected → connected transition
-(including the silent on-load check picking up a connection the renter didn't request),
-locked-menu behavior, logout, each built screen's load/save/error states plus its
-HomeScreen navigation wiring, `fetchWithCache`'s cache/stale/passthrough behavior in
-isolation (`test/core/cached_fetch_test.dart`), and each screen's stale-banner rendering
-from a pre-seeded cache entry.
+`pumpAndSettle` rather than failing fast if a screen falls back to its default. The same
+injected-fake pattern extends to `FilePickerService`/`UrlOpener` (Documents) and
+`RazorpayCheckout` (Payments) — none of those platform channels exist in the test
+sandbox either. Covers: signup/login validation and error surfacing, the unconnected →
+connected transition (including the silent on-load check picking up a connection the
+renter didn't request), locked-hub-tile behavior, logout (now via `SettingsScreen`),
+each built screen's load/save/error states plus its HomeScreen navigation wiring,
+`fetchWithCache`'s cache/stale/passthrough behavior in isolation
+(`test/core/cached_fetch_test.dart`), each screen's stale-banner rendering from a
+pre-seeded cache entry, and — for Payments — order creation opening checkout with the
+right amount/key and both the success and failure callback paths.

@@ -9,6 +9,7 @@ import '../../widgets/nivasa_button.dart';
 import '../../widgets/nivasa_stale_banner.dart';
 import '../auth/auth_repository.dart';
 import 'profile_repository.dart';
+import 'settings_screen.dart';
 
 /// Name and account email stay manager/signup-set — only phone and language are
 /// editable here (2026-08-14 scope call, see tenant-service/README.md's
@@ -107,7 +108,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Profile')),
+      appBar: AppBar(
+        title: const Text('Profile'),
+        actions: [
+          IconButton(
+            key: const Key('settings-button'),
+            icon: const Icon(Icons.settings_outlined),
+            onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => SettingsScreen(authRepository: _auth))),
+          ),
+        ],
+      ),
       body: SafeArea(
         child: _loading
             ? const Center(child: CircularProgressIndicator())
