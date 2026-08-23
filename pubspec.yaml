@@ -62,6 +62,7 @@ dev_dependencies:
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
   flutter_native_splash: ^2.4.8
+  flutter_launcher_icons: ^0.14.4
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -110,6 +111,19 @@ flutter:
 
   assets:
     - assets/splash/splash_logo.png
+    - assets/icon/app_icon.png
+
+# App icon (2026-08-23) — run `dart run flutter_launcher_icons` after changing this to
+# regenerate the Android mipmaps and iOS AppIcon.appiconset. assets/icon/app_icon.png is
+# a full-bleed (no rounded corners — the OS applies its own mask) export of the same gold
+# chevron mark as lib/widgets/nivasa_logo.dart's NivasaLogoMark, generated with the
+# rotated shape re-centered in the canvas for legibility at small icon sizes (unlike
+# splash_logo.png below, which intentionally matches the in-app widget's exact placement).
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/icon/app_icon.png"
+  remove_alpha_ios: true
 
 # Native (pre-Flutter-engine) splash screen shown on cold start, replacing the default
 # white screen — run `dart run flutter_native_splash:create` after changing this to
