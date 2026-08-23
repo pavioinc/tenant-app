@@ -4,11 +4,22 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:nivasaos_tenant_app/core/api_client.dart';
+import 'package:nivasaos_tenant_app/core/push_notifications.dart';
 import 'package:nivasaos_tenant_app/core/session_store.dart';
 import 'package:nivasaos_tenant_app/features/auth/auth_repository.dart';
 import 'package:nivasaos_tenant_app/features/auth/login_screen.dart';
 import 'package:nivasaos_tenant_app/features/profile/settings_screen.dart';
 import 'package:nivasaos_tenant_app/theme/nivasa_theme.dart';
+
+// logout() awaits PushNotifications.unregister(), which calls Firebase.initializeApp()
+// — unavailable in the widget-test environment (no real platform channels), and prone to
+// hanging pumpAndSettle rather than throwing a catchable exception. Stub it out.
+class _NoopPushNotifications extends PushNotifications {
+  @override
+  Future<void> register(String accessToken) async {}
+  @override
+  Future<void> unregister(String accessToken) async {}
+}
 
 class _InMemorySecureStore implements SecureStore {
   final _values = <String, String>{};
@@ -43,7 +54,11 @@ Future<AuthRepository> _connectedAuth(http.Client client) async {
       'tenant_id': 'tenant-1',
     }),
   );
-  return AuthRepository(apiClient: ApiClient(httpClient: client), sessionStore: SessionStore(storage: store));
+  return AuthRepository(
+    apiClient: ApiClient(httpClient: client),
+    sessionStore: SessionStore(storage: store),
+    pushNotifications: _NoopPushNotifications(),
+  );
 }
 
 void main() {

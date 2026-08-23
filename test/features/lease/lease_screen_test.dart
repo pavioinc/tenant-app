@@ -214,7 +214,7 @@ void main() {
     expect(find.text('Pending'), findsOneWidget);
   });
 
-  testWidgets('shows cached data with a stale banner and disables the renewal button when offline', (tester) async {
+  testWidgets('shows cached data with a stale banner and lets Reconnect retry the fetch when offline', (tester) async {
     _useTallSurface(tester);
     final auth = await _connectedAuth();
     final cache = _InMemoryCacheStore();
@@ -235,7 +235,16 @@ void main() {
     expect(find.textContaining('Showing saved data from'), findsOneWidget);
     expect(find.text('Reconnect to request a renewal'), findsOneWidget);
 
+    // Enabled (not disabled-with-a-misleading-label) — tapping it actually retries the
+    // fetch rather than doing nothing. Still offline, so it falls back to the same
+    // cached data again without crashing.
     final button = tester.widget<ElevatedButton>(find.widgetWithText(ElevatedButton, 'Reconnect to request a renewal'));
-    expect(button.onPressed, isNull);
+    expect(button.onPressed, isNotNull);
+
+    await tester.tap(find.text('Reconnect to request a renewal'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('204 · Bed B'), findsOneWidget);
+    expect(find.textContaining('Showing saved data from'), findsOneWidget);
   });
 }

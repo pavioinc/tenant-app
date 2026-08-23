@@ -234,7 +234,10 @@ class _LeaseScreenState extends State<LeaseScreen> {
                         label: _stale ? 'Reconnect to request a renewal' : 'Request renewal',
                         loading: _requesting,
                         loadingLabel: 'Sending…',
-                        onPressed: _stale ? null : _requestRenewal,
+                        // "Reconnect" actually retries the fetch, rather than being a
+                        // disabled label promising an action it can't perform — was
+                        // previously onPressed: null when stale.
+                        onPressed: _stale ? _load : _requestRenewal,
                       ),
                     ],
                     if (_error != null) ...[

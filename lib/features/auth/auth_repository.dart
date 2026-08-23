@@ -1,4 +1,6 @@
+import 'dart:async' show unawaited;
 import '../../core/api_client.dart';
+import '../../core/push_notifications.dart';
 import '../../core/session_store.dart';
 
 /// Renters sign up directly with full name/email/password — a general NivasaOS platform
@@ -9,21 +11,29 @@ import '../../core/session_store.dart';
 /// beyond what's in the current session — [refreshConnectionStatus] is how the app picks
 /// up a manager having linked the renter in the meantime.
 class AuthRepository {
-  AuthRepository({ApiClient? apiClient, SessionStore? sessionStore})
+  AuthRepository({ApiClient? apiClient, SessionStore? sessionStore, PushNotifications? pushNotifications})
     : _api = apiClient ?? ApiClient(),
-      _sessions = sessionStore ?? SessionStore();
+      _sessions = sessionStore ?? SessionStore(),
+      _push = pushNotifications ?? PushNotifications();
 
   final ApiClient _api;
   final SessionStore _sessions;
+  final PushNotifications _push;
 
   Future<Session> signup({required String fullName, required String email, required String password}) async {
     final body = await _api.post('/api/auth/v1/tenant/signup', {'full_name': fullName, 'email': email, 'password': password});
-    return _saveSession(body);
+    final session = await _saveSession(body);
+    // Fire-and-forget — a push-registration failure (declined permission, no Firebase
+    // project configured yet) must never block or fail signup/login itself.
+    unawaited(_push.register(session.accessToken));
+    return session;
   }
 
   Future<Session> login({required String email, required String password}) async {
     final body = await _api.post('/api/auth/v1/tenant/login', {'email': email, 'password': password});
-    return _saveSession(body);
+    final session = await _saveSession(body);
+    unawaited(_push.register(session.accessToken));
+    return session;
   }
 
   Future<Session> _saveSession(Map<String, dynamic> body) async {
@@ -121,6 +131,16 @@ class AuthRepository {
     return session;
   }
 
+  Future<void> changePassword({required String currentPassword, required String newPassword}) async {
+    final session = await currentSession();
+    if (session == null) throw StateError('no active session');
+    await _api.patch(
+      '/api/auth/v1/tenant/password',
+      {'current_password': currentPassword, 'new_password': newPassword},
+      token: session.accessToken,
+    );
+  }
+
   Future<void> logout() async {
     final session = await _sessions.read();
     if (session != null) {
@@ -130,6 +150,7 @@ class AuthRepository {
         // Best-effort — clear the local session regardless, same rationale as
         // owner-dashboard's AccountMenu.onLogout.
       }
+      await _push.unregister(session.accessToken);
     }
     await _sessions.clear();
   }

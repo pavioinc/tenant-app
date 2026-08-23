@@ -9,6 +9,16 @@
 # packages, and plugins designed to encourage good coding practices.
 include: package:flutter_lints/flutter.yaml
 
+analyzer:
+  # build/ios/SourcePackages ends up containing a full copy of each SPM-resolved plugin's
+  # own source (including ITS test/example files, e.g. firebase_messaging's mockito-based
+  # tests) once any Firebase package is added — those aren't part of this app and
+  # reference dev dependencies (mockito) this project doesn't have, so they'd otherwise
+  # show up as false-positive analyzer errors. build/ is already gitignored; this just
+  # keeps it out of analysis too.
+  exclude:
+    - build/**
+
 linter:
   # The lint rules applied to this project can be customized in the
   # section below to disable rules from the `package:flutter_lints/flutter.yaml`

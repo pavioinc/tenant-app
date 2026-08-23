@@ -177,9 +177,14 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
                                       Icon(_contentTypeIcons[item.contentType] ?? Icons.description_outlined, color: NivasaColors.primary700),
                                       const SizedBox(width: NivasaSpacing.s12),
                                       Expanded(child: Text(item.label, style: NivasaText.body, overflow: TextOverflow.ellipsis)),
-                                      IconButton(icon: const Icon(Icons.download_outlined), onPressed: () => _download(item)),
+                                      IconButton(
+                                        icon: const Icon(Icons.download_outlined),
+                                        tooltip: 'Download',
+                                        onPressed: () => _download(item),
+                                      ),
                                       IconButton(
                                         icon: Icon(Icons.delete_outline, color: NivasaColors.negativeFg),
+                                        tooltip: 'Delete',
                                         onPressed: () => _delete(item),
                                       ),
                                     ],

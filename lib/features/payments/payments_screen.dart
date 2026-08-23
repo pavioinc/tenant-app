@@ -192,7 +192,10 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
                                     label: _stale ? 'Reconnect' : 'Pay',
                                     loading: _payingInvoiceId == invoice.invoiceId,
                                     loadingLabel: '…',
-                                    onPressed: _stale ? null : () => _pay(invoice),
+                                    // "Reconnect" actually retries the fetch, rather than
+                                    // being a disabled label promising an action it can't
+                                    // perform — was previously onPressed: null when stale.
+                                    onPressed: _stale ? _load : () => _pay(invoice),
                                   ),
                                 ),
                               ],

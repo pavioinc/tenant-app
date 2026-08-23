@@ -158,6 +158,7 @@ class _VehiclesScreenState extends State<VehiclesScreen> {
                                       ),
                                       IconButton(
                                         icon: Icon(Icons.delete_outline, color: NivasaColors.negativeFg),
+                                        tooltip: 'Delete',
                                         onPressed: () => _delete(item),
                                       ),
                                     ],

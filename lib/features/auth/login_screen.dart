@@ -5,6 +5,7 @@ import '../../theme/nivasa_spacing.dart';
 import '../../theme/nivasa_text_styles.dart';
 import '../../widgets/nivasa_button.dart';
 import '../../widgets/nivasa_logo.dart';
+import '../../widgets/nivasa_password_field.dart';
 import '../home/home_screen.dart';
 import 'auth_repository.dart';
 import 'signup_screen.dart';
@@ -97,12 +98,11 @@ class _LoginScreenState extends State<LoginScreen> {
               const SizedBox(height: NivasaSpacing.s16),
               Text('Password', style: NivasaText.label),
               const SizedBox(height: NivasaSpacing.s8),
-              TextField(
+              NivasaPasswordField(
                 controller: _passwordController,
-                obscureText: true,
                 autofillHints: const [AutofillHints.password],
-                style: NivasaText.body,
-                decoration: InputDecoration(hintText: 'Your password', errorText: _error),
+                hintText: 'Your password',
+                errorText: _error,
                 onSubmitted: (_) => _submit(),
               ),
               const SizedBox(height: NivasaSpacing.s24),

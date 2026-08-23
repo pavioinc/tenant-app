@@ -188,7 +188,7 @@ void main() {
     expect(find.text('Payment cancelled by user'), findsOneWidget);
   });
 
-  testWidgets('shows cached data with a stale banner and relabels the Pay button when offline', (tester) async {
+  testWidgets('shows cached data with a stale banner and lets Reconnect retry the fetch when offline', (tester) async {
     final auth = await _connectedAuth();
     final cache = _InMemoryCacheStore();
     await cache.write(
@@ -217,7 +217,15 @@ void main() {
     expect(find.textContaining('Showing saved data from'), findsOneWidget);
     expect(find.text('Reconnect'), findsOneWidget);
 
+    // Enabled (not disabled-with-a-misleading-label) — tapping it actually retries the
+    // fetch rather than doing nothing. Still offline, so it falls back to the same
+    // cached data again without crashing.
     final button = tester.widget<ElevatedButton>(find.widgetWithText(ElevatedButton, 'Reconnect'));
-    expect(button.onPressed, isNull);
+    expect(button.onPressed, isNotNull);
+
+    await tester.tap(find.text('Reconnect'));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('Showing saved data from'), findsOneWidget);
   });
 }

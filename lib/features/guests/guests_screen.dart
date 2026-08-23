@@ -162,6 +162,7 @@ class _GuestsScreenState extends State<GuestsScreen> {
                                       ),
                                       IconButton(
                                         icon: Icon(Icons.delete_outline, color: NivasaColors.negativeFg),
+                                        tooltip: 'Delete',
                                         onPressed: () => _delete(item),
                                       ),
                                     ],

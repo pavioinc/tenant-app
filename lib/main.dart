@@ -1,4 +1,6 @@
+import 'dart:async' show unawaited;
 import 'package:flutter/material.dart';
+import 'core/push_notifications.dart';
 import 'features/auth/auth_repository.dart';
 import 'features/auth/login_screen.dart';
 import 'features/home/home_screen.dart';
@@ -31,7 +33,13 @@ class _SessionGate extends StatelessWidget {
         if (snapshot.connectionState != ConnectionState.done) {
           return const Scaffold(body: Center(child: CircularProgressIndicator()));
         }
-        return snapshot.data != null ? HomeScreen(authRepository: auth) : LoginScreen(authRepository: auth);
+        final session = snapshot.data;
+        if (session == null) return LoginScreen(authRepository: auth);
+        // Re-registers on every cold start with an existing session (not just right
+        // after login/signup) — the app's FCM token can rotate independently of the
+        // NivasaOS session, so this is how a rotated token gets picked back up.
+        unawaited(PushNotifications().register(session.accessToken));
+        return HomeScreen(authRepository: auth);
       },
     );
   }

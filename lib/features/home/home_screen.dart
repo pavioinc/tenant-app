@@ -143,7 +143,12 @@ class _HomeScreenState extends State<HomeScreen> {
                   const SizedBox(width: NivasaSpacing.s12),
                   Text('NivasaOS', style: NivasaText.h3.copyWith(color: NivasaColors.primary800)),
                   const Spacer(),
-                  IconButton(key: const Key('profile-button'), icon: const Icon(Icons.person_outline), onPressed: _openProfile),
+                  IconButton(
+                    key: const Key('profile-button'),
+                    icon: const Icon(Icons.person_outline),
+                    tooltip: 'Profile',
+                    onPressed: _openProfile,
+                  ),
                 ],
               ),
               const SizedBox(height: NivasaSpacing.s24),

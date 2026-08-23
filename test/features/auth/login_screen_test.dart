@@ -44,6 +44,24 @@ void main() {
     expect(find.text('Enter your email and password'), findsOneWidget);
   });
 
+  testWidgets('toggles password visibility', (tester) async {
+    final repo = AuthRepository(
+      apiClient: ApiClient(httpClient: MockClient((_) async => _json({}, 500))),
+      sessionStore: SessionStore(storage: _InMemorySecureStore()),
+    );
+
+    await tester.pumpWidget(_wrap(LoginScreen(authRepository: repo)));
+
+    expect(tester.widget<TextField>(find.byType(TextField).last).obscureText, isTrue);
+    expect(find.byTooltip('Show password'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Show password'));
+    await tester.pump();
+
+    expect(tester.widget<TextField>(find.byType(TextField).last).obscureText, isFalse);
+    expect(find.byTooltip('Hide password'), findsOneWidget);
+  });
+
   testWidgets('navigates to HomeScreen on successful login', (tester) async {
     final client = MockClient((request) async {
       expect(request.url.path, '/api/auth/v1/tenant/login');
