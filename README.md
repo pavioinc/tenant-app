@@ -366,35 +366,47 @@ blocks login/signup/logout. Rent-due reminders are the first event wired to this
 channel — see notification-service/src/handlers.ts's `handleRentDueEvent` and
 providers.ts's `PushNotificationProvider`.
 
-**One-time setup this app needs before push actually works** (no Firebase project
-exists yet as of this writing):
+**Client-side setup is done** (2026-08-23) — Firebase project `nivasaos` exists, both
+apps are registered, and both platforms are wired and verified end to end (real device
+build + the native "Would Like to Send You Notifications" permission prompt firing on
+both a booted iOS simulator and an Android emulator):
 
-1. Create a Firebase project at <https://console.firebase.google.com>.
-2. Add an Android app to it — package name **`com.nivasaos.nivasaos_tenant_app`**
-   (`android/app/build.gradle.kts`'s `applicationId`). Download the generated
-   `google-services.json` and place it at `android/app/google-services.json`. Recent
-   `firebase_core` versions auto-apply the Google Services Gradle plugin once that
-   file is present — no manual `build.gradle.kts` edit needed.
-3. Add an iOS app to the same project — bundle ID **`com.nivasaos.nivasaosTenantApp`**
-   (`ios/Runner.xcodeproj`'s `PRODUCT_BUNDLE_IDENTIFIER`). Download
-   `GoogleService-Info.plist` and add it to the `Runner` target in Xcode (drag it into
-   the `Runner/` group with "Copy items if needed" checked — a plain file copy outside
-   Xcode isn't enough, it has to be added to the target's build phase).
-4. In the Firebase console, generate an APNs auth key (Project settings → Cloud
-   Messaging → Apple app configuration) and upload it — required for iOS push to
-   actually deliver, separate from the GoogleService-Info.plist step above.
-5. On the backend: Project settings → Service accounts → Generate new private key,
+- Android: `android/app/google-services.json` is present. The Google Services Gradle
+  plugin is declared with a version in `settings.gradle.kts` (`apply false`) and
+  actually applied (no version, no `apply false`) in `android/app/build.gradle.kts` —
+  it was previously declared `apply false` in the app module too, which registered the
+  plugin but never ran it, so `google-services.json` was never processed. Also added
+  `android.permission.POST_NOTIFICATIONS` to `AndroidManifest.xml` — required on
+  Android 13+ for `requestPermission()` to actually prompt; without it the permission
+  call silently no-ops and push never shows.
+- iOS: `ios/Runner/GoogleService-Info.plist` is present and registered in
+  `Runner.xcodeproj/project.pbxproj` (PBXFileReference + PBXBuildFile + Resources build
+  phase + Runner group — added by hand since the FlutterFire CLI wasn't available and
+  needs an interactive `firebase login`; verified with `plutil -lint` after editing).
+  This project resolves Firebase via Swift Package Manager (`FlutterGeneratedPluginSwiftPackage`),
+  not CocoaPods — `flutter_secure_storage`/`razorpay_flutter` are the only two
+  CocoaPods-only plugins here. Firebase's current iOS SDK requires a minimum deployment
+  target of 15.0, so `IPHONEOS_DEPLOYMENT_TARGET` was bumped from 13.0 to 15.0 across
+  all three build configurations (was blocking the build with a clear "requires minimum
+  platform version 15.0" error until fixed).
+
+**Still needed for push to actually deliver in production** (not required for local
+dev — see below):
+
+1. In the Firebase console, generate an APNs auth key (Project settings → Cloud
+   Messaging → Apple app configuration) and upload it — separate from the
+   GoogleService-Info.plist step above, and only needed for real iOS push delivery
+   (irrelevant to the simulator, which can't receive real push anyway).
+2. On the backend: Project settings → Service accounts → Generate new private key,
    then set notification-service's `FIREBASE_SERVICE_ACCOUNT_JSON` env var to that
    file's contents as a single-line JSON string (see
    `notification-service/.env.example`). Until this is set, notification-service logs
-   push sends instead of delivering them — the rest of the app works normally.
+   push sends instead of delivering them — the rest of the app works normally, and this
+   is genuinely fine for local dev (see that service's README).
 
-The easiest way to do steps 2-3 correctly (including the Xcode wiring) is the
-[FlutterFire CLI](https://firebase.google.com/docs/flutter/setup): `dart pub global
-activate flutterfire_cli`, then `flutterfire configure` from this directory once the
-Firebase project exists — it also generates `lib/firebase_options.dart`, which isn't
-present yet and isn't required for the manual path above (`Firebase.initializeApp()`
-with no arguments relies purely on the native config files).
+No `lib/firebase_options.dart` exists and none is needed — `Firebase.initializeApp()`
+with no arguments relies purely on the native config files above, which is sufficient
+for a single-Firebase-project, no-multi-flavor setup like this one.
 
 ## Local development
 

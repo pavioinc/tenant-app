@@ -1,4 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Required on Android 13+ (API 33+) for FirebaseMessaging.instance.requestPermission()
+         to actually prompt the user — without this, push notifications silently never
+         show, even once a device token is registered. See lib/core/push_notifications.dart. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <application
         android:label="nivasaos_tenant_app"
         android:name="${applicationName}"
