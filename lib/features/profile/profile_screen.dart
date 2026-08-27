@@ -46,7 +46,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   late final ProfileRepository _profiles = widget.profileRepository ?? ProfileRepository();
   late final KycRepository _kyc = widget.kycRepository ?? KycRepository();
   late final PaymentsRepository _payments = widget.paymentsRepository ?? PaymentsRepository();
-  late final CacheStore _cache = widget.cacheStore ?? const SharedPreferencesCacheStore();
+  // SecureCacheStore, not SharedPreferencesCacheStore: this screen's cached payload
+  // (TenantProfile) includes home address and emergency contact — see cache_store.dart.
+  late final CacheStore _cache = widget.cacheStore ?? const SecureCacheStore();
   final _phoneController = TextEditingController();
   final _permanentAddressController = TextEditingController();
   final _emergencyContactNameController = TextEditingController();
