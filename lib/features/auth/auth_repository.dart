@@ -20,8 +20,20 @@ class AuthRepository {
   final SessionStore _sessions;
   final PushNotifications _push;
 
-  Future<Session> signup({required String fullName, required String email, required String password}) async {
-    final body = await _api.post('/api/auth/v1/tenant/signup', {'full_name': fullName, 'email': email, 'password': password});
+  Future<Session> signup({
+    required String firstName,
+    required String lastName,
+    required String email,
+    required String password,
+    String? birthdate,
+  }) async {
+    final body = await _api.post('/api/auth/v1/tenant/signup', {
+      'first_name': firstName,
+      'last_name': lastName,
+      'email': email,
+      'password': password,
+      if (birthdate != null) 'birthdate': birthdate,
+    });
     final session = await _saveSession(body);
     // Fire-and-forget — a push-registration failure (declined permission, no Firebase
     // project configured yet) must never block or fail signup/login itself.

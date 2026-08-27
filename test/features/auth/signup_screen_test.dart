@@ -26,7 +26,46 @@ http.Response _json(Map<String, dynamic> body, int status) =>
 
 Widget _wrap(Widget child) => MaterialApp(theme: NivasaTheme.light(), home: child);
 
+const _strongPassword = 'Correct-Horse-1!';
+
+Future<void> _fillRequiredFields(WidgetTester tester, {String password = _strongPassword}) async {
+  await tester.enterText(find.widgetWithText(TextField, 'example@email.com'), 'amit@example.com');
+  await tester.enterText(find.widgetWithText(TextField, 'John'), 'Amit');
+  await tester.enterText(find.widgetWithText(TextField, 'Smith'), 'Kumar');
+  await tester.enterText(find.widgetWithText(TextField, 'Enter your password'), password);
+}
+
 void main() {
+  testWidgets('shows the lease-email banner and the password complexity hint', (tester) async {
+    final repo = AuthRepository(
+      apiClient: ApiClient(httpClient: MockClient((request) async => _json({}, 500))),
+      sessionStore: SessionStore(storage: _InMemorySecureStore()),
+    );
+    await tester.pumpWidget(_wrap(SignupScreen(authRepository: repo)));
+
+    expect(find.textContaining('must use the email address associated with your lease'), findsOneWidget);
+    expect(find.textContaining('1 lowercase letter, 1 uppercase letter, 1 number, and 1 special character'), findsOneWidget);
+  });
+
+  testWidgets('rejects an invalid email client-side without calling the network', (tester) async {
+    var called = false;
+    final client = MockClient((request) async {
+      called = true;
+      return _json({}, 201);
+    });
+    final repo = AuthRepository(apiClient: ApiClient(httpClient: client), sessionStore: SessionStore(storage: _InMemorySecureStore()));
+
+    await tester.pumpWidget(_wrap(SignupScreen(authRepository: repo)));
+    await _fillRequiredFields(tester);
+    await tester.enterText(find.widgetWithText(TextField, 'example@email.com'), 'not-an-email');
+    await tester.ensureVisible(find.text('Create Account'));
+    await tester.tap(find.text('Create Account'));
+    await tester.pump();
+
+    expect(called, isFalse);
+    expect(find.text('Enter a valid email address'), findsOneWidget);
+  });
+
   testWidgets('rejects a weak password client-side without calling the network', (tester) async {
     var called = false;
     final client = MockClient((request) async {
@@ -36,23 +75,47 @@ void main() {
     final repo = AuthRepository(apiClient: ApiClient(httpClient: client), sessionStore: SessionStore(storage: _InMemorySecureStore()));
 
     await tester.pumpWidget(_wrap(SignupScreen(authRepository: repo)));
-    await tester.enterText(find.widgetWithText(TextField, 'Amit Kumar'), 'Amit Kumar');
-    await tester.enterText(find.widgetWithText(TextField, 'you@example.com'), 'amit@example.com');
-    await tester.enterText(find.widgetWithText(TextField, 'At least 8 characters'), 'short');
-    await tester.tap(find.text('Create account'));
+    await _fillRequiredFields(tester, password: 'short');
+    await tester.ensureVisible(find.text('Create Account'));
+    await tester.tap(find.text('Create Account'));
     await tester.pump();
 
     expect(called, isFalse);
-    expect(find.text('Password must be at least 8 characters'), findsOneWidget);
+    expect(find.text('Password does not meet the requirements below'), findsOneWidget);
   });
 
-  testWidgets('creates an unconnected account and navigates to HomeScreen', (tester) async {
+  testWidgets('rejects a missing last name client-side', (tester) async {
+    var called = false;
+    final client = MockClient((request) async {
+      called = true;
+      return _json({}, 201);
+    });
+    final repo = AuthRepository(apiClient: ApiClient(httpClient: client), sessionStore: SessionStore(storage: _InMemorySecureStore()));
+
+    await tester.pumpWidget(_wrap(SignupScreen(authRepository: repo)));
+    await tester.enterText(find.widgetWithText(TextField, 'example@email.com'), 'amit@example.com');
+    await tester.enterText(find.widgetWithText(TextField, 'John'), 'Amit');
+    await tester.enterText(find.widgetWithText(TextField, 'Enter your password'), _strongPassword);
+    await tester.ensureVisible(find.text('Create Account'));
+    await tester.tap(find.text('Create Account'));
+    await tester.pump();
+
+    expect(called, isFalse);
+    expect(find.text('Enter your last name'), findsOneWidget);
+  });
+
+  testWidgets('creates an unconnected account (no birthdate given) and navigates to HomeScreen', (tester) async {
     // HomeScreen silently re-checks connection status on load when unconnected (see
     // home_screen.dart's initState), so this mock also has to answer /refresh and
     // /tenant/me — not just /tenant/signup.
     final client = MockClient((request) async {
       if (request.url.path == '/api/auth/v1/tenant/signup') {
-        expect(jsonDecode(request.body), {'full_name': 'Amit Kumar', 'email': 'amit@example.com', 'password': 'correct-horse-battery-staple'});
+        expect(jsonDecode(request.body), {
+          'first_name': 'Amit',
+          'last_name': 'Kumar',
+          'email': 'amit@example.com',
+          'password': _strongPassword,
+        });
         return _json({
           'access_token': 'access-token',
           'refresh_token': 'refresh-token',
@@ -75,10 +138,9 @@ void main() {
     final repo = AuthRepository(apiClient: ApiClient(httpClient: client), sessionStore: SessionStore(storage: _InMemorySecureStore()));
 
     await tester.pumpWidget(_wrap(SignupScreen(authRepository: repo)));
-    await tester.enterText(find.widgetWithText(TextField, 'Amit Kumar'), 'Amit Kumar');
-    await tester.enterText(find.widgetWithText(TextField, 'you@example.com'), 'amit@example.com');
-    await tester.enterText(find.widgetWithText(TextField, 'At least 8 characters'), 'correct-horse-battery-staple');
-    await tester.tap(find.text('Create account'));
+    await _fillRequiredFields(tester);
+    await tester.ensureVisible(find.text('Create Account'));
+    await tester.tap(find.text('Create Account'));
     await tester.pumpAndSettle();
 
     expect(find.byType(HomeScreen), findsOneWidget);
@@ -90,12 +152,28 @@ void main() {
     final repo = AuthRepository(apiClient: ApiClient(httpClient: client), sessionStore: SessionStore(storage: _InMemorySecureStore()));
 
     await tester.pumpWidget(_wrap(SignupScreen(authRepository: repo)));
-    await tester.enterText(find.widgetWithText(TextField, 'Amit Kumar'), 'Amit Kumar');
-    await tester.enterText(find.widgetWithText(TextField, 'you@example.com'), 'amit@example.com');
-    await tester.enterText(find.widgetWithText(TextField, 'At least 8 characters'), 'correct-horse-battery-staple');
-    await tester.tap(find.text('Create account'));
+    await _fillRequiredFields(tester);
+    await tester.ensureVisible(find.text('Create Account'));
+    await tester.tap(find.text('Create Account'));
     await tester.pumpAndSettle();
 
     expect(find.text('an account with this email already exists'), findsOneWidget);
+  });
+
+  testWidgets('tapping "Already have an account? Log In" navigates without submitting', (tester) async {
+    var called = false;
+    final client = MockClient((request) async {
+      called = true;
+      return _json({}, 201);
+    });
+    final repo = AuthRepository(apiClient: ApiClient(httpClient: client), sessionStore: SessionStore(storage: _InMemorySecureStore()));
+
+    await tester.pumpWidget(_wrap(SignupScreen(authRepository: repo)));
+    await tester.ensureVisible(find.textContaining('Already have an account?'));
+    await tester.tap(find.textContaining('Already have an account?'));
+    await tester.pumpAndSettle();
+
+    expect(called, isFalse);
+    expect(find.text('Welcome back'), findsOneWidget);
   });
 }

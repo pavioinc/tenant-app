@@ -26,7 +26,12 @@ void main() {
       final store = _InMemorySecureStore();
       final client = MockClient((request) async {
         expect(request.url.path, '/api/auth/v1/tenant/signup');
-        expect(jsonDecode(request.body), {'full_name': 'Amit Kumar', 'email': 'amit@example.com', 'password': 'correct-horse-battery-staple'});
+        expect(jsonDecode(request.body), {
+          'first_name': 'Amit',
+          'last_name': 'Kumar',
+          'email': 'amit@example.com',
+          'password': 'Correct-Horse-1!',
+        });
         return _json({
           'access_token': 'access-token',
           'refresh_token': 'refresh-token',
@@ -36,10 +41,37 @@ void main() {
       });
       final repo = AuthRepository(apiClient: ApiClient(httpClient: client), sessionStore: SessionStore(storage: store));
 
-      final session = await repo.signup(fullName: 'Amit Kumar', email: 'amit@example.com', password: 'correct-horse-battery-staple');
+      final session = await repo.signup(firstName: 'Amit', lastName: 'Kumar', email: 'amit@example.com', password: 'Correct-Horse-1!');
 
       expect(session.user.connected, false);
       expect(await store.read('nivasaos.access_token'), 'access-token');
+    });
+
+    test('includes birthdate only when given', () async {
+      final client = MockClient((request) async {
+        expect(jsonDecode(request.body), {
+          'first_name': 'Amit',
+          'last_name': 'Kumar',
+          'email': 'amit@example.com',
+          'password': 'Correct-Horse-1!',
+          'birthdate': '1995-06-15',
+        });
+        return _json({
+          'access_token': 'access-token',
+          'refresh_token': 'refresh-token',
+          'expires_at': DateTime.now().add(const Duration(minutes: 30)).toIso8601String(),
+          'user': {'user_id': 'account-1', 'name': 'Amit Kumar', 'role': 'tenant', 'connected': false},
+        }, 201);
+      });
+      final repo = AuthRepository(apiClient: ApiClient(httpClient: client), sessionStore: SessionStore(storage: _InMemorySecureStore()));
+
+      await repo.signup(
+        firstName: 'Amit',
+        lastName: 'Kumar',
+        email: 'amit@example.com',
+        password: 'Correct-Horse-1!',
+        birthdate: '1995-06-15',
+      );
     });
 
     test('surfaces email_taken as an ApiException', () async {
@@ -47,7 +79,7 @@ void main() {
       final repo = AuthRepository(apiClient: ApiClient(httpClient: client), sessionStore: SessionStore(storage: _InMemorySecureStore()));
 
       await expectLater(
-        repo.signup(fullName: 'Amit Kumar', email: 'amit@example.com', password: 'correct-horse-battery-staple'),
+        repo.signup(firstName: 'Amit', lastName: 'Kumar', email: 'amit@example.com', password: 'Correct-Horse-1!'),
         throwsA(isA<ApiException>().having((e) => e.code, 'code', 'email_taken')),
       );
     });
