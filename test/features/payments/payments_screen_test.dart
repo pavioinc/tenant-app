@@ -156,31 +156,6 @@ void main() {
     expect(find.text('Pay'), findsOneWidget);
   });
 
-  testWidgets('the 3 unbuilt management rows show as disabled and surface "Coming soon"', (tester) async {
-    final auth = await _connectedAuth();
-
-    await tester.pumpWidget(
-      _wrap(
-        PaymentsScreen(
-          authRepository: auth,
-          paymentsRepository: PaymentsRepository(apiClient: ApiClient(httpClient: _clientFor())),
-          cacheStore: _InMemoryCacheStore(),
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    expect(find.text('Manage Payment Methods'), findsOneWidget);
-    expect(find.text('Manage Auto Payments'), findsOneWidget);
-    expect(find.text('Manage Refund Account'), findsOneWidget);
-    expect(find.text('Coming soon'), findsNWidgets(3));
-
-    await tester.tap(find.text('Manage Payment Methods'));
-    await tester.pump();
-
-    expect(find.text('Coming soon'), findsNWidgets(4)); // 3 row labels + the snackbar
-  });
-
   testWidgets('renders recent transactions from the new endpoint', (tester) async {
     final auth = await _connectedAuth();
     final client = _clientFor(

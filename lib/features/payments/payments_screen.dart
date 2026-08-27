@@ -150,10 +150,6 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
     }
   }
 
-  void _comingSoon() {
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Coming soon')));
-  }
-
   void _showBalanceDetails() {
     showModalBottomSheet(
       context: context,
@@ -300,12 +296,11 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
 }
 
 class _ActionRow extends StatelessWidget {
-  const _ActionRow({required this.icon, required this.label, required this.onTap, this.disabled = false});
+  const _ActionRow({required this.icon, required this.label, required this.onTap});
 
   final IconData icon;
   final String label;
   final VoidCallback onTap;
-  final bool disabled;
 
   @override
   Widget build(BuildContext context) {
@@ -315,15 +310,12 @@ class _ActionRow extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: NivasaSpacing.s12),
         child: Row(
           children: [
-            Icon(icon, size: 20, color: disabled ? NivasaColors.ink400 : NivasaColors.ink700),
+            Icon(icon, size: 20, color: NivasaColors.ink700),
             const SizedBox(width: NivasaSpacing.s12),
             Expanded(
-              child: Text(label, style: NivasaText.body.copyWith(color: disabled ? NivasaColors.ink400 : NivasaColors.ink900, fontSize: 15)),
+              child: Text(label, style: NivasaText.body.copyWith(color: NivasaColors.ink900, fontSize: 15)),
             ),
-            if (disabled)
-              Text('Coming soon', style: NivasaText.caption)
-            else
-              const Icon(Icons.chevron_right, size: 20, color: NivasaColors.ink400),
+            const Icon(Icons.chevron_right, size: 20, color: NivasaColors.ink400),
           ],
         ),
       ),
