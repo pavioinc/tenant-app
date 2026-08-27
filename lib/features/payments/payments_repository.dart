@@ -1,5 +1,5 @@
 import '../../core/api_client.dart';
-import '../../core/date_utils.dart';
+import '../../core/date_utils.dart' show shortDate;
 
 class PendingInvoice {
   const PendingInvoice({required this.invoiceId, required this.amount, required this.currency, required this.dueDate, required this.status});
@@ -54,10 +54,64 @@ class RazorpayOrder {
   );
 }
 
-/// payment-service's `/tenant/me/invoices` + `/tenant/me/orders` — the tenant-scoped
-/// counterpart to the existing manager-facing order-creation flow, plus a
-/// `total_due` summary that finally gives the Home screen's payment banner (currently
-/// static) a real number to eventually show.
+/// One row in the Payments screen's "Recent transactions" feed — either a confirmed
+/// payment or a still-pending invoice, as returned by `/tenant/me/transactions`.
+class TenantTransaction {
+  const TenantTransaction({
+    required this.transactionId,
+    required this.type,
+    required this.title,
+    required this.subtitle,
+    required this.amount,
+    required this.currency,
+    required this.date,
+  });
+
+  final String transactionId;
+  final String type;
+  final String title;
+  final String? subtitle;
+  final int amount;
+  final String currency;
+  final String date;
+
+  factory TenantTransaction.fromJson(Map<String, dynamic> json) => TenantTransaction(
+    transactionId: json['transaction_id'] as String,
+    type: json['type'] as String,
+    title: json['title'] as String,
+    subtitle: json['subtitle'] as String?,
+    amount: json['amount'] as int,
+    currency: json['currency'] as String,
+    date: shortDate(json['date'] as String),
+  );
+
+  Map<String, dynamic> toJson() => {
+    'transaction_id': transactionId,
+    'type': type,
+    'title': title,
+    'subtitle': subtitle,
+    'amount': amount,
+    'currency': currency,
+    'date': date,
+  };
+}
+
+class TenantTransactions {
+  const TenantTransactions({required this.transactions});
+
+  final List<TenantTransaction> transactions;
+
+  factory TenantTransactions.fromJson(Map<String, dynamic> json) => TenantTransactions(
+    transactions: (json['transactions'] as List).map((t) => TenantTransaction.fromJson(t as Map<String, dynamic>)).toList(),
+  );
+
+  Map<String, dynamic> toJson() => {'transactions': transactions.map((t) => t.toJson()).toList()};
+}
+
+/// payment-service's `/tenant/me/invoices` + `/tenant/me/orders` + `/tenant/me/transactions`
+/// — the tenant-scoped counterpart to the existing manager-facing order-creation flow,
+/// plus a `total_due` summary that finally gives the Home screen's payment banner
+/// (currently static) a real number to eventually show.
 class PaymentsRepository {
   PaymentsRepository({ApiClient? apiClient}) : _api = apiClient ?? ApiClient();
 
@@ -66,6 +120,11 @@ class PaymentsRepository {
   Future<PendingInvoices> pendingInvoices(String token) async {
     final body = await _api.get('/api/payments/v1/tenant/me/invoices', token: token);
     return PendingInvoices.fromJson(body);
+  }
+
+  Future<TenantTransactions> recentTransactions(String token) async {
+    final body = await _api.get('/api/payments/v1/tenant/me/transactions', token: token);
+    return TenantTransactions.fromJson(body);
   }
 
   Future<RazorpayOrder> createOrder(String token, {required String invoiceId, required String idempotencyKey}) async {

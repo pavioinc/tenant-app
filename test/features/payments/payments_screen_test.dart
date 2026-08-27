@@ -87,29 +87,52 @@ Future<AuthRepository> _connectedAuth() async {
 
 const _invoiceJson = {'invoice_id': 'invoice-1', 'amount': 150000, 'currency': 'INR', 'due_date': '2026-08-15', 'status': 'pending'};
 
+const _emptyTransactions = {'transactions': []};
+
+/// Routes a fake client's responses by path, since the screen now calls two GET
+/// endpoints (invoices + transactions) instead of one.
+http.Client _clientFor({
+  Map<String, dynamic> invoices = const {'invoices': [], 'total_due': 0},
+  Map<String, dynamic> transactions = _emptyTransactions,
+  Map<String, dynamic>? orderResponse,
+}) {
+  return MockClient((request) async {
+    if (request.method == 'POST') {
+      return _json(orderResponse!, 201);
+    }
+    if (request.url.path.endsWith('/transactions')) {
+      return _json(transactions, 200);
+    }
+    return _json(invoices, 200);
+  });
+}
+
 void main() {
   testWidgets('shows total due and an empty state with nothing pending', (tester) async {
     final auth = await _connectedAuth();
-    final client = MockClient((request) async => _json({'invoices': [], 'total_due': 0}, 200));
 
     await tester.pumpWidget(
       _wrap(
         PaymentsScreen(
           authRepository: auth,
-          paymentsRepository: PaymentsRepository(apiClient: ApiClient(httpClient: client)),
+          paymentsRepository: PaymentsRepository(apiClient: ApiClient(httpClient: _clientFor())),
           cacheStore: _InMemoryCacheStore(),
         ),
       ),
     );
     await tester.pumpAndSettle();
 
+    expect(find.text('Nothing to Pay'), findsOneWidget);
     expect(find.text('₹0'), findsOneWidget);
-    expect(find.text('Nothing to pay right now'), findsOneWidget);
+    expect(find.text('No recent activity'), findsOneWidget);
+
+    final button = tester.widget<ElevatedButton>(find.widgetWithText(ElevatedButton, 'Pay now'));
+    expect(button.onPressed, isNull);
   });
 
-  testWidgets('lists pending invoices with the total due', (tester) async {
+  testWidgets('shows amount due and lets View Balance Details reveal the pending invoice', (tester) async {
     final auth = await _connectedAuth();
-    final client = MockClient((request) async => _json({'invoices': [_invoiceJson], 'total_due': 150000}, 200));
+    final client = _clientFor(invoices: {'invoices': [_invoiceJson], 'total_due': 150000});
 
     await tester.pumpWidget(
       _wrap(
@@ -122,19 +145,93 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('₹1500'), findsNWidgets(2));
+    expect(find.text('Amount Due'), findsOneWidget);
+    expect(find.text('₹1500'), findsOneWidget);
+    expect(find.text('Due 2026-08-15'), findsNothing);
+
+    await tester.tap(find.text('View Balance Details'));
+    await tester.pumpAndSettle();
+
     expect(find.text('Due 2026-08-15'), findsOneWidget);
     expect(find.text('Pay'), findsOneWidget);
   });
 
+  testWidgets('the 3 unbuilt management rows show as disabled and surface "Coming soon"', (tester) async {
+    final auth = await _connectedAuth();
+
+    await tester.pumpWidget(
+      _wrap(
+        PaymentsScreen(
+          authRepository: auth,
+          paymentsRepository: PaymentsRepository(apiClient: ApiClient(httpClient: _clientFor())),
+          cacheStore: _InMemoryCacheStore(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Manage Payment Methods'), findsOneWidget);
+    expect(find.text('Manage Auto Payments'), findsOneWidget);
+    expect(find.text('Manage Refund Account'), findsOneWidget);
+    expect(find.text('Coming soon'), findsNWidgets(3));
+
+    await tester.tap(find.text('Manage Payment Methods'));
+    await tester.pump();
+
+    expect(find.text('Coming soon'), findsNWidgets(4)); // 3 row labels + the snackbar
+  });
+
+  testWidgets('renders recent transactions from the new endpoint', (tester) async {
+    final auth = await _connectedAuth();
+    final client = _clientFor(
+      transactions: {
+        'transactions': [
+          {
+            'transaction_id': 'invoice-1',
+            'type': 'charge',
+            'title': 'Scheduled Charges',
+            'subtitle': null,
+            'amount': 179700,
+            'currency': 'INR',
+            'date': '2026-10-01',
+          },
+          {
+            'transaction_id': 'invoice-2',
+            'type': 'charge',
+            'title': 'Upcoming Charge',
+            'subtitle': 'Passthru Utilities - Residential (Sewer)',
+            'amount': 1540,
+            'currency': 'INR',
+            'date': '2026-09-01',
+          },
+        ],
+      },
+    );
+
+    await tester.pumpWidget(
+      _wrap(
+        PaymentsScreen(
+          authRepository: auth,
+          paymentsRepository: PaymentsRepository(apiClient: ApiClient(httpClient: client)),
+          cacheStore: _InMemoryCacheStore(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Scheduled Charges'), findsOneWidget);
+    expect(find.text('₹1797'), findsOneWidget);
+    expect(find.text('Upcoming Charge'), findsOneWidget);
+    expect(find.text('Passthru Utilities - Residential (Sewer)'), findsOneWidget);
+    expect(find.text('₹15'), findsOneWidget);
+  });
+
   testWidgets('paying creates an order and opens checkout with the right amount', (tester) async {
     final auth = await _connectedAuth();
-    final client = MockClient((request) async {
-      if (request.method == 'POST') {
-        return _json({'payment_id': 'payment-1', 'invoice_id': 'invoice-1', 'razorpay_order_id': 'order_123', 'key_id': 'rzp_test_key'}, 201);
-      }
-      return _json({'invoices': [_invoiceJson], 'total_due': 150000}, 200);
-    });
+    final client = _clientFor(
+      invoices: {'invoices': [_invoiceJson], 'total_due': 150000},
+      orderResponse: {'payment_id': 'payment-1', 'invoice_id': 'invoice-1', 'razorpay_order_id': 'order_123', 'key_id': 'rzp_test_key'},
+    );
     final checkout = _FakeRazorpayCheckout();
 
     await tester.pumpWidget(
@@ -149,7 +246,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Pay'));
+    await tester.tap(find.text('Pay now'));
     await tester.pumpAndSettle();
 
     expect(checkout.openedWith?.keyId, 'rzp_test_key');
@@ -160,12 +257,10 @@ void main() {
 
   testWidgets('shows an error when checkout fails', (tester) async {
     final auth = await _connectedAuth();
-    final client = MockClient((request) async {
-      if (request.method == 'POST') {
-        return _json({'payment_id': 'payment-1', 'invoice_id': 'invoice-1', 'razorpay_order_id': 'order_123', 'key_id': 'rzp_test_key'}, 201);
-      }
-      return _json({'invoices': [_invoiceJson], 'total_due': 150000}, 200);
-    });
+    final client = _clientFor(
+      invoices: {'invoices': [_invoiceJson], 'total_due': 150000},
+      orderResponse: {'payment_id': 'payment-1', 'invoice_id': 'invoice-1', 'razorpay_order_id': 'order_123', 'key_id': 'rzp_test_key'},
+    );
     final checkout = _FakeRazorpayCheckout()
       ..succeed = false
       ..failureMessage = 'Payment cancelled by user';
@@ -182,7 +277,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Pay'));
+    await tester.tap(find.text('Pay now'));
     await tester.pumpAndSettle();
 
     expect(find.text('Payment cancelled by user'), findsOneWidget);
