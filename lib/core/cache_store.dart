@@ -39,7 +39,7 @@ class SharedPreferencesCacheStore implements CacheStore {
 
 /// Same offline-cache contract as [SharedPreferencesCacheStore], backed by the platform
 /// keystore/keychain instead of plain-text SharedPreferences — for a cached API response
-/// that itself contains PII (e.g. ProfileScreen's home address and emergency contact),
+/// that itself contains PII (e.g. AccountDetailsScreen's home address and emergency contact),
 /// where the whole point of `fetchWithCache`'s offline fallback doesn't hold up if the
 /// cache itself is the weaker link. See the 2026-08-26 security review.
 class SecureCacheStore implements CacheStore {

@@ -9,7 +9,7 @@ import 'kyc_repository.dart';
 
 enum _KycStep { enterAadhaar, enterOtp }
 
-/// Two-step Aadhaar OTP verification, pushed from ProfileScreen. Plain TextFields
+/// Two-step Aadhaar OTP verification, pushed from AccountDetailsScreen. Plain TextFields
 /// throughout — matches login_screen.dart's existing style; there's no reusable 6-box
 /// OTP-entry widget in this app to inherit (login moved to email+password only).
 /// Pops `true` on success so the caller can refresh its own status.

@@ -7,7 +7,7 @@ import 'package:nivasaos_tenant_app/core/api_client.dart';
 import 'package:nivasaos_tenant_app/core/session_store.dart';
 import 'package:nivasaos_tenant_app/features/auth/auth_repository.dart';
 import 'package:nivasaos_tenant_app/features/home/home_screen.dart';
-import 'package:nivasaos_tenant_app/features/profile/profile_screen.dart';
+import 'package:nivasaos_tenant_app/features/profile/user_screen.dart';
 import 'package:nivasaos_tenant_app/features/lease/lease_screen.dart';
 import 'package:nivasaos_tenant_app/features/complaints/complaints_screen.dart';
 import 'package:nivasaos_tenant_app/features/contacts/contacts_screen.dart';
@@ -305,7 +305,7 @@ void main() {
     expect(find.byType(ComplaintsScreen), findsOneWidget);
   });
 
-  testWidgets('tapping the header profile icon navigates to ProfileScreen', (tester) async {
+  testWidgets('tapping the header person icon navigates to UserScreen', (tester) async {
     _useTallSurface(tester);
     final store = await _storeWithSession(connected: true);
     final repo = AuthRepository(
@@ -316,14 +316,14 @@ void main() {
     await tester.pumpWidget(_wrap(HomeScreen(authRepository: repo)));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byKey(const Key('profile-button')));
-    // ProfileScreen's own data fetch uses a real ApiClient (HomeScreen only passes it an
+    await tester.tap(find.byKey(const Key('user-menu-button')));
+    // UserScreen's own data fetch uses a real ApiClient (HomeScreen only passes it an
     // AuthRepository, not a fake ProfileRepository) — safe to settle anyway, since
     // flutter_test's TestWidgetsFlutterBinding intercepts dart:io's HttpClient globally
     // and synthesizes a 400 for anything not explicitly mocked, rather than making a real
     // network call. This only asserts the navigation itself happened.
     await tester.pumpAndSettle();
 
-    expect(find.byType(ProfileScreen), findsOneWidget);
+    expect(find.byType(UserScreen), findsOneWidget);
   });
 }

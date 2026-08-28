@@ -5,7 +5,7 @@ import '../../theme/nivasa_spacing.dart';
 import '../../theme/nivasa_text_styles.dart';
 import '../../widgets/nivasa_logo.dart';
 import '../auth/auth_repository.dart';
-import '../profile/profile_screen.dart';
+import '../profile/user_screen.dart';
 import '../lease/lease_screen.dart';
 import '../complaints/complaints_screen.dart';
 import '../contacts/contacts_screen.dart';
@@ -50,8 +50,8 @@ final _menuItems = [
 /// auth_repository.dart) sees a prompt instead of live data; a silent connection check
 /// runs on load so a renter who was linked while the app was closed sees it reflected
 /// immediately, with a manual "Check again" action as a fallback. Tiles with no backend
-/// yet say so rather than pretending to work; Profile/Settings/logout live behind the
-/// header's person icon, not in the grid.
+/// yet say so rather than pretending to work; account details/settings/logout live behind
+/// the header's person icon (UserScreen), not in the grid.
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key, this.authRepository});
 
@@ -108,8 +108,8 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  void _openProfile() {
-    Navigator.of(context).push(MaterialPageRoute(builder: (_) => ProfileScreen(authRepository: _auth)));
+  void _openUserMenu() {
+    Navigator.of(context).push(MaterialPageRoute(builder: (_) => UserScreen(authRepository: _auth)));
   }
 
   void _onMenuTap(_MenuItem item) {
@@ -144,10 +144,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   Text('NivasaOS', style: NivasaText.h3.copyWith(color: NivasaColors.primary800)),
                   const Spacer(),
                   IconButton(
-                    key: const Key('profile-button'),
+                    key: const Key('user-menu-button'),
                     icon: const Icon(Icons.person_outline),
-                    tooltip: 'Profile',
-                    onPressed: _openProfile,
+                    tooltip: 'Account',
+                    onPressed: _openUserMenu,
                   ),
                 ],
               ),

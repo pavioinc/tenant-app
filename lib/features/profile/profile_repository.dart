@@ -4,8 +4,12 @@ const supportedLanguages = ['en', 'ml', 'ta', 'hi', 'te'];
 
 const languageLabels = {'en': 'English', 'ml': 'Malayalam', 'ta': 'Tamil', 'hi': 'Hindi', 'te': 'Telugu'};
 
-/// Mirrors tenant-service's `TenantSelf` response shape exactly
-/// (src/routes/tenantSelf.ts's `serializeSelf`).
+/// Mirrors tenant-service's `TenantSelf` response shape (src/routes/tenantSelf.ts's
+/// `serializeSelf`) — minus emergency_contact_name/phone/relationship, which the backend
+/// still returns (they're now unused legacy fields on `tenants`, kept for the manager-facing
+/// tenants.ts) but which the app itself no longer reads or writes; see
+/// EmergencyContactsRepository for the real add/update/delete list that replaced them
+/// (2026-08-27).
 class TenantProfile {
   const TenantProfile({
     required this.tenantId,
@@ -19,9 +23,6 @@ class TenantProfile {
     required this.language,
     required this.status,
     required this.permanentAddress,
-    required this.emergencyContactName,
-    required this.emergencyContactPhone,
-    required this.emergencyContactRelationship,
     required this.accountFullName,
     required this.accountEmail,
   });
@@ -37,9 +38,6 @@ class TenantProfile {
   final String language;
   final String status;
   final String? permanentAddress;
-  final String? emergencyContactName;
-  final String? emergencyContactPhone;
-  final String? emergencyContactRelationship;
   final String? accountFullName;
   final String? accountEmail;
 
@@ -55,9 +53,6 @@ class TenantProfile {
     language: json['language'] as String,
     status: json['status'] as String,
     permanentAddress: json['permanent_address'] as String?,
-    emergencyContactName: json['emergency_contact_name'] as String?,
-    emergencyContactPhone: json['emergency_contact_phone'] as String?,
-    emergencyContactRelationship: json['emergency_contact_relationship'] as String?,
     accountFullName: json['account_full_name'] as String?,
     accountEmail: json['account_email'] as String?,
   );
@@ -74,9 +69,6 @@ class TenantProfile {
     'language': language,
     'status': status,
     'permanent_address': ?permanentAddress,
-    'emergency_contact_name': ?emergencyContactName,
-    'emergency_contact_phone': ?emergencyContactPhone,
-    'emergency_contact_relationship': ?emergencyContactRelationship,
     'account_full_name': ?accountFullName,
     'account_email': ?accountEmail,
   };
@@ -95,22 +87,11 @@ class ProfileRepository {
     return TenantProfile.fromJson(body);
   }
 
-  Future<TenantProfile> update(
-    String token, {
-    String? phone,
-    String? language,
-    String? permanentAddress,
-    String? emergencyContactName,
-    String? emergencyContactPhone,
-    String? emergencyContactRelationship,
-  }) async {
+  Future<TenantProfile> update(String token, {String? phone, String? language, String? permanentAddress}) async {
     final body = await _api.patch('/api/tenants/v1/tenant/me', {
       'phone': ?phone,
       'language': ?language,
       'permanent_address': ?permanentAddress,
-      'emergency_contact_name': ?emergencyContactName,
-      'emergency_contact_phone': ?emergencyContactPhone,
-      'emergency_contact_relationship': ?emergencyContactRelationship,
     }, token: token);
     return TenantProfile.fromJson(body);
   }
