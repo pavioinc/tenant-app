@@ -23,36 +23,46 @@ class Allocation {
   Map<String, dynamic> toJson() => {'check_in_date': checkInDate};
 }
 
-/// Mirrors tenant-service's `Agreement` schema (src/routes/agreements.ts's serializeAgreement).
+/// Mirrors tenant-service's `Agreement` schema. `GET /tenant/me/rental` returns the raw
+/// `rent_agreements` row (see tenantSelf.ts), so agreementId/terms are always present
+/// even though the manager-facing serializeAgreement's DTO isn't what's used here.
 class Agreement {
   const Agreement({
+    required this.agreementId,
     required this.status,
     required this.monthlyRent,
     required this.securityDeposit,
     required this.startDate,
     required this.endDate,
+    required this.terms,
   });
 
+  final String agreementId;
   final String status;
   final int monthlyRent;
   final int securityDeposit;
   final String startDate;
   final String? endDate;
+  final String terms;
 
   factory Agreement.fromJson(Map<String, dynamic> json) => Agreement(
+    agreementId: json['agreement_id'] as String,
     status: json['status'] as String,
     monthlyRent: json['monthly_rent'] as int,
     securityDeposit: json['security_deposit'] as int,
     startDate: shortDate(json['start_date'] as String),
     endDate: json['end_date'] != null ? shortDate(json['end_date'] as String) : null,
+    terms: json['terms'] as String? ?? '',
   );
 
   Map<String, dynamic> toJson() => {
+    'agreement_id': agreementId,
     'status': status,
     'monthly_rent': monthlyRent,
     'security_deposit': securityDeposit,
     'start_date': startDate,
     'end_date': ?endDate,
+    'terms': terms,
   };
 }
 
@@ -118,5 +128,17 @@ class RentalRepository {
       agreement: agreementJson != null ? Agreement.fromJson(agreementJson) : null,
       billingProfile: billingProfileJson != null ? BillingProfile.fromJson(billingProfileJson) : null,
     );
+  }
+
+  /// The tenant-initiated e-sign path (tenant-service's POST /tenant/me/agreements/:id/
+  /// sign) — typed name + explicit consent, no document upload. Returns the updated
+  /// Agreement so the caller can refresh its view without a second round trip.
+  Future<Agreement> signAgreement(String token, {required String agreementId, required String signedByName}) async {
+    final result = await _api.post(
+      '/api/tenants/v1/tenant/me/agreements/$agreementId/sign',
+      {'signed_by_name': signedByName, 'accepted': true},
+      token: token,
+    );
+    return Agreement.fromJson(result);
   }
 }

@@ -65,11 +65,28 @@ const _rentalWithEverything = {
   'allocation': {'check_in_date': '2026-07-01'},
   'bed': {'label': 'B', 'room_name': '204', 'floor_name': 'Floor 1'},
   'agreement': {
+    'agreement_id': 'agreement-1',
     'status': 'signed',
     'monthly_rent': 800000,
     'security_deposit': 1600000,
     'start_date': '2026-07-01',
     'end_date': '2027-07-01',
+    'terms': 'Standard terms.',
+  },
+};
+
+const _rentalWithDraftAgreement = {
+  'tenant_id': 'tenant-1',
+  'allocation': {'check_in_date': '2026-07-01'},
+  'bed': {'label': 'B', 'room_name': '204', 'floor_name': 'Floor 1'},
+  'agreement': {
+    'agreement_id': 'agreement-1',
+    'status': 'draft',
+    'monthly_rent': 800000,
+    'security_deposit': 1600000,
+    'start_date': '2026-07-01',
+    'end_date': '2027-07-01',
+    'terms': 'Clause one.\nClause two.',
   },
 };
 
@@ -246,5 +263,67 @@ void main() {
 
     expect(find.text('204 · Bed B'), findsOneWidget);
     expect(find.textContaining('Showing saved data from'), findsOneWidget);
+  });
+
+  testWidgets('shows Review & sign for a draft agreement and signs it end to end', (tester) async {
+    _useTallSurface(tester);
+    final auth = await _connectedAuth();
+    var rentalFetchCount = 0;
+    var signed = false;
+    final client = MockClient((request) async {
+      if (request.url.path == '/api/tenants/v1/tenant/me/rental') {
+        rentalFetchCount += 1;
+        return _json(signed ? _rentalWithEverything : _rentalWithDraftAgreement, 200);
+      }
+      if (request.url.path == '/api/billing/v1/tenant/me/billing-profile') {
+        return _json({
+          'billing_profile': {'amount': 800000, 'cycle_type': 'monthly'},
+        }, 200);
+      }
+      if (request.url.path == '/api/tenants/v1/tenant/me/renewal-requests' && request.method == 'GET') {
+        return _json({'renewal_requests': []}, 200);
+      }
+      if (request.url.path == '/api/tenants/v1/tenant/me/agreements/agreement-1/sign' && request.method == 'POST') {
+        final body = jsonDecode(request.body) as Map<String, dynamic>;
+        expect(body['signed_by_name'], 'Amit Kumar');
+        expect(body['accepted'], true);
+        signed = true;
+        return _json({
+          'agreement_id': 'agreement-1',
+          'status': 'signed',
+          'monthly_rent': 800000,
+          'security_deposit': 1600000,
+          'start_date': '2026-07-01',
+          'end_date': '2027-07-01',
+          'terms': 'Clause one.\nClause two.',
+        }, 200);
+      }
+      throw StateError('unexpected request: ${request.method} ${request.url.path}');
+    });
+
+    await tester.pumpWidget(_leaseScreen(auth: auth, client: client));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Review & sign'), findsOneWidget);
+    await tester.tap(find.text('Review & sign'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Clause one.'), findsNothing);
+    expect(find.textContaining('1. Clause one.'), findsOneWidget);
+
+    final submitButton = find.widgetWithText(ElevatedButton, 'Sign & Submit');
+    expect(tester.widget<ElevatedButton>(submitButton).onPressed, isNull);
+
+    await tester.enterText(find.byType(TextField), 'Amit Kumar');
+    await tester.tap(find.byType(Checkbox));
+    await tester.pump();
+    expect(tester.widget<ElevatedButton>(submitButton).onPressed, isNotNull);
+
+    await tester.tap(submitButton);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Review & sign'), findsNothing);
+    expect(find.text('Signed'), findsOneWidget);
+    expect(rentalFetchCount, 2);
   });
 }

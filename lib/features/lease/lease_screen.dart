@@ -8,6 +8,7 @@ import '../../theme/nivasa_text_styles.dart';
 import '../../widgets/nivasa_button.dart';
 import '../../widgets/nivasa_stale_banner.dart';
 import '../auth/auth_repository.dart';
+import '../rental/agreement_sign_screen.dart';
 import '../rental/rental_repository.dart';
 import '../renewal/renewal_repository.dart';
 
@@ -98,6 +99,15 @@ class _LeaseScreenState extends State<LeaseScreen> {
     } finally {
       if (mounted) setState(() => _loading = false);
     }
+  }
+
+  Future<void> _reviewAndSign() async {
+    final agreement = _rental?.agreement;
+    if (agreement == null) return;
+    final signed = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(builder: (_) => AgreementSignScreen(agreement: agreement, authRepository: _auth, rentalRepository: _rentals)),
+    );
+    if (signed == true) await _load();
   }
 
   Future<void> _pickPreferredDate() async {
@@ -195,6 +205,10 @@ class _LeaseScreenState extends State<LeaseScreen> {
                                       : 'Since ${_rental!.agreement!.startDate}',
                                   style: NivasaText.body.copyWith(color: NivasaColors.ink500, fontSize: 13),
                                 ),
+                                if (_rental!.agreement!.status == 'draft') ...[
+                                  const SizedBox(height: NivasaSpacing.s12),
+                                  NivasaPrimaryButton(label: 'Review & sign', onPressed: _reviewAndSign),
+                                ],
                               ],
                             )
                           : Text('No agreement on file yet', style: NivasaText.body.copyWith(color: NivasaColors.ink500)),
