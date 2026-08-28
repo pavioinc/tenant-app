@@ -32,7 +32,7 @@ class AuthRepository {
       'last_name': lastName,
       'email': email,
       'password': password,
-      if (birthdate != null) 'birthdate': birthdate,
+      'birthdate': ?birthdate,
     });
     final session = await _saveSession(body);
     // Fire-and-forget — a push-registration failure (declined permission, no Firebase
