@@ -8,6 +8,7 @@ import '../../widgets/nivasa_logo.dart';
 import '../../widgets/nivasa_password_field.dart';
 import '../home/home_screen.dart';
 import 'auth_repository.dart';
+import 'forgot_password_screen.dart';
 import 'signup_screen.dart';
 
 /// Entry point for a returning renter — email + password against the general NivasaOS
@@ -105,7 +106,16 @@ class _LoginScreenState extends State<LoginScreen> {
                 errorText: _error,
                 onSubmitted: (_) => _submit(),
               ),
-              const SizedBox(height: NivasaSpacing.s24),
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                  onPressed: _submitting
+                      ? null
+                      : () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => ForgotPasswordScreen(authRepository: _auth))),
+                  child: const Text('Forgot password?'),
+                ),
+              ),
+              const SizedBox(height: NivasaSpacing.s8),
               NivasaPrimaryButton(label: 'Log in', loading: _submitting, loadingLabel: 'Logging in…', onPressed: _submit),
               const SizedBox(height: NivasaSpacing.s16),
               Center(

@@ -6,6 +6,7 @@ import 'package:http/testing.dart';
 import 'package:nivasaos_tenant_app/core/api_client.dart';
 import 'package:nivasaos_tenant_app/core/session_store.dart';
 import 'package:nivasaos_tenant_app/features/auth/auth_repository.dart';
+import 'package:nivasaos_tenant_app/features/auth/forgot_password_screen.dart';
 import 'package:nivasaos_tenant_app/features/auth/login_screen.dart';
 import 'package:nivasaos_tenant_app/features/auth/signup_screen.dart';
 import 'package:nivasaos_tenant_app/features/home/home_screen.dart';
@@ -107,5 +108,18 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(SignupScreen), findsOneWidget);
+  });
+
+  testWidgets('the "Forgot password?" link navigates to ForgotPasswordScreen', (tester) async {
+    final repo = AuthRepository(
+      apiClient: ApiClient(httpClient: MockClient((_) async => _json({}, 200))),
+      sessionStore: SessionStore(storage: _InMemorySecureStore()),
+    );
+
+    await tester.pumpWidget(_wrap(LoginScreen(authRepository: repo)));
+    await tester.tap(find.text('Forgot password?'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(ForgotPasswordScreen), findsOneWidget);
   });
 }

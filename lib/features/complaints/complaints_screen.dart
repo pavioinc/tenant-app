@@ -9,27 +9,11 @@ import '../../theme/nivasa_text_styles.dart';
 import '../../widgets/nivasa_button.dart';
 import '../../widgets/nivasa_stale_banner.dart';
 import '../auth/auth_repository.dart';
+import 'complaint_detail_screen.dart';
 import 'complaints_repository.dart';
 
-const _statusLabels = {
-  'open': 'Open',
-  'in_progress': 'In progress',
-  'resolved': 'Resolved',
-};
-
-(Color, Color) _statusColors(String status) => switch (status) {
-  'resolved' => (NivasaColors.positiveTint, NivasaColors.positiveTextOnTint),
-  'in_progress' => (NivasaColors.infoTint, NivasaColors.infoTextOnTint),
-  _ => (NivasaColors.warningTint, NivasaColors.warningTextOnTint),
-};
-
 class ComplaintsScreen extends StatefulWidget {
-  const ComplaintsScreen({
-    super.key,
-    this.authRepository,
-    this.complaintsRepository,
-    this.cacheStore,
-  });
+  const ComplaintsScreen({super.key, this.authRepository, this.complaintsRepository, this.cacheStore});
 
   final AuthRepository? authRepository;
   final ComplaintsRepository? complaintsRepository;
@@ -41,10 +25,8 @@ class ComplaintsScreen extends StatefulWidget {
 
 class _ComplaintsScreenState extends State<ComplaintsScreen> {
   late final AuthRepository _auth = widget.authRepository ?? AuthRepository();
-  late final ComplaintsRepository _complaints =
-      widget.complaintsRepository ?? ComplaintsRepository();
-  late final CacheStore _cache =
-      widget.cacheStore ?? const SharedPreferencesCacheStore();
+  late final ComplaintsRepository _complaints = widget.complaintsRepository ?? ComplaintsRepository();
+  late final CacheStore _cache = widget.cacheStore ?? const SharedPreferencesCacheStore();
 
   String? _token;
   List<Complaint> _items = [];
@@ -68,15 +50,7 @@ class _ComplaintsScreenState extends State<ComplaintsScreen> {
       final session = await _auth.currentSession();
       if (session == null) throw StateError('no active session');
       _token = session.accessToken;
-      final result = await fetchWithCache<List<Complaint>>(
-        cache: _cache,
-        cacheKey: 'complaints',
-        fetchNetwork: () => _complaints.list(_token!),
-        toJson: (items) => items.map((c) => c.toJson()).toList(),
-        fromJson: (json) => (json as List)
-            .map((c) => Complaint.fromJson(c as Map<String, dynamic>))
-            .toList(),
-      );
+      final result = await fetchWithCache<List<Complaint>>(cache: _cache, cacheKey: 'complaints', fetchNetwork: () => _complaints.list(_token!), toJson: (items) => items.map((c) => c.toJson()).toList(), fromJson: (json) => (json as List).map((c) => Complaint.fromJson(c as Map<String, dynamic>)).toList());
       if (!mounted) return;
       setState(() {
         _items = result.data;
@@ -98,8 +72,7 @@ class _ComplaintsScreenState extends State<ComplaintsScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) =>
-          _NewComplaintSheet(token: _token!, complaintsRepository: _complaints),
+      builder: (_) => _NewComplaintSheet(token: _token!, complaintsRepository: _complaints),
     );
     if (submitted == true) _load();
   }
@@ -108,11 +81,7 @@ class _ComplaintsScreenState extends State<ComplaintsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Maintenance')),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _openNewComplaintSheet,
-        label: const Text('New request'),
-        icon: const Icon(Icons.add),
-      ),
+      floatingActionButton: FloatingActionButton.extended(onPressed: _openNewComplaintSheet, label: const Text('New request'), icon: const Icon(Icons.add)),
       body: SafeArea(
         child: _loading
             ? const Center(child: CircularProgressIndicator())
@@ -125,16 +94,11 @@ class _ComplaintsScreenState extends State<ComplaintsScreen> {
                     children: [
                       Text(
                         _error!,
-                        style: NivasaText.body.copyWith(
-                          color: NivasaColors.ink500,
-                        ),
+                        style: NivasaText.body.copyWith(color: NivasaColors.ink500),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: NivasaSpacing.s16),
-                      TextButton(
-                        onPressed: _load,
-                        child: const Text('Try again'),
-                      ),
+                      TextButton(onPressed: _load, child: const Text('Try again')),
                     ],
                   ),
                 ),
@@ -143,12 +107,7 @@ class _ComplaintsScreenState extends State<ComplaintsScreen> {
                 children: [
                   if (_stale)
                     Padding(
-                      padding: const EdgeInsets.fromLTRB(
-                        NivasaSpacing.s24,
-                        NivasaSpacing.s24,
-                        NivasaSpacing.s24,
-                        0,
-                      ),
+                      padding: const EdgeInsets.fromLTRB(NivasaSpacing.s24, NivasaSpacing.s24, NivasaSpacing.s24, 0),
                       child: NivasaStaleBanner(lastSyncedAt: _lastSyncedAt, onRetry: _load),
                     ),
                   Expanded(
@@ -158,85 +117,55 @@ class _ComplaintsScreenState extends State<ComplaintsScreen> {
                           ? ListView(
                               children: [
                                 Padding(
-                                  padding: const EdgeInsets.all(
-                                    NivasaSpacing.s24,
-                                  ),
-                                  child: Text(
-                                    'No maintenance requests yet — tap "New request" to raise one.',
-                                    style: NivasaText.body.copyWith(
-                                      color: NivasaColors.ink500,
-                                    ),
-                                  ),
+                                  padding: const EdgeInsets.all(NivasaSpacing.s24),
+                                  child: Text('No maintenance requests yet — tap "New request" to raise one.', style: NivasaText.body.copyWith(color: NivasaColors.ink500)),
                                 ),
                               ],
                             )
                           : ListView.separated(
                               padding: const EdgeInsets.all(NivasaSpacing.s24),
                               itemCount: _items.length,
-                              separatorBuilder: (_, _) =>
-                                  const SizedBox(height: NivasaSpacing.s12),
+                              separatorBuilder: (_, _) => const SizedBox(height: NivasaSpacing.s12),
                               itemBuilder: (context, index) {
                                 final item = _items[index];
-                                final (bg, fg) = _statusColors(item.status);
-                                return Container(
-                                  padding: const EdgeInsets.all(
-                                    NivasaSpacing.s16,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: NivasaColors.white,
-                                    border: Border.all(
-                                      color: NivasaColors.line,
-                                    ),
-                                    borderRadius: BorderRadius.circular(NivasaRadius.card),
-                                  ),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
-                                        children: [
-                                          Expanded(
-                                            child: Text(
-                                              item.category,
-                                              style: NivasaText.h3,
-                                            ),
-                                          ),
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 10,
-                                              vertical: 4,
-                                            ),
-                                            decoration: BoxDecoration(
-                                              color: bg,
-                                              borderRadius:
-                                                  BorderRadius.circular(NivasaRadius.pill),
-                                            ),
-                                            child: Text(
-                                              _statusLabels[item.status] ??
-                                                  item.status,
-                                              style: NivasaText.body.copyWith(
-                                                color: fg,
-                                                fontSize: 12,
-                                                fontWeight: FontWeight.w600,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      const SizedBox(height: NivasaSpacing.s8),
-                                      Text(
-                                        item.description,
-                                        style: NivasaText.body,
-                                      ),
-                                      const SizedBox(height: NivasaSpacing.s4),
-                                      Text(
-                                        formatDisplayDate(item.createdAt),
-                                        style: NivasaText.body.copyWith(
-                                          color: NivasaColors.ink500,
-                                          fontSize: 12,
+                                final (bg, fg) = complaintStatusColors(item.status);
+                                return InkWell(
+                                  borderRadius: BorderRadius.circular(NivasaRadius.card),
+                                  onTap: () => Navigator.of(context)
+                                      .push(
+                                        MaterialPageRoute(
+                                          builder: (_) => ComplaintDetailScreen(complaint: item, authRepository: _auth, complaintsRepository: _complaints),
                                         ),
-                                      ),
-                                    ],
+                                      )
+                                      .then((_) => _load()),
+                                  child: Container(
+                                    padding: const EdgeInsets.all(NivasaSpacing.s16),
+                                    decoration: BoxDecoration(
+                                      color: NivasaColors.white,
+                                      border: Border.all(color: NivasaColors.line),
+                                      borderRadius: BorderRadius.circular(NivasaRadius.card),
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          children: [
+                                            Expanded(child: Text(item.category, style: NivasaText.h3)),
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                              decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(NivasaRadius.pill)),
+                                              child: Text(complaintStatusLabels[item.status] ?? item.status, style: NivasaText.badge.copyWith(color: fg)),
+                                            ),
+                                            const SizedBox(width: NivasaSpacing.s4),
+                                            Icon(Icons.chevron_right, color: NivasaColors.ink400),
+                                          ],
+                                        ),
+                                        const SizedBox(height: NivasaSpacing.s8),
+                                        Text(item.description, style: NivasaText.body, maxLines: 2, overflow: TextOverflow.ellipsis),
+                                        const SizedBox(height: NivasaSpacing.s4),
+                                        Text(formatDisplayDate(item.createdAt), style: NivasaText.bodySmall.copyWith(color: NivasaColors.ink500)),
+                                      ],
+                                    ),
                                   ),
                                 );
                               },
@@ -251,10 +180,7 @@ class _ComplaintsScreenState extends State<ComplaintsScreen> {
 }
 
 class _NewComplaintSheet extends StatefulWidget {
-  const _NewComplaintSheet({
-    required this.token,
-    required this.complaintsRepository,
-  });
+  const _NewComplaintSheet({required this.token, required this.complaintsRepository});
 
   final String token;
   final ComplaintsRepository complaintsRepository;
@@ -285,11 +211,7 @@ class _NewComplaintSheetState extends State<_NewComplaintSheet> {
       _error = null;
     });
     try {
-      await widget.complaintsRepository.submit(
-        widget.token,
-        category: _category,
-        description: _descriptionController.text.trim(),
-      );
+      await widget.complaintsRepository.submit(widget.token, category: _category, description: _descriptionController.text.trim());
       if (!mounted) return;
       Navigator.of(context).pop(true);
     } on ApiException catch (e) {
@@ -304,16 +226,12 @@ class _NewComplaintSheetState extends State<_NewComplaintSheet> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom,
-      ),
+      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
       child: Container(
         padding: const EdgeInsets.all(NivasaSpacing.s24),
         decoration: const BoxDecoration(
           color: NivasaColors.white,
-          borderRadius: BorderRadius.vertical(
-            top: Radius.circular(NivasaRadius.bottomSheetTop),
-          ),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(NivasaRadius.bottomSheetTop)),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -333,12 +251,8 @@ class _NewComplaintSheetState extends State<_NewComplaintSheet> {
             const SizedBox(height: NivasaSpacing.s8),
             DropdownButtonFormField<String>(
               initialValue: _category,
-              items: [
-                for (final c in complaintCategories)
-                  DropdownMenuItem(value: c, child: Text(c)),
-              ],
-              onChanged: (value) =>
-                  setState(() => _category = value ?? _category),
+              items: [for (final c in complaintCategories) DropdownMenuItem(value: c, child: Text(c))],
+              onChanged: (value) => setState(() => _category = value ?? _category),
             ),
             const SizedBox(height: NivasaSpacing.s16),
             Text('Description', style: NivasaText.label),
@@ -347,18 +261,10 @@ class _NewComplaintSheetState extends State<_NewComplaintSheet> {
               controller: _descriptionController,
               maxLines: 3,
               style: NivasaText.body,
-              decoration: InputDecoration(
-                hintText: 'Describe the issue',
-                errorText: _error,
-              ),
+              decoration: InputDecoration(hintText: 'Describe the issue', errorText: _error),
             ),
             const SizedBox(height: NivasaSpacing.s24),
-            NivasaPrimaryButton(
-              label: 'Submit',
-              loading: _submitting,
-              loadingLabel: 'Submitting…',
-              onPressed: _submit,
-            ),
+            NivasaPrimaryButton(label: 'Submit', loading: _submitting, loadingLabel: 'Submitting…', onPressed: _submit),
             const SizedBox(height: NivasaSpacing.s8),
           ],
         ),

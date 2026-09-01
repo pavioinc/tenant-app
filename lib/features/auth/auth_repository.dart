@@ -153,6 +153,20 @@ class AuthRepository {
     );
   }
 
+  /// Public (no session) — auth-service always responds the same way whether or not the
+  /// email matches an account, so there's nothing meaningful to return here beyond "the
+  /// request went through." See auth-service/src/routes/tenantAuth.ts's POST
+  /// /password/forgot for the enumeration-resistance reasoning.
+  Future<void> requestPasswordReset(String email) async {
+    await _api.post('/api/auth/v1/tenant/password/forgot', {'email': email});
+  }
+
+  /// Public (no session) — [token] is the code from the reset email
+  /// (auth-service mints it in POST /password/forgot, single-use, time-limited).
+  Future<void> resetPassword({required String token, required String newPassword}) async {
+    await _api.post('/api/auth/v1/tenant/password/reset', {'token': token, 'new_password': newPassword});
+  }
+
   Future<void> logout() async {
     final session = await _sessions.read();
     if (session != null) {

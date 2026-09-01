@@ -8,6 +8,7 @@ import 'package:nivasaos_tenant_app/core/api_client.dart';
 import 'package:nivasaos_tenant_app/core/cache_store.dart';
 import 'package:nivasaos_tenant_app/core/session_store.dart';
 import 'package:nivasaos_tenant_app/features/auth/auth_repository.dart';
+import 'package:nivasaos_tenant_app/features/complaints/complaint_detail_screen.dart';
 import 'package:nivasaos_tenant_app/features/complaints/complaints_repository.dart';
 import 'package:nivasaos_tenant_app/features/complaints/complaints_screen.dart';
 import 'package:nivasaos_tenant_app/theme/nivasa_theme.dart';
@@ -83,7 +84,7 @@ void main() {
     final client = MockClient(
       (request) async => _json({
         'complaints': [
-          {'category': 'Electrical', 'description': 'Fan not working', 'status': 'open', 'created_at': '2026-08-14'},
+          {'complaint_id': 'complaint-1', 'category': 'Electrical', 'description': 'Fan not working', 'status': 'open', 'created_at': '2026-08-14'},
         ],
       }, 200),
     );
@@ -111,13 +112,13 @@ void main() {
     final client = MockClient((request) async {
       if (request.method == 'POST') {
         posted = true;
-        return _json({'category': 'Plumbing', 'description': 'Leaky tap', 'status': 'open', 'created_at': '2026-08-14'}, 201);
+        return _json({'complaint_id': 'complaint-2', 'category': 'Plumbing', 'description': 'Leaky tap', 'status': 'open', 'created_at': '2026-08-14'}, 201);
       }
       listCount += 1;
       if (listCount == 1) return _json({'complaints': []}, 200);
       return _json({
         'complaints': [
-          {'category': 'Plumbing', 'description': 'Leaky tap', 'status': 'open', 'created_at': '2026-08-14'},
+          {'complaint_id': 'complaint-2', 'category': 'Plumbing', 'description': 'Leaky tap', 'status': 'open', 'created_at': '2026-08-14'},
         ],
       }, 200);
     });
@@ -151,7 +152,7 @@ void main() {
       'complaints',
       jsonEncode({
         'data': [
-          {'category': 'Electrical', 'description': 'Fan not working', 'status': 'open', 'created_at': '2026-08-14'},
+          {'complaint_id': 'complaint-1', 'category': 'Electrical', 'description': 'Fan not working', 'status': 'open', 'created_at': '2026-08-14'},
         ],
         'cached_at': DateTime(2026, 8, 1, 9, 15).toIso8601String(),
       }),
@@ -171,5 +172,33 @@ void main() {
 
     expect(find.text('Fan not working'), findsOneWidget);
     expect(find.textContaining('Showing saved data from'), findsOneWidget);
+  });
+
+  testWidgets('tapping a complaint card navigates to ComplaintDetailScreen', (tester) async {
+    final auth = await _connectedAuth();
+    final client = MockClient((request) async {
+      if (request.url.path.endsWith('/notes')) return _json({'notes': []}, 200);
+      return _json({
+        'complaints': [
+          {'complaint_id': 'complaint-1', 'category': 'Electrical', 'description': 'Fan not working', 'status': 'open', 'created_at': '2026-08-14'},
+        ],
+      }, 200);
+    });
+
+    await tester.pumpWidget(
+      _wrap(
+        ComplaintsScreen(
+          authRepository: auth,
+          complaintsRepository: ComplaintsRepository(apiClient: ApiClient(httpClient: client)),
+          cacheStore: _InMemoryCacheStore(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Electrical'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(ComplaintDetailScreen), findsOneWidget);
   });
 }
