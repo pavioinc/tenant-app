@@ -100,7 +100,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Priya Friend'), findsOneWidget);
-    expect(find.text('2026-08-20 · +919888888888'), findsOneWidget);
+    expect(find.text('20 Aug 2026 · +919888888888'), findsOneWidget);
   });
 
   testWidgets('deletes a guest', (tester) async {
@@ -135,6 +135,8 @@ void main() {
     await tester.pumpAndSettle();
 
     await tester.tap(find.byIcon(Icons.delete_outline));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Remove'));
     await tester.pumpAndSettle();
 
     expect(deleted, isTrue);

@@ -53,7 +53,7 @@ class _ChannelCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(NivasaSpacing.s16),
-      decoration: BoxDecoration(color: NivasaColors.white, border: Border.all(color: NivasaColors.line), borderRadius: BorderRadius.circular(12)),
+      decoration: BoxDecoration(color: NivasaColors.white, border: Border.all(color: NivasaColors.line), borderRadius: BorderRadius.circular(NivasaRadius.card)),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -65,7 +65,7 @@ class _ChannelCard extends StatelessWidget {
               children: [
                 Text(title, style: NivasaText.body.copyWith(fontWeight: FontWeight.w600)),
                 const SizedBox(height: NivasaSpacing.s4),
-                Text(description, style: NivasaText.body.copyWith(color: NivasaColors.ink500, fontSize: 13)),
+                Text(description, style: NivasaText.bodySmall.copyWith(color: NivasaColors.ink500)),
               ],
             ),
           ),

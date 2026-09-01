@@ -10,6 +10,7 @@ import '../../widgets/nivasa_menu_row.dart';
 import '../../widgets/nivasa_stale_banner.dart';
 import '../auth/auth_repository.dart';
 import '../auth/login_screen.dart';
+import '../kyc/kyc_repository.dart';
 import 'account_details_screen.dart';
 import 'app_feedback_screen.dart';
 import 'emergency_contacts_screen.dart';
@@ -24,10 +25,11 @@ import 'profile_repository.dart';
 /// lives behind its own row/sub-screen; this screen itself only reads the profile, it never
 /// edits it directly (except language, which the design shows inline).
 class UserScreen extends StatefulWidget {
-  const UserScreen({super.key, this.authRepository, this.profileRepository, this.cacheStore});
+  const UserScreen({super.key, this.authRepository, this.profileRepository, this.kycRepository, this.cacheStore});
 
   final AuthRepository? authRepository;
   final ProfileRepository? profileRepository;
+  final KycRepository? kycRepository;
   final CacheStore? cacheStore;
 
   @override
@@ -37,6 +39,7 @@ class UserScreen extends StatefulWidget {
 class _UserScreenState extends State<UserScreen> {
   late final AuthRepository _auth = widget.authRepository ?? AuthRepository();
   late final ProfileRepository _profiles = widget.profileRepository ?? ProfileRepository();
+  late final KycRepository _kyc = widget.kycRepository ?? KycRepository();
   // Same store/key as AccountDetailsScreen and EmergencyContactsScreen — one cached copy of
   // the tenant-self resource, not a per-screen fork of it. Secure, not SharedPreferences:
   // the cached payload carries PII (see cache_store.dart's SecureCacheStore doc).
@@ -50,6 +53,7 @@ class _UserScreenState extends State<UserScreen> {
   String? _error;
   bool _propertyExpanded = false;
   String? _appVersion;
+  KycStatus? _kycStatus;
 
   @override
   void initState() {
@@ -90,12 +94,27 @@ class _UserScreenState extends State<UserScreen> {
         _stale = result.stale;
         _lastSyncedAt = result.lastSyncedAt;
       });
+      _loadKycStatus();
     } on ApiException catch (e) {
       setState(() => _error = e.message);
     } catch (_) {
       setState(() => _error = 'Could not load your profile — try again');
     } finally {
       if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  /// Fire-and-forget, same rationale as AccountDetailsScreen's: a failure here just
+  /// leaves the Account Details row without a status badge instead of blocking the rest
+  /// of this screen from loading.
+  Future<void> _loadKycStatus() async {
+    if (_token == null) return;
+    try {
+      final status = await _kyc.status(_token!);
+      if (!mounted) return;
+      setState(() => _kycStatus = status);
+    } catch (_) {
+      // Non-fatal — see comment above.
     }
   }
 
@@ -163,91 +182,171 @@ class _UserScreenState extends State<UserScreen> {
             ? const Center(child: CircularProgressIndicator())
             : _profile == null
             ? _ErrorState(message: _error ?? 'Could not load your profile', onRetry: _load)
-            : RefreshIndicator(
-                onRefresh: _load,
-                child: ListView(
-                  padding: const EdgeInsets.all(NivasaSpacing.s24),
-                  children: [
-                    if (_stale) ...[NivasaStaleBanner(lastSyncedAt: _lastSyncedAt), const SizedBox(height: NivasaSpacing.s16)],
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(child: Text(_profile!.name, style: NivasaText.h2)),
-                        InkWell(
-                          key: const Key('user-avatar'),
-                          borderRadius: BorderRadius.circular(999),
-                          onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => AccountDetailsScreen(authRepository: _auth))),
-                          child: Container(
-                            width: 40,
-                            height: 40,
-                            decoration: const BoxDecoration(color: NivasaColors.primary50, shape: BoxShape.circle),
-                            child: const Icon(Icons.person_outline, color: NivasaColors.primary700),
+            : Column(
+                children: [
+                  if (_stale)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(NivasaSpacing.s24, NivasaSpacing.s24, NivasaSpacing.s24, 0),
+                      child: NivasaStaleBanner(lastSyncedAt: _lastSyncedAt, onRetry: _load),
+                    ),
+                  Expanded(
+                    child: RefreshIndicator(
+                      onRefresh: _load,
+                      child: ListView(
+                        padding: const EdgeInsets.all(NivasaSpacing.s24),
+                        children: [
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(child: Text(_profile!.name, style: NivasaText.h2)),
+                              InkWell(
+                                key: const Key('user-avatar'),
+                                borderRadius: BorderRadius.circular(NivasaRadius.pill),
+                                onTap: () => Navigator.of(
+                                  context,
+                                ).push(MaterialPageRoute(builder: (_) => AccountDetailsScreen(authRepository: _auth))),
+                                child: Container(
+                                  width: 40,
+                                  height: 40,
+                                  decoration: const BoxDecoration(color: NivasaColors.primary50, shape: BoxShape.circle),
+                                  child: const Icon(Icons.person_outline, color: NivasaColors.primary700),
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
-                      ],
+                          const SizedBox(height: NivasaSpacing.s24),
+                          _PropertyRow(
+                            profile: _profile!,
+                            expanded: _propertyExpanded,
+                            onTap: () => setState(() => _propertyExpanded = !_propertyExpanded),
+                          ),
+                          const SizedBox(height: NivasaSpacing.s24),
+                          // Grouped into three cards (2026-08-31, doc option "1i") — the old
+                          // flat list of eight identical rows had a real Identity/Preferences/
+                          // Legal structure that only showed up as a single extra gap before
+                          // "Privacy Policy"; every other boundary looked the same.
+                          NivasaMenuGroupCard(
+                            title: 'Profile',
+                            children: [
+                              NivasaMenuRow(
+                                icon: Icons.badge_outlined,
+                                label: 'Account Details',
+                                showCard: false,
+                                trailing: _KycBadge(status: _kycStatus),
+                                onTap: () => Navigator.of(
+                                  context,
+                                ).push(MaterialPageRoute(builder: (_) => AccountDetailsScreen(authRepository: _auth))),
+                              ),
+                              NivasaMenuRow(
+                                icon: Icons.emergency_outlined,
+                                label: 'Emergency Contacts',
+                                showCard: false,
+                                onTap: () => Navigator.of(
+                                  context,
+                                ).push(MaterialPageRoute(builder: (_) => EmergencyContactsScreen(authRepository: _auth))),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: NivasaSpacing.s16),
+                          NivasaMenuGroupCard(
+                            title: 'Preferences',
+                            children: [
+                              NivasaMenuRow(
+                                icon: Icons.notifications_outlined,
+                                label: 'Notifications',
+                                showCard: false,
+                                onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const NotificationsScreen())),
+                              ),
+                              NivasaMenuRow(
+                                icon: Icons.language_outlined,
+                                label: 'Language: ${languageLabels[_profile!.language] ?? _profile!.language}',
+                                trailing: const Icon(Icons.keyboard_arrow_down, color: NivasaColors.ink500),
+                                showCard: false,
+                                onTap: _pickLanguage,
+                              ),
+                              NivasaMenuRow(
+                                icon: Icons.feedback_outlined,
+                                label: 'App Feedback',
+                                showCard: false,
+                                onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AppFeedbackScreen())),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: NivasaSpacing.s16),
+                          NivasaMenuGroupCard(
+                            title: 'Legal',
+                            children: [
+                              NivasaMenuRow(
+                                icon: Icons.privacy_tip_outlined,
+                                label: 'Privacy Policy',
+                                showCard: false,
+                                onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const PrivacyPolicyScreen())),
+                              ),
+                              NivasaMenuRow(
+                                icon: Icons.description_outlined,
+                                label: 'Terms & Conditions',
+                                showCard: false,
+                                onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const TermsScreen())),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: NivasaSpacing.s16),
+                          NivasaMenuRow(
+                            icon: Icons.logout,
+                            label: 'Sign Out',
+                            iconColor: NivasaColors.negativeFg,
+                            labelColor: NivasaColors.negativeFg,
+                            trailing: const SizedBox.shrink(),
+                            onTap: _confirmSignOut,
+                          ),
+                          if (_appVersion != null) ...[
+                            const SizedBox(height: NivasaSpacing.s24),
+                            Center(child: Text(_appVersion!, style: NivasaText.caption)),
+                          ],
+                        ],
+                      ),
                     ),
-                    const SizedBox(height: NivasaSpacing.s24),
-                    _PropertyRow(profile: _profile!, expanded: _propertyExpanded, onTap: () => setState(() => _propertyExpanded = !_propertyExpanded)),
-                    const SizedBox(height: NivasaSpacing.s24),
-                    NivasaMenuRow(
-                      icon: Icons.badge_outlined,
-                      label: 'Account Details',
-                      onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => AccountDetailsScreen(authRepository: _auth))),
-                    ),
-                    const SizedBox(height: NivasaSpacing.s12),
-                    NivasaMenuRow(
-                      icon: Icons.emergency_outlined,
-                      label: 'Emergency Contacts',
-                      onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => EmergencyContactsScreen(authRepository: _auth))),
-                    ),
-                    const SizedBox(height: NivasaSpacing.s12),
-                    NivasaMenuRow(
-                      icon: Icons.notifications_outlined,
-                      label: 'Notifications',
-                      onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const NotificationsScreen())),
-                    ),
-                    const SizedBox(height: NivasaSpacing.s12),
-                    NivasaMenuRow(
-                      icon: Icons.language_outlined,
-                      label: 'Language: ${languageLabels[_profile!.language] ?? _profile!.language}',
-                      trailing: const Icon(Icons.keyboard_arrow_down, color: NivasaColors.ink500),
-                      onTap: _pickLanguage,
-                    ),
-                    const SizedBox(height: NivasaSpacing.s12),
-                    NivasaMenuRow(
-                      icon: Icons.feedback_outlined,
-                      label: 'App Feedback',
-                      onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AppFeedbackScreen())),
-                    ),
-                    const SizedBox(height: NivasaSpacing.s32),
-                    NivasaMenuRow(
-                      icon: Icons.privacy_tip_outlined,
-                      label: 'Privacy Policy',
-                      onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const PrivacyPolicyScreen())),
-                    ),
-                    const SizedBox(height: NivasaSpacing.s12),
-                    NivasaMenuRow(
-                      icon: Icons.description_outlined,
-                      label: 'Terms & Conditions',
-                      onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const TermsScreen())),
-                    ),
-                    const SizedBox(height: NivasaSpacing.s12),
-                    NivasaMenuRow(
-                      icon: Icons.logout,
-                      label: 'Sign Out',
-                      iconColor: NivasaColors.negativeFg,
-                      labelColor: NivasaColors.negativeFg,
-                      trailing: const SizedBox.shrink(),
-                      onTap: _confirmSignOut,
-                    ),
-                    if (_appVersion != null) ...[
-                      const SizedBox(height: NivasaSpacing.s24),
-                      Center(child: Text(_appVersion!, style: NivasaText.caption)),
-                    ],
-                  ],
-                ),
+                  ),
+                ],
               ),
       ),
+    );
+  }
+}
+
+const _kycBadgeLabels = {'verified': 'Verified', 'pending': 'Pending', 'failed': 'Action needed', 'expired': 'Action needed'};
+
+/// Compact status pill on the "Account Details" row (doc option "1i": "surface KYC
+/// status on the row") — the full explanation/"Verify now" action still lives on
+/// AccountDetailsScreen's own `_KycStatusCard`; this just answers "do I need to go in
+/// there?" without opening the row.
+class _KycBadge extends StatelessWidget {
+  const _KycBadge({required this.status});
+
+  final KycStatus? status;
+
+  @override
+  Widget build(BuildContext context) {
+    final (fg, tint) = switch (status?.status) {
+      'verified' => (NivasaColors.positiveTextOnTint, NivasaColors.positiveTint),
+      'pending' => (NivasaColors.warningTextOnTint, NivasaColors.warningTint),
+      'failed' || 'expired' => (NivasaColors.negativeTextOnTint, NivasaColors.negativeTint),
+      _ => (NivasaColors.offlineTextOnTint, NivasaColors.offlineTint),
+    };
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          decoration: BoxDecoration(color: tint, borderRadius: BorderRadius.circular(NivasaRadius.pill)),
+          child: Text(
+            _kycBadgeLabels[status?.status] ?? 'Not verified',
+            style: NivasaText.caption.copyWith(color: fg, fontWeight: FontWeight.w600),
+          ),
+        ),
+        const SizedBox(width: NivasaSpacing.s8),
+        const Icon(Icons.chevron_right, color: NivasaColors.ink500),
+      ],
     );
   }
 }
@@ -268,10 +367,10 @@ class _PropertyRow extends StatelessWidget {
     final hasAddress = profile.propertyAddress != null && profile.propertyAddress!.isNotEmpty;
     return InkWell(
       onTap: hasAddress ? onTap : null,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(NivasaRadius.card),
       child: Container(
         padding: const EdgeInsets.all(NivasaSpacing.s16),
-        decoration: BoxDecoration(color: NivasaColors.white, border: Border.all(color: NivasaColors.line), borderRadius: BorderRadius.circular(12)),
+        decoration: BoxDecoration(color: NivasaColors.white, border: Border.all(color: NivasaColors.line), borderRadius: BorderRadius.circular(NivasaRadius.card)),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -284,7 +383,7 @@ class _PropertyRow extends StatelessWidget {
                       Text(profile.propertyName ?? 'No property on file', style: NivasaText.h3),
                       if (profile.propertyCity != null) ...[
                         const SizedBox(height: NivasaSpacing.s4),
-                        Text(profile.propertyCity!, style: NivasaText.body.copyWith(color: NivasaColors.ink500, fontSize: 13)),
+                        Text(profile.propertyCity!, style: NivasaText.bodySmall.copyWith(color: NivasaColors.ink500)),
                       ],
                     ],
                   ),

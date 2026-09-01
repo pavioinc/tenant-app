@@ -20,6 +20,7 @@ jobs:
           channel: 'stable'
       - run: flutter pub get
       - run: flutter analyze
+      - run: dart run tool/token_lint.dart
       - run: flutter test
 
   build:

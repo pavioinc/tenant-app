@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/api_client.dart';
 import '../../core/cache_store.dart';
 import '../../core/cached_fetch.dart';
+import '../../core/date_utils.dart';
 import '../../theme/nivasa_colors.dart';
 import '../../theme/nivasa_spacing.dart';
 import '../../theme/nivasa_text_styles.dart';
@@ -66,22 +67,7 @@ class _LeaseScreenState extends State<LeaseScreen> {
       final session = await _auth.currentSession();
       if (session == null) throw StateError('no active session');
       _token = session.accessToken;
-      final results = await Future.wait([
-        fetchWithCache<RentalInfo>(
-          cache: _cache,
-          cacheKey: 'rental_info',
-          fetchNetwork: () => _rentals.fetch(_token!),
-          toJson: (r) => r.toJson(),
-          fromJson: (json) => RentalInfo.fromJson(json as Map<String, dynamic>),
-        ),
-        fetchWithCache<List<RenewalRequest>>(
-          cache: _cache,
-          cacheKey: 'renewal_requests',
-          fetchNetwork: () => _renewals.list(_token!),
-          toJson: (items) => items.map((r) => r.toJson()).toList(),
-          fromJson: (json) => (json as List).map((r) => RenewalRequest.fromJson(r as Map<String, dynamic>)).toList(),
-        ),
-      ]);
+      final results = await Future.wait([fetchWithCache<RentalInfo>(cache: _cache, cacheKey: 'rental_info', fetchNetwork: () => _rentals.fetch(_token!), toJson: (r) => r.toJson(), fromJson: (json) => RentalInfo.fromJson(json as Map<String, dynamic>)), fetchWithCache<List<RenewalRequest>>(cache: _cache, cacheKey: 'renewal_requests', fetchNetwork: () => _renewals.list(_token!), toJson: (items) => items.map((r) => r.toJson()).toList(), fromJson: (json) => (json as List).map((r) => RenewalRequest.fromJson(r as Map<String, dynamic>)).toList())]);
       if (!mounted) return;
       final rentalResult = results[0] as CachedFetch<RentalInfo>;
       final renewalResult = results[1] as CachedFetch<List<RenewalRequest>>;
@@ -105,7 +91,9 @@ class _LeaseScreenState extends State<LeaseScreen> {
     final agreement = _rental?.agreement;
     if (agreement == null) return;
     final signed = await Navigator.of(context).push<bool>(
-      MaterialPageRoute(builder: (_) => AgreementSignScreen(agreement: agreement, authRepository: _auth, rentalRepository: _rentals)),
+      MaterialPageRoute(
+        builder: (_) => AgreementSignScreen(agreement: agreement, authRepository: _auth, rentalRepository: _rentals),
+      ),
     );
     if (signed == true) await _load();
   }
@@ -128,9 +116,7 @@ class _LeaseScreenState extends State<LeaseScreen> {
       _error = null;
     });
     try {
-      final requestedEndDate = _preferredEndDate == null
-          ? null
-          : '${_preferredEndDate!.year.toString().padLeft(4, '0')}-${_preferredEndDate!.month.toString().padLeft(2, '0')}-${_preferredEndDate!.day.toString().padLeft(2, '0')}';
+      final requestedEndDate = _preferredEndDate == null ? null : '${_preferredEndDate!.year.toString().padLeft(4, '0')}-${_preferredEndDate!.month.toString().padLeft(2, '0')}-${_preferredEndDate!.day.toString().padLeft(2, '0')}';
       await _renewals.request(_token!, requestedEndDate: requestedEndDate);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Renewal requested — your property manager has been notified')));
@@ -159,136 +145,103 @@ class _LeaseScreenState extends State<LeaseScreen> {
             ? const Center(child: CircularProgressIndicator())
             : _rental == null
             ? _ErrorState(message: _error ?? 'Could not load your lease details', onRetry: _load)
-            : RefreshIndicator(
-                onRefresh: _load,
-                child: ListView(
-                  padding: const EdgeInsets.all(NivasaSpacing.s24),
-                  children: [
-                    if (_stale) ...[
-                      NivasaStaleBanner(lastSyncedAt: _lastSyncedAt),
-                      const SizedBox(height: NivasaSpacing.s16),
-                    ],
-                    _SectionCard(
-                      title: 'Room & bed',
-                      sub: _rental!.allocation != null ? 'Checked in ${_rental!.allocation!.checkInDate}' : null,
-                      child: _rental!.bed != null
-                          ? Text('${_rental!.bed!.roomName} · Bed ${_rental!.bed!.label}', style: NivasaText.h3)
-                          : Text('Not assigned to a bed yet', style: NivasaText.body.copyWith(color: NivasaColors.ink500)),
+            : Column(
+                children: [
+                  if (_stale)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(NivasaSpacing.s24, NivasaSpacing.s24, NivasaSpacing.s24, 0),
+                      child: NivasaStaleBanner(lastSyncedAt: _lastSyncedAt, onRetry: _load),
                     ),
-                    const SizedBox(height: NivasaSpacing.s16),
-                    _SectionCard(
-                      title: 'Rent',
-                      child: _rental!.billingProfile != null
-                          ? Text(
-                              '${_formatInr(_rental!.billingProfile!.amount)}${_cycleLabels[_rental!.billingProfile!.cycleType] ?? ''}',
-                              style: NivasaText.h3,
-                            )
-                          : Text('No billing set up yet', style: NivasaText.body.copyWith(color: NivasaColors.ink500)),
-                    ),
-                    const SizedBox(height: NivasaSpacing.s16),
-                    _SectionCard(
-                      title: 'Agreement',
-                      child: _rental!.agreement != null
-                          ? Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                _StatusPill(status: _rental!.agreement!.status),
-                                const SizedBox(height: NivasaSpacing.s8),
-                                Text(
-                                  'Monthly rent ${_formatInr(_rental!.agreement!.monthlyRent)} · Deposit ${_formatInr(_rental!.agreement!.securityDeposit)}',
-                                  style: NivasaText.body,
-                                ),
-                                const SizedBox(height: NivasaSpacing.s4),
-                                Text(
-                                  _rental!.agreement!.endDate != null
-                                      ? '${_rental!.agreement!.startDate} to ${_rental!.agreement!.endDate}'
-                                      : 'Since ${_rental!.agreement!.startDate}',
-                                  style: NivasaText.body.copyWith(color: NivasaColors.ink500, fontSize: 13),
-                                ),
-                                if (_rental!.agreement!.status == 'draft') ...[
-                                  const SizedBox(height: NivasaSpacing.s12),
-                                  NivasaPrimaryButton(label: 'Review & sign', onPressed: _reviewAndSign),
-                                ],
-                              ],
-                            )
-                          : Text('No agreement on file yet', style: NivasaText.body.copyWith(color: NivasaColors.ink500)),
-                    ),
-                    const SizedBox(height: NivasaSpacing.s16),
-                    _SectionCard(
-                      title: 'Rental offers',
-                      child: Text('Coming soon', style: NivasaText.body.copyWith(color: NivasaColors.ink500)),
-                    ),
-                    const SizedBox(height: NivasaSpacing.s32),
-                    Text('Renewal', style: NivasaText.label.copyWith(color: NivasaColors.ink500)),
-                    const SizedBox(height: NivasaSpacing.s12),
-                    if (_hasPending)
-                      Container(
-                        padding: const EdgeInsets.all(NivasaSpacing.s16),
-                        decoration: BoxDecoration(
-                          color: NivasaColors.warningTint,
-                          border: Border.all(color: NivasaColors.warningTintBorder),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          'A renewal request is pending — your property manager has been notified.',
-                          style: NivasaText.body.copyWith(color: NivasaColors.warningTextOnTint),
-                        ),
-                      )
-                    else ...[
-                      TextButton(
-                        onPressed: _requesting ? null : _pickPreferredDate,
-                        child: Text(
-                          _preferredEndDate == null
-                              ? 'Set a preferred end date (optional)'
-                              : 'Preferred end date: ${_preferredEndDate!.year}-${_preferredEndDate!.month.toString().padLeft(2, '0')}-${_preferredEndDate!.day.toString().padLeft(2, '0')}',
-                        ),
-                      ),
-                      const SizedBox(height: NivasaSpacing.s8),
-                      NivasaPrimaryButton(
-                        label: _stale ? 'Reconnect to request a renewal' : 'Request renewal',
-                        loading: _requesting,
-                        loadingLabel: 'Sending…',
-                        // "Reconnect" actually retries the fetch, rather than being a
-                        // disabled label promising an action it can't perform — was
-                        // previously onPressed: null when stale.
-                        onPressed: _stale ? _load : _requestRenewal,
-                      ),
-                    ],
-                    if (_error != null) ...[
-                      const SizedBox(height: NivasaSpacing.s16),
-                      Text(_error!, style: NivasaText.body.copyWith(color: NivasaColors.negativeFg)),
-                    ],
-                    const SizedBox(height: NivasaSpacing.s32),
-                    Text('Request history', style: NivasaText.label.copyWith(color: NivasaColors.ink500)),
-                    const SizedBox(height: NivasaSpacing.s8),
-                    if (_requests.isEmpty)
-                      Text('No renewal requests yet', style: NivasaText.body.copyWith(color: NivasaColors.ink500))
-                    else
-                      ..._requests.map(
-                        (r) => Padding(
-                          padding: const EdgeInsets.only(bottom: NivasaSpacing.s8),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  r.requestedEndDate != null ? 'Requested end date: ${r.requestedEndDate}' : 'Requested ${r.createdAt}',
-                                  style: NivasaText.body,
-                                ),
-                              ),
-                              Text(
-                                r.status == 'pending' ? 'Pending' : 'Acknowledged',
-                                style: NivasaText.body.copyWith(
-                                  color: r.status == 'pending' ? NivasaColors.warningTextOnTint : NivasaColors.positiveTextOnTint,
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 13,
-                                ),
-                              ),
-                            ],
+                  Expanded(
+                    child: RefreshIndicator(
+                      onRefresh: _load,
+                      child: ListView(
+                        padding: const EdgeInsets.all(NivasaSpacing.s24),
+                        children: [
+                          _SectionCard(
+                            title: 'Room & bed',
+                            sub: _rental!.allocation != null ? 'Checked in ${formatDisplayDate(_rental!.allocation!.checkInDate)}' : null,
+                            child: _rental!.bed != null ? Text('${_rental!.bed!.roomName} · Bed ${_rental!.bed!.label}', style: NivasaText.h3) : Text('Not assigned to a bed yet', style: NivasaText.body.copyWith(color: NivasaColors.ink500)),
                           ),
-                        ),
+                          const SizedBox(height: NivasaSpacing.s16),
+                          _SectionCard(
+                            title: 'Rent',
+                            child: _rental!.billingProfile != null ? Text('${_formatInr(_rental!.billingProfile!.amount)}${_cycleLabels[_rental!.billingProfile!.cycleType] ?? ''}', style: NivasaText.h3.copyWith(fontFamily: 'Noto Sans Mono')) : Text('No billing set up yet', style: NivasaText.body.copyWith(color: NivasaColors.ink500)),
+                          ),
+                          const SizedBox(height: NivasaSpacing.s16),
+                          _SectionCard(
+                            title: 'Agreement',
+                            child: _rental!.agreement != null
+                                ? Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      _StatusPill(status: _rental!.agreement!.status),
+                                      const SizedBox(height: NivasaSpacing.s8),
+                                      Text('Monthly rent ${_formatInr(_rental!.agreement!.monthlyRent)} · Deposit ${_formatInr(_rental!.agreement!.securityDeposit)}', style: NivasaText.body),
+                                      const SizedBox(height: NivasaSpacing.s4),
+                                      Text(_rental!.agreement!.endDate != null ? '${formatDisplayDate(_rental!.agreement!.startDate)} to ${formatDisplayDate(_rental!.agreement!.endDate!)}' : 'Since ${formatDisplayDate(_rental!.agreement!.startDate)}', style: NivasaText.bodySmall.copyWith(color: NivasaColors.ink500)),
+                                      if (_rental!.agreement!.status == 'draft') ...[const SizedBox(height: NivasaSpacing.s12), NivasaPrimaryButton(label: 'Review & sign', onPressed: _reviewAndSign)],
+                                    ],
+                                  )
+                                : Text('No agreement on file yet', style: NivasaText.body.copyWith(color: NivasaColors.ink500)),
+                          ),
+                          const SizedBox(height: NivasaSpacing.s16),
+                          _SectionCard(
+                            title: 'Rental offers',
+                            child: Text('Coming soon', style: NivasaText.body.copyWith(color: NivasaColors.ink500)),
+                          ),
+                          const SizedBox(height: NivasaSpacing.s32),
+                          Text('Renewal', style: NivasaText.label.copyWith(color: NivasaColors.ink500)),
+                          const SizedBox(height: NivasaSpacing.s12),
+                          if (_hasPending)
+                            Container(
+                              padding: const EdgeInsets.all(NivasaSpacing.s16),
+                              decoration: BoxDecoration(
+                                color: NivasaColors.warningTint,
+                                border: Border.all(color: NivasaColors.warningTintBorder),
+                                borderRadius: BorderRadius.circular(NivasaRadius.card),
+                              ),
+                              child: Text('A renewal request is pending — your property manager has been notified.', style: NivasaText.body.copyWith(color: NivasaColors.warningTextOnTint)),
+                            )
+                          else ...[
+                            TextButton(onPressed: _requesting ? null : _pickPreferredDate, child: Text(_preferredEndDate == null ? 'Set a preferred end date (optional)' : 'Preferred end date: ${formatDisplayDate('${_preferredEndDate!.year}-${_preferredEndDate!.month.toString().padLeft(2, '0')}-${_preferredEndDate!.day.toString().padLeft(2, '0')}')}')),
+                            const SizedBox(height: NivasaSpacing.s8),
+                            NivasaPrimaryButton(
+                              label: _stale ? 'Reconnect to request a renewal' : 'Request renewal',
+                              loading: _requesting,
+                              loadingLabel: 'Sending…',
+                              // "Reconnect" actually retries the fetch, rather than being a
+                              // disabled label promising an action it can't perform — was
+                              // previously onPressed: null when stale.
+                              onPressed: _stale ? _load : _requestRenewal,
+                            ),
+                          ],
+                          if (_error != null) ...[const SizedBox(height: NivasaSpacing.s16), Text(_error!, style: NivasaText.body.copyWith(color: NivasaColors.negativeFg))],
+                          const SizedBox(height: NivasaSpacing.s32),
+                          Text('Request history', style: NivasaText.label.copyWith(color: NivasaColors.ink500)),
+                          const SizedBox(height: NivasaSpacing.s8),
+                          if (_requests.isEmpty)
+                            Text('No renewal requests yet', style: NivasaText.body.copyWith(color: NivasaColors.ink500))
+                          else
+                            ..._requests.map(
+                              (r) => Padding(
+                                padding: const EdgeInsets.only(bottom: NivasaSpacing.s8),
+                                child: Row(
+                                  children: [
+                                    Expanded(child: Text(r.requestedEndDate != null ? 'Requested end date: ${formatDisplayDate(r.requestedEndDate!)}' : 'Requested ${formatDisplayDate(r.createdAt)}', style: NivasaText.body)),
+                                    Text(
+                                      r.status == 'pending' ? 'Pending' : 'Acknowledged',
+                                      style: NivasaText.bodySmall.copyWith(color: r.status == 'pending' ? NivasaColors.warningTextOnTint : NivasaColors.positiveTextOnTint, fontWeight: FontWeight.w600),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                        ],
                       ),
-                  ],
-                ),
+                    ),
+                  ),
+                ],
               ),
       ),
     );
@@ -306,17 +259,18 @@ class _SectionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(NivasaSpacing.s16),
-      decoration: BoxDecoration(color: NivasaColors.white, border: Border.all(color: NivasaColors.line), borderRadius: BorderRadius.circular(12)),
+      decoration: BoxDecoration(
+        color: NivasaColors.white,
+        border: Border.all(color: NivasaColors.line),
+        borderRadius: BorderRadius.circular(NivasaRadius.card),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(title, style: NivasaText.label.copyWith(color: NivasaColors.ink500)),
           const SizedBox(height: NivasaSpacing.s8),
           child,
-          if (sub != null) ...[
-            const SizedBox(height: NivasaSpacing.s4),
-            Text(sub!, style: NivasaText.body.copyWith(color: NivasaColors.ink500, fontSize: 13)),
-          ],
+          if (sub != null) ...[const SizedBox(height: NivasaSpacing.s4), Text(sub!, style: NivasaText.bodySmall.copyWith(color: NivasaColors.ink500))],
         ],
       ),
     );
@@ -336,8 +290,15 @@ class _StatusPill extends StatelessWidget {
     };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(color: bg, border: Border.all(color: border), borderRadius: BorderRadius.circular(999)),
-      child: Text(status[0].toUpperCase() + status.substring(1), style: NivasaText.body.copyWith(color: text, fontSize: 12, fontWeight: FontWeight.w600)),
+      decoration: BoxDecoration(
+        color: bg,
+        border: Border.all(color: border),
+        borderRadius: BorderRadius.circular(NivasaRadius.pill),
+      ),
+      child: Text(
+        status[0].toUpperCase() + status.substring(1),
+        style: NivasaText.badge.copyWith(color: text),
+      ),
     );
   }
 }
@@ -356,7 +317,11 @@ class _ErrorState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(message, style: NivasaText.body.copyWith(color: NivasaColors.ink500), textAlign: TextAlign.center),
+            Text(
+              message,
+              style: NivasaText.body.copyWith(color: NivasaColors.ink500),
+              textAlign: TextAlign.center,
+            ),
             const SizedBox(height: NivasaSpacing.s16),
             TextButton(onPressed: onRetry, child: const Text('Try again')),
           ],

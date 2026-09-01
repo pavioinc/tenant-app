@@ -144,7 +144,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(HomeScreen), findsOneWidget);
-    expect(find.text('Connect with your property manager'), findsOneWidget);
+    expect(find.text('Almost there'), findsOneWidget);
   });
 
   testWidgets('surfaces email_taken from the server', (tester) async {

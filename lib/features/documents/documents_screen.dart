@@ -110,6 +110,18 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
 
   Future<void> _delete(TenantDocument document) async {
     if (_token == null) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Remove document?'),
+        content: Text('"${document.label}" will be permanently removed. This can\'t be undone.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Remove')),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
     try {
       await _documents.delete(_token!, document.documentId);
       if (!mounted) return;
@@ -142,7 +154,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
                   if (_stale)
                     Padding(
                       padding: const EdgeInsets.fromLTRB(NivasaSpacing.s24, NivasaSpacing.s24, NivasaSpacing.s24, 0),
-                      child: NivasaStaleBanner(lastSyncedAt: _lastSyncedAt),
+                      child: NivasaStaleBanner(lastSyncedAt: _lastSyncedAt, onRetry: _load),
                     ),
                   Expanded(
                     child: RefreshIndicator(
@@ -170,7 +182,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
                                   decoration: BoxDecoration(
                                     color: NivasaColors.white,
                                     border: Border.all(color: NivasaColors.line),
-                                    borderRadius: BorderRadius.circular(12),
+                                    borderRadius: BorderRadius.circular(NivasaRadius.card),
                                   ),
                                   child: Row(
                                     children: [

@@ -55,6 +55,27 @@ class NivasaText {
     color: NivasaColors.ink900,
   );
 
+  /// The de-facto "small body" step ~15 call sites were already reaching for by hand via
+  /// `body.copyWith(fontSize: 13)` (secondary lines under a primary body line — due
+  /// dates, addresses, timestamps) — formalized here (2026-08-31) so that pattern has a
+  /// name instead of a magic number repeated at every call site. Same family/weight/
+  /// height ratio as body, one size down; callers still `.copyWith(color: ...)` for the
+  /// muted/status colors that vary per use.
+  static const bodySmall = TextStyle(
+    fontFamily: _fontSans,
+    fontSize: 13,
+    fontWeight: FontWeight.w400,
+    height: 1.6,
+    color: NivasaColors.ink900,
+  );
+
+  /// Small bold label for status/role pills (e.g. Contacts' role chip, Lease's agreement
+  /// status pill) — always paired with `.copyWith(color: ...)` for whichever status/
+  /// brand color the pill needs. The other de-facto size step ~3 call sites were
+  /// reaching for by hand via `body.copyWith(fontSize: 12, fontWeight: FontWeight.w600)`
+  /// alongside bodySmall's 13px one.
+  static const badge = TextStyle(fontFamily: _fontSans, fontSize: 12, fontWeight: FontWeight.w600, color: NivasaColors.ink900);
+
   static const label = TextStyle(
     fontFamily: _fontSans,
     fontSize: 13,

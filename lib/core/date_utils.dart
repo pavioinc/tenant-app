@@ -6,7 +6,7 @@
 /// just returns the whole string in element 0).
 String shortDate(String raw) => raw.split('T').first;
 
-const _staleBannerMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const _monthAbbr = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 /// No `intl` dependency for a single call site — hand-rolled "Aug 18, 3:45 PM" in the
 /// device's local time, for the offline stale-cache banner (see cached_fetch.dart).
@@ -16,5 +16,20 @@ String formatSyncedAt(DateTime dt) {
   final hour12 = hour24 % 12 == 0 ? 12 : hour24 % 12;
   final period = hour24 < 12 ? 'AM' : 'PM';
   final minute = local.minute.toString().padLeft(2, '0');
-  return '${_staleBannerMonths[local.month - 1]} ${local.day}, $hour12:$minute $period';
+  return '${_monthAbbr[local.month - 1]} ${local.day}, $hour12:$minute $period';
+}
+
+/// "2026-08-20" → "20 Aug 2026" — for any already-`shortDate`d date rendered directly to
+/// the renter (Maintenance timestamps, Lease/agreement dates, transaction history, guest
+/// visit dates), replacing the raw ISO string most screens printed as-is. Falls back to
+/// the input unchanged if it isn't `YYYY-MM-DD` shaped, rather than throwing on
+/// unexpected backend data.
+String formatDisplayDate(String isoDate) {
+  final parts = isoDate.split('-');
+  if (parts.length != 3) return isoDate;
+  final year = int.tryParse(parts[0]);
+  final month = int.tryParse(parts[1]);
+  final day = int.tryParse(parts[2]);
+  if (year == null || month == null || day == null || month < 1 || month > 12) return isoDate;
+  return '$day ${_monthAbbr[month - 1]} $year';
 }

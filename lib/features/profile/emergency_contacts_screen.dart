@@ -146,7 +146,7 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
                   if (_stale)
                     Padding(
                       padding: const EdgeInsets.fromLTRB(NivasaSpacing.s24, NivasaSpacing.s24, NivasaSpacing.s24, 0),
-                      child: NivasaStaleBanner(lastSyncedAt: _lastSyncedAt),
+                      child: NivasaStaleBanner(lastSyncedAt: _lastSyncedAt, onRetry: _load),
                     ),
                   Expanded(
                     child: RefreshIndicator(
@@ -171,13 +171,13 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
                                 final item = _items[index];
                                 return InkWell(
                                   onTap: () => _openEditSheet(item),
-                                  borderRadius: BorderRadius.circular(12),
+                                  borderRadius: BorderRadius.circular(NivasaRadius.card),
                                   child: Container(
                                     padding: const EdgeInsets.all(NivasaSpacing.s16),
                                     decoration: BoxDecoration(
                                       color: NivasaColors.white,
                                       border: Border.all(color: NivasaColors.line),
-                                      borderRadius: BorderRadius.circular(12),
+                                      borderRadius: BorderRadius.circular(NivasaRadius.card),
                                     ),
                                     child: Row(
                                       children: [
@@ -192,10 +192,10 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
                                                     const SizedBox(width: NivasaSpacing.s8),
                                                     Container(
                                                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                                      decoration: BoxDecoration(color: NivasaColors.primary50, borderRadius: BorderRadius.circular(999)),
+                                                      decoration: BoxDecoration(color: NivasaColors.primary50, borderRadius: BorderRadius.circular(NivasaRadius.pill)),
                                                       child: Text(
                                                         'Primary',
-                                                        style: NivasaText.body.copyWith(color: NivasaColors.primary700, fontSize: 12, fontWeight: FontWeight.w600),
+                                                        style: NivasaText.badge.copyWith(color: NivasaColors.primary700),
                                                       ),
                                                     ),
                                                   ],
@@ -204,7 +204,7 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
                                               const SizedBox(height: NivasaSpacing.s4),
                                               Text(
                                                 [item.phone, if (item.relationship != null) item.relationship!].join(' · '),
-                                                style: NivasaText.body.copyWith(color: NivasaColors.ink500, fontSize: 13),
+                                                style: NivasaText.bodySmall.copyWith(color: NivasaColors.ink500),
                                               ),
                                               if (!item.isPrimary) ...[
                                                 const SizedBox(height: NivasaSpacing.s8),

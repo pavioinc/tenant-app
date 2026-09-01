@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/api_client.dart';
 import '../../core/cache_store.dart';
 import '../../core/cached_fetch.dart';
+import '../../core/date_utils.dart';
 import '../../theme/nivasa_colors.dart';
 import '../../theme/nivasa_spacing.dart';
 import '../../theme/nivasa_text_styles.dart';
@@ -72,6 +73,18 @@ class _GuestsScreenState extends State<GuestsScreen> {
 
   Future<void> _delete(ExpectedGuest guest) async {
     if (_token == null) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Remove guest?'),
+        content: Text('"${guest.name}" will be removed from your guest list. This can\'t be undone.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Remove')),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
     try {
       await _guests.delete(_token!, guest.guestId);
       if (!mounted) return;
@@ -111,7 +124,7 @@ class _GuestsScreenState extends State<GuestsScreen> {
                   if (_stale)
                     Padding(
                       padding: const EdgeInsets.fromLTRB(NivasaSpacing.s24, NivasaSpacing.s24, NivasaSpacing.s24, 0),
-                      child: NivasaStaleBanner(lastSyncedAt: _lastSyncedAt),
+                      child: NivasaStaleBanner(lastSyncedAt: _lastSyncedAt, onRetry: _load),
                     ),
                   Expanded(
                     child: RefreshIndicator(
@@ -139,7 +152,7 @@ class _GuestsScreenState extends State<GuestsScreen> {
                                   decoration: BoxDecoration(
                                     color: NivasaColors.white,
                                     border: Border.all(color: NivasaColors.line),
-                                    borderRadius: BorderRadius.circular(12),
+                                    borderRadius: BorderRadius.circular(NivasaRadius.card),
                                   ),
                                   child: Row(
                                     children: [
@@ -150,8 +163,8 @@ class _GuestsScreenState extends State<GuestsScreen> {
                                             Text(item.name, style: NivasaText.h3),
                                             const SizedBox(height: NivasaSpacing.s4),
                                             Text(
-                                              [item.visitDate, if (item.phone != null) item.phone!].join(' · '),
-                                              style: NivasaText.body.copyWith(color: NivasaColors.ink500, fontSize: 13),
+                                              [formatDisplayDate(item.visitDate), if (item.phone != null) item.phone!].join(' · '),
+                                              style: NivasaText.bodySmall.copyWith(color: NivasaColors.ink500),
                                             ),
                                             if (item.notes != null) ...[
                                               const SizedBox(height: NivasaSpacing.s4),
@@ -274,7 +287,7 @@ class _AddGuestSheetState extends State<_AddGuestSheet> {
               child: Text(
                 _visitDate == null
                     ? 'Pick a visit date'
-                    : 'Visit date: ${_visitDate!.year}-${_visitDate!.month.toString().padLeft(2, '0')}-${_visitDate!.day.toString().padLeft(2, '0')}',
+                    : 'Visit date: ${formatDisplayDate('${_visitDate!.year}-${_visitDate!.month.toString().padLeft(2, '0')}-${_visitDate!.day.toString().padLeft(2, '0')}')}',
               ),
             ),
             const SizedBox(height: NivasaSpacing.s8),

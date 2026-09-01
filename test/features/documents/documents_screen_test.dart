@@ -247,6 +247,8 @@ void main() {
 
     await tester.tap(find.byIcon(Icons.delete_outline));
     await tester.pumpAndSettle();
+    await tester.tap(find.text('Remove'));
+    await tester.pumpAndSettle();
 
     expect(deleted, isTrue);
     expect(find.text('Aadhaar card'), findsNothing);

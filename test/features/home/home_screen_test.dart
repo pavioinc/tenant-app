@@ -66,7 +66,7 @@ void _useTallSurface(WidgetTester tester) {
 }
 
 void main() {
-  testWidgets('shows the connect prompt and locked hub tiles for an unconnected renter, silently re-checking on load', (tester) async {
+  testWidgets('shows the almost-there card with locked pills for an unconnected renter, silently re-checking on load', (tester) async {
     _useTallSurface(tester);
     final store = await _storeWithSession(connected: false);
     var refreshCalled = false;
@@ -93,12 +93,12 @@ void main() {
 
     expect(refreshCalled, isTrue);
     expect(meCalled, isTrue);
-    expect(find.text('Connect with your property manager'), findsOneWidget);
-    expect(find.byIcon(Icons.lock_outline), findsNWidgets(7));
-
-    await tester.tap(find.text('Maintenance'));
-    await tester.pump();
-    expect(find.textContaining('Connect with your property manager first'), findsOneWidget);
+    expect(find.text('Almost there'), findsOneWidget);
+    // The 7 locked areas render as chips, not tappable tiles — no grid, no lock icon.
+    expect(find.text('Maintenance'), findsOneWidget);
+    expect(find.text('Pay Rent'), findsNothing);
+    expect(find.byType(GridView), findsNothing);
+    expect(find.byIcon(Icons.lock_outline), findsNothing);
   });
 
   testWidgets('reflects a connection picked up during the silent check without user action', (tester) async {
@@ -130,11 +130,10 @@ void main() {
     await tester.pumpWidget(_wrap(HomeScreen(authRepository: repo)));
     await tester.pumpAndSettle();
 
-    expect(find.text('Connect with your property manager'), findsNothing);
-    expect(find.byIcon(Icons.lock_outline), findsNothing);
+    expect(find.text('Almost there'), findsNothing);
   });
 
-  testWidgets('a connected renter sees no connect prompt', (tester) async {
+  testWidgets('a connected renter sees no almost-there card', (tester) async {
     _useTallSurface(tester);
     final store = await _storeWithSession(connected: true);
     final repo = AuthRepository(
@@ -145,7 +144,7 @@ void main() {
     await tester.pumpWidget(_wrap(HomeScreen(authRepository: repo)));
     await tester.pumpAndSettle();
 
-    expect(find.text('Connect with your property manager'), findsNothing);
+    expect(find.text('Almost there'), findsNothing);
   });
 
   testWidgets('a connected renter tapping Payments navigates to PaymentsScreen', (tester) async {
@@ -167,24 +166,7 @@ void main() {
     expect(find.byType(PaymentsScreen), findsOneWidget);
   });
 
-  testWidgets('the payment banner navigates to PaymentsScreen too, same as the tile', (tester) async {
-    _useTallSurface(tester);
-    final store = await _storeWithSession(connected: true);
-    final repo = AuthRepository(
-      apiClient: ApiClient(httpClient: MockClient((_) async => _json({}, 200))),
-      sessionStore: SessionStore(storage: store),
-    );
-
-    await tester.pumpWidget(_wrap(HomeScreen(authRepository: repo)));
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.text('Pay Rent'));
-    await tester.pumpAndSettle();
-
-    expect(find.byType(PaymentsScreen), findsOneWidget);
-  });
-
-  testWidgets('the payment banner is gated by connection status like every other tile', (tester) async {
+  testWidgets('the resident hub and everything-else list stay hidden entirely for an unconnected renter', (tester) async {
     _useTallSurface(tester);
     final store = await _storeWithSession(connected: false);
     final repo = AuthRepository(
@@ -195,9 +177,8 @@ void main() {
     await tester.pumpWidget(_wrap(HomeScreen(authRepository: repo)));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Pay Rent'));
-    await tester.pump();
-    expect(find.textContaining('Connect with your property manager first'), findsOneWidget);
+    expect(find.text('Resident Hub'), findsNothing);
+    expect(find.text('Everything else'), findsNothing);
   });
 
   testWidgets('a connected renter tapping Lease navigates to LeaseScreen', (tester) async {
@@ -305,9 +286,9 @@ void main() {
     expect(find.byType(ComplaintsScreen), findsOneWidget);
   });
 
-  testWidgets('tapping the header person icon navigates to UserScreen', (tester) async {
+  testWidgets('an unconnected renter tapping the header person icon navigates to UserScreen', (tester) async {
     _useTallSurface(tester);
-    final store = await _storeWithSession(connected: true);
+    final store = await _storeWithSession(connected: false);
     final repo = AuthRepository(
       apiClient: ApiClient(httpClient: MockClient((_) async => _json({}, 200))),
       sessionStore: SessionStore(storage: store),
@@ -322,6 +303,25 @@ void main() {
     // flutter_test's TestWidgetsFlutterBinding intercepts dart:io's HttpClient globally
     // and synthesizes a 400 for anything not explicitly mocked, rather than making a real
     // network call. This only asserts the navigation itself happened.
+    await tester.pumpAndSettle();
+
+    expect(find.byType(UserScreen), findsOneWidget);
+  });
+
+  testWidgets('a connected renter has no header person icon, and reaches UserScreen via "Your account" instead', (tester) async {
+    _useTallSurface(tester);
+    final store = await _storeWithSession(connected: true);
+    final repo = AuthRepository(
+      apiClient: ApiClient(httpClient: MockClient((_) async => _json({}, 200))),
+      sessionStore: SessionStore(storage: store),
+    );
+
+    await tester.pumpWidget(_wrap(HomeScreen(authRepository: repo)));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('user-menu-button')), findsNothing);
+
+    await tester.tap(find.text('Your account'));
     await tester.pumpAndSettle();
 
     expect(find.byType(UserScreen), findsOneWidget);

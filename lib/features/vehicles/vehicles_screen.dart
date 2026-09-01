@@ -72,6 +72,18 @@ class _VehiclesScreenState extends State<VehiclesScreen> {
 
   Future<void> _delete(Vehicle vehicle) async {
     if (_token == null) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Remove vehicle?'),
+        content: Text('"${vehicle.plateNumber}" will be permanently removed. This can\'t be undone.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Remove')),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
     try {
       await _vehicles.delete(_token!, vehicle.vehicleId);
       if (!mounted) return;
@@ -111,7 +123,7 @@ class _VehiclesScreenState extends State<VehiclesScreen> {
                   if (_stale)
                     Padding(
                       padding: const EdgeInsets.fromLTRB(NivasaSpacing.s24, NivasaSpacing.s24, NivasaSpacing.s24, 0),
-                      child: NivasaStaleBanner(lastSyncedAt: _lastSyncedAt),
+                      child: NivasaStaleBanner(lastSyncedAt: _lastSyncedAt, onRetry: _load),
                     ),
                   Expanded(
                     child: RefreshIndicator(
@@ -139,7 +151,7 @@ class _VehiclesScreenState extends State<VehiclesScreen> {
                                   decoration: BoxDecoration(
                                     color: NivasaColors.white,
                                     border: Border.all(color: NivasaColors.line),
-                                    borderRadius: BorderRadius.circular(12),
+                                    borderRadius: BorderRadius.circular(NivasaRadius.card),
                                   ),
                                   child: Row(
                                     children: [
@@ -151,7 +163,7 @@ class _VehiclesScreenState extends State<VehiclesScreen> {
                                             const SizedBox(height: NivasaSpacing.s4),
                                             Text(
                                               [vehicleTypeLabel(item.vehicleType), if (item.color != null) item.color!].join(' · '),
-                                              style: NivasaText.body.copyWith(color: NivasaColors.ink500, fontSize: 13),
+                                              style: NivasaText.bodySmall.copyWith(color: NivasaColors.ink500),
                                             ),
                                           ],
                                         ),

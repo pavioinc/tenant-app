@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/api_client.dart';
 import '../../core/cache_store.dart';
 import '../../core/cached_fetch.dart';
+import '../../core/date_utils.dart';
 import '../../core/razorpay_checkout.dart';
 import '../../theme/nivasa_colors.dart';
 import '../../theme/nivasa_spacing.dart';
@@ -63,13 +64,7 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
       final session = await _auth.currentSession();
       if (session == null) throw StateError('no active session');
       _token = session.accessToken;
-      final result = await fetchWithCache<PendingInvoices>(
-        cache: _cache,
-        cacheKey: 'payments_invoices',
-        fetchNetwork: () => _payments.pendingInvoices(_token!),
-        toJson: (p) => p.toJson(),
-        fromJson: (json) => PendingInvoices.fromJson(json as Map<String, dynamic>),
-      );
+      final result = await fetchWithCache<PendingInvoices>(cache: _cache, cacheKey: 'payments_invoices', fetchNetwork: () => _payments.pendingInvoices(_token!), toJson: (p) => p.toJson(), fromJson: (json) => PendingInvoices.fromJson(json as Map<String, dynamic>));
       if (!mounted) return;
       setState(() {
         _invoices = result.data.invoices;
@@ -92,13 +87,7 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
   // which is the part of this screen that actually matters.
   Future<void> _loadTransactions() async {
     try {
-      final result = await fetchWithCache<TenantTransactions>(
-        cache: _cache,
-        cacheKey: 'payments_transactions',
-        fetchNetwork: () => _payments.recentTransactions(_token!),
-        toJson: (t) => t.toJson(),
-        fromJson: (json) => TenantTransactions.fromJson(json as Map<String, dynamic>),
-      );
+      final result = await fetchWithCache<TenantTransactions>(cache: _cache, cacheKey: 'payments_transactions', fetchNetwork: () => _payments.recentTransactions(_token!), toJson: (t) => t.toJson(), fromJson: (json) => TenantTransactions.fromJson(json as Map<String, dynamic>));
       if (!mounted) return;
       setState(() {
         _transactions = result.data.transactions;
@@ -129,9 +118,7 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
         onSuccess: () {
           if (!mounted) return;
           setState(() => _payingInvoiceId = null);
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(const SnackBar(content: Text('Payment submitted — pull to refresh in a moment to confirm')));
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Payment submitted — pull to refresh in a moment to confirm')));
         },
         onError: (message) {
           if (!mounted) return;
@@ -177,9 +164,9 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(_formatInr(invoice.amount), style: NivasaText.h3),
+                              Text(_formatInr(invoice.amount), style: NivasaText.h3.copyWith(fontFamily: 'Noto Sans Mono')),
                               const SizedBox(height: NivasaSpacing.s4),
-                              Text('Due ${invoice.dueDate}', style: NivasaText.body.copyWith(color: NivasaColors.ink500, fontSize: 13)),
+                              Text('Due ${formatDisplayDate(invoice.dueDate)}', style: NivasaText.bodySmall.copyWith(color: NivasaColors.ink500)),
                             ],
                           ),
                         ),
@@ -218,77 +205,81 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
             ? const Center(child: CircularProgressIndicator())
             : _error != null
             ? _ErrorState(message: _error!, onRetry: _load)
-            : RefreshIndicator(
-                onRefresh: _load,
-                child: ListView(
-                  padding: const EdgeInsets.all(NivasaSpacing.s24),
-                  children: [
-                    if (_stale) ...[
-                      NivasaStaleBanner(lastSyncedAt: _lastSyncedAt),
-                      const SizedBox(height: NivasaSpacing.s16),
-                    ],
-                    Container(
-                      padding: const EdgeInsets.all(NivasaSpacing.s20),
-                      decoration: BoxDecoration(
-                        color: NivasaColors.white,
-                        border: Border.all(color: NivasaColors.line),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+            : Column(
+                children: [
+                  if (_stale)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(NivasaSpacing.s24, NivasaSpacing.s24, NivasaSpacing.s24, 0),
+                      child: NivasaStaleBanner(lastSyncedAt: _lastSyncedAt, onRetry: _load),
+                    ),
+                  Expanded(
+                    child: RefreshIndicator(
+                      onRefresh: _load,
+                      child: ListView(
+                        padding: const EdgeInsets.all(NivasaSpacing.s24),
                         children: [
-                          Text(_totalDue == 0 ? 'Nothing to Pay' : 'Amount Due', style: NivasaText.h3),
-                          const SizedBox(height: NivasaSpacing.s8),
-                          Text(_formatInr(_totalDue), style: NivasaText.display),
-                          const SizedBox(height: NivasaSpacing.s20),
-                          SizedBox(
-                            width: double.infinity,
-                            child: NivasaPrimaryButton(
-                              label: _stale ? 'Reconnect' : 'Pay now',
-                              loading: primaryInvoice != null && _payingInvoiceId == primaryInvoice.invoiceId,
-                              loadingLabel: '…',
-                              onPressed: _stale
-                                  ? _load
-                                  : primaryInvoice == null
-                                  ? null
-                                  : () => _pay(primaryInvoice),
+                          Container(
+                            padding: const EdgeInsets.all(NivasaSpacing.s20),
+                            decoration: BoxDecoration(
+                              color: NivasaColors.white,
+                              border: Border.all(color: NivasaColors.line),
+                              borderRadius: BorderRadius.circular(NivasaRadius.card),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(_totalDue == 0 ? 'Nothing to Pay' : 'Amount Due', style: NivasaText.h3),
+                                const SizedBox(height: NivasaSpacing.s8),
+                                Text(_formatInr(_totalDue), style: NivasaText.display.copyWith(fontFamily: 'Noto Sans Mono')),
+                                const SizedBox(height: NivasaSpacing.s20),
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: NivasaPrimaryButton(
+                                    label: _stale ? 'Reconnect' : 'Pay now',
+                                    loading: primaryInvoice != null && _payingInvoiceId == primaryInvoice.invoiceId,
+                                    loadingLabel: '…',
+                                    onPressed: _stale
+                                        ? _load
+                                        : primaryInvoice == null
+                                        ? null
+                                        : () => _pay(primaryInvoice),
+                                  ),
+                                ),
+                                const SizedBox(height: NivasaSpacing.s20),
+                                const Divider(height: 1),
+                                _ActionRow(icon: Icons.receipt_long_outlined, label: 'View Balance Details', onTap: _showBalanceDetails),
+                                //_ActionRow(icon: Icons.account_balance_wallet_outlined, label: 'Manage Payment Methods', onTap: _comingSoon, disabled: true),
+                                //_ActionRow(icon: Icons.autorenew, label: 'Manage Auto Payments', onTap: _comingSoon, disabled: true),
+                                //_ActionRow(icon: Icons.account_balance_outlined, label: 'Manage Refund Account', onTap: _comingSoon, disabled: true),
+                              ],
                             ),
                           ),
-                          const SizedBox(height: NivasaSpacing.s20),
-                          const Divider(height: 1),
-                          _ActionRow(icon: Icons.receipt_long_outlined, label: 'View Balance Details', onTap: _showBalanceDetails),
-                          //_ActionRow(icon: Icons.account_balance_wallet_outlined, label: 'Manage Payment Methods', onTap: _comingSoon, disabled: true),
-                          //_ActionRow(icon: Icons.autorenew, label: 'Manage Auto Payments', onTap: _comingSoon, disabled: true),
-                          //_ActionRow(icon: Icons.account_balance_outlined, label: 'Manage Refund Account', onTap: _comingSoon, disabled: true),
+                          const SizedBox(height: NivasaSpacing.s24),
+                          Text('Recent transactions', style: NivasaText.label.copyWith(color: NivasaColors.ink700)),
+                          const SizedBox(height: NivasaSpacing.s12),
+                          if (_transactionsError != null)
+                            Text(_transactionsError!, style: NivasaText.body.copyWith(color: NivasaColors.ink500))
+                          else if (_transactions.isEmpty)
+                            Text('No recent activity', style: NivasaText.body.copyWith(color: NivasaColors.ink500))
+                          else
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: NivasaSpacing.s16),
+                              decoration: BoxDecoration(
+                                color: NivasaColors.white,
+                                border: Border.all(color: NivasaColors.line),
+                                borderRadius: BorderRadius.circular(NivasaRadius.card),
+                              ),
+                              child: Column(
+                                children: [
+                                  for (var i = 0; i < _transactions.length; i++) ...[_TransactionRow(transaction: _transactions[i]), if (i != _transactions.length - 1) const Divider(height: 1)],
+                                ],
+                              ),
+                            ),
                         ],
                       ),
                     ),
-                    const SizedBox(height: NivasaSpacing.s24),
-                    Text('Recent transactions', style: NivasaText.label.copyWith(color: NivasaColors.ink700)),
-                    const SizedBox(height: NivasaSpacing.s12),
-                    if (_transactionsError != null)
-                      Text(_transactionsError!, style: NivasaText.body.copyWith(color: NivasaColors.ink500))
-                    else if (_transactions.isEmpty)
-                      Text('No recent activity', style: NivasaText.body.copyWith(color: NivasaColors.ink500))
-                    else
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: NivasaSpacing.s16),
-                        decoration: BoxDecoration(
-                          color: NivasaColors.white,
-                          border: Border.all(color: NivasaColors.line),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Column(
-                          children: [
-                            for (var i = 0; i < _transactions.length; i++) ...[
-                              _TransactionRow(transaction: _transactions[i]),
-                              if (i != _transactions.length - 1) const Divider(height: 1),
-                            ],
-                          ],
-                        ),
-                      ),
-                  ],
-                ),
+                  ),
+                ],
               ),
       ),
     );
@@ -313,7 +304,7 @@ class _ActionRow extends StatelessWidget {
             Icon(icon, size: 20, color: NivasaColors.ink700),
             const SizedBox(width: NivasaSpacing.s12),
             Expanded(
-              child: Text(label, style: NivasaText.body.copyWith(color: NivasaColors.ink900, fontSize: 15)),
+              child: Text(label, style: NivasaText.body),
             ),
             const Icon(Icons.chevron_right, size: 20, color: NivasaColors.ink400),
           ],
@@ -337,12 +328,17 @@ class _TransactionRow extends StatelessWidget {
         children: [
           Row(
             children: [
-              Expanded(child: Text(transaction.title, style: NivasaText.body.copyWith(fontWeight: FontWeight.w600))),
-              Text(_formatInr(transaction.amount), style: NivasaText.body.copyWith(fontWeight: FontWeight.w600)),
+              Expanded(
+                child: Text(transaction.title, style: NivasaText.body.copyWith(fontWeight: FontWeight.w600)),
+              ),
+              Text(
+                _formatInr(transaction.amount),
+                style: NivasaText.body.copyWith(fontWeight: FontWeight.w600, fontFamily: 'Noto Sans Mono'),
+              ),
             ],
           ),
           const SizedBox(height: NivasaSpacing.s4),
-          Text(transaction.subtitle ?? transaction.date, style: NivasaText.caption),
+          Text(transaction.subtitle ?? formatDisplayDate(transaction.date), style: NivasaText.caption),
         ],
       ),
     );
@@ -363,7 +359,11 @@ class _ErrorState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(message, style: NivasaText.body.copyWith(color: NivasaColors.ink500), textAlign: TextAlign.center),
+            Text(
+              message,
+              style: NivasaText.body.copyWith(color: NivasaColors.ink500),
+              textAlign: TextAlign.center,
+            ),
             const SizedBox(height: NivasaSpacing.s16),
             TextButton(onPressed: onRetry, child: const Text('Try again')),
           ],

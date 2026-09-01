@@ -145,12 +145,19 @@ class _AccountDetailsScreenState extends State<AccountDetailsScreen> {
             ? const Center(child: CircularProgressIndicator())
             : _profile == null
             ? _ErrorState(message: _error ?? 'Could not load your profile', onRetry: _load)
-            : SingleChildScrollView(
-                padding: const EdgeInsets.all(NivasaSpacing.s24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (_stale) ...[NivasaStaleBanner(lastSyncedAt: _lastSyncedAt), const SizedBox(height: NivasaSpacing.s16)],
+            : Column(
+                children: [
+                  if (_stale)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(NivasaSpacing.s24, NivasaSpacing.s24, NivasaSpacing.s24, 0),
+                      child: NivasaStaleBanner(lastSyncedAt: _lastSyncedAt, onRetry: _load),
+                    ),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(NivasaSpacing.s24),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
                     Text('Name', style: NivasaText.label),
                     const SizedBox(height: NivasaSpacing.s8),
                     Text(_profile!.name, style: NivasaText.body),
@@ -167,7 +174,7 @@ class _AccountDetailsScreenState extends State<AccountDetailsScreen> {
                         style: NivasaText.body.copyWith(color: NivasaColors.ink500),
                       ),
                       if (_profile!.propertyAddress != null)
-                        Text(_profile!.propertyAddress!, style: NivasaText.body.copyWith(color: NivasaColors.ink500, fontSize: 13)),
+                        Text(_profile!.propertyAddress!, style: NivasaText.bodySmall.copyWith(color: NivasaColors.ink500)),
                     ],
                     const SizedBox(height: NivasaSpacing.s24),
                     Text('Phone', style: NivasaText.label),
@@ -199,8 +206,11 @@ class _AccountDetailsScreenState extends State<AccountDetailsScreen> {
                     Text('Identity verification', style: NivasaText.label),
                     const SizedBox(height: NivasaSpacing.s8),
                     _KycStatusCard(status: _kycStatus, onVerify: _openKyc),
-                  ],
-                ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ),
       ),
     );
@@ -225,7 +235,7 @@ class _KycStatusCard extends StatelessWidget {
     };
     return Container(
       padding: const EdgeInsets.all(NivasaSpacing.s16),
-      decoration: BoxDecoration(color: tint, border: Border.all(color: border), borderRadius: BorderRadius.circular(12)),
+      decoration: BoxDecoration(color: tint, border: Border.all(color: border), borderRadius: BorderRadius.circular(NivasaRadius.card)),
       child: Row(
         children: [
           Expanded(
@@ -235,7 +245,7 @@ class _KycStatusCard extends StatelessWidget {
                 Text(label, style: NivasaText.body.copyWith(color: fg, fontWeight: FontWeight.w600)),
                 if (verified && status?.aadhaarLast4 != null) ...[
                   const SizedBox(height: NivasaSpacing.s4),
-                  Text('Aadhaar •••• ${status!.aadhaarLast4}', style: NivasaText.body.copyWith(color: fg, fontSize: 13)),
+                  Text('Aadhaar •••• ${status!.aadhaarLast4}', style: NivasaText.bodySmall.copyWith(color: fg)),
                 ],
               ],
             ),

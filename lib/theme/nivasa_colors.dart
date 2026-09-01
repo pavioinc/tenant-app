@@ -28,7 +28,7 @@ class NivasaColors {
   // Neutral — warm, never cold blue
   static const ink900 = Color(0xFF1A1F1D);
   static const ink700 = Color(0xFF3A423F);
-  static const ink500 = Color(0xFF6B7671); // floor — never below 13px text
+  static const ink500 = Color(0xFF5A6560); // floor — never below 13px text; darkened 2026-08-21 for WCAG AA
   static const ink400 = Color(0xFF97A09B);
   static const ink300 = Color(0xFFC3C9C4);
   static const line = Color(0xFFDBD9D2);

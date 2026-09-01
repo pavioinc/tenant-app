@@ -7,10 +7,23 @@ import 'package:http/testing.dart';
 import 'package:nivasaos_tenant_app/core/api_client.dart';
 import 'package:nivasaos_tenant_app/core/cache_store.dart';
 import 'package:nivasaos_tenant_app/core/session_store.dart';
+import 'package:nivasaos_tenant_app/core/url_opener.dart';
 import 'package:nivasaos_tenant_app/features/auth/auth_repository.dart';
 import 'package:nivasaos_tenant_app/features/contacts/contacts_repository.dart';
 import 'package:nivasaos_tenant_app/features/contacts/contacts_screen.dart';
 import 'package:nivasaos_tenant_app/theme/nivasa_theme.dart';
+
+class _FakeUrlOpener implements UrlOpener {
+  _FakeUrlOpener({this.result = true});
+  final bool result;
+  String? lastUrl;
+
+  @override
+  Future<bool> open(String url) async {
+    lastUrl = url;
+    return result;
+  }
+}
 
 class _InMemorySecureStore implements SecureStore {
   final _values = <String, String>{};
@@ -151,5 +164,64 @@ void main() {
 
     expect(find.text('Asha Manager'), findsOneWidget);
     expect(find.textContaining('Showing saved data from'), findsOneWidget);
+  });
+
+  testWidgets('tapping the phone number opens a tel: link', (tester) async {
+    final auth = await _connectedAuth();
+    final client = MockClient(
+      (request) async => _json({
+        'contacts': [
+          {'name': 'Asha Manager', 'email': 'asha@example.com', 'phone': '+919876500000', 'role': 'manager'},
+        ],
+      }, 200),
+    );
+    final opener = _FakeUrlOpener();
+
+    await tester.pumpWidget(
+      _wrap(
+        ContactsScreen(
+          authRepository: auth,
+          contactsRepository: ContactsRepository(apiClient: ApiClient(httpClient: client)),
+          cacheStore: _InMemoryCacheStore(),
+          urlOpener: opener,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('+919876500000'));
+    await tester.pumpAndSettle();
+
+    expect(opener.lastUrl, 'tel:+919876500000');
+  });
+
+  testWidgets('tapping the email opens a mailto: link, with a fallback message when nothing handles it', (tester) async {
+    final auth = await _connectedAuth();
+    final client = MockClient(
+      (request) async => _json({
+        'contacts': [
+          {'name': 'Asha Manager', 'email': 'asha@example.com', 'phone': '+919876500000', 'role': 'manager'},
+        ],
+      }, 200),
+    );
+    final opener = _FakeUrlOpener(result: false);
+
+    await tester.pumpWidget(
+      _wrap(
+        ContactsScreen(
+          authRepository: auth,
+          contactsRepository: ContactsRepository(apiClient: ApiClient(httpClient: client)),
+          cacheStore: _InMemoryCacheStore(),
+          urlOpener: opener,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('asha@example.com'));
+    await tester.pumpAndSettle();
+
+    expect(opener.lastUrl, 'mailto:asha@example.com');
+    expect(find.textContaining('No email app found'), findsOneWidget);
   });
 }

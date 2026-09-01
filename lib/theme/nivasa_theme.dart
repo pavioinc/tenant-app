@@ -68,6 +68,10 @@ class NivasaTheme {
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: NivasaColors.primary700,
+          // Bounded width, unlike Size.fromHeight — TextButton (unlike Elevated/Outlined)
+          // is often used inline in a Row rather than stretched full-width, and
+          // Size.fromHeight's implicit width: double.infinity breaks layout there.
+          minimumSize: const Size(64, NivasaSpacing.buttonHeightMobile),
           textStyle: const TextStyle(fontFamily: 'Noto Sans', fontSize: 14, fontWeight: FontWeight.w600),
         ),
       ),

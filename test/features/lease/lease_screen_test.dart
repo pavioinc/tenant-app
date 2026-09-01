@@ -135,7 +135,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('204 · Bed B'), findsOneWidget);
-    expect(find.text('Checked in 2026-07-01'), findsOneWidget);
+    expect(find.text('Checked in 1 Jul 2026'), findsOneWidget);
     expect(find.text('₹8000/month'), findsOneWidget);
     expect(find.text('Signed'), findsOneWidget);
     expect(find.text('Monthly rent ₹8000 · Deposit ₹16000'), findsOneWidget);

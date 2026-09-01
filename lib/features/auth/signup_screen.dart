@@ -139,7 +139,7 @@ class _SignupScreenState extends State<SignupScreen> {
                 decoration: BoxDecoration(
                   color: NivasaColors.warningTint,
                   border: Border.all(color: NivasaColors.warningTintBorder),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(NivasaRadius.card),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,

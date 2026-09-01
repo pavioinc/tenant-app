@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/api_client.dart';
 import '../../core/cache_store.dart';
 import '../../core/cached_fetch.dart';
+import '../../core/date_utils.dart';
 import '../../theme/nivasa_colors.dart';
 import '../../theme/nivasa_spacing.dart';
 import '../../theme/nivasa_text_styles.dart';
@@ -148,7 +149,7 @@ class _ComplaintsScreenState extends State<ComplaintsScreen> {
                         NivasaSpacing.s24,
                         0,
                       ),
-                      child: NivasaStaleBanner(lastSyncedAt: _lastSyncedAt),
+                      child: NivasaStaleBanner(lastSyncedAt: _lastSyncedAt, onRetry: _load),
                     ),
                   Expanded(
                     child: RefreshIndicator(
@@ -186,7 +187,7 @@ class _ComplaintsScreenState extends State<ComplaintsScreen> {
                                     border: Border.all(
                                       color: NivasaColors.line,
                                     ),
-                                    borderRadius: BorderRadius.circular(12),
+                                    borderRadius: BorderRadius.circular(NivasaRadius.card),
                                   ),
                                   child: Column(
                                     crossAxisAlignment:
@@ -208,7 +209,7 @@ class _ComplaintsScreenState extends State<ComplaintsScreen> {
                                             decoration: BoxDecoration(
                                               color: bg,
                                               borderRadius:
-                                                  BorderRadius.circular(999),
+                                                  BorderRadius.circular(NivasaRadius.pill),
                                             ),
                                             child: Text(
                                               _statusLabels[item.status] ??
@@ -229,7 +230,7 @@ class _ComplaintsScreenState extends State<ComplaintsScreen> {
                                       ),
                                       const SizedBox(height: NivasaSpacing.s4),
                                       Text(
-                                        item.createdAt,
+                                        formatDisplayDate(item.createdAt),
                                         style: NivasaText.body.copyWith(
                                           color: NivasaColors.ink500,
                                           fontSize: 12,

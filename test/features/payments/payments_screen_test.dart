@@ -147,12 +147,12 @@ void main() {
 
     expect(find.text('Amount Due'), findsOneWidget);
     expect(find.text('₹1500'), findsOneWidget);
-    expect(find.text('Due 2026-08-15'), findsNothing);
+    expect(find.text('Due 15 Aug 2026'), findsNothing);
 
     await tester.tap(find.text('View Balance Details'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Due 2026-08-15'), findsOneWidget);
+    expect(find.text('Due 15 Aug 2026'), findsOneWidget);
     expect(find.text('Pay'), findsOneWidget);
   });
 
