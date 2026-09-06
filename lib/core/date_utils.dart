@@ -6,7 +6,60 @@
 /// just returns the whole string in element 0).
 String shortDate(String raw) => raw.split('T').first;
 
-const _monthAbbr = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const _monthAbbr = [
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
+];
+
+const _monthNames = [
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
+];
+
+const _weekdayNames = [
+  'Monday',
+  'Tuesday',
+  'Wednesday',
+  'Thursday',
+  'Friday',
+  'Saturday',
+  'Sunday',
+];
+
+/// 1 (January) - 12 (December) → full name, for the one-line "which month" copy Lease's
+/// renewal card and Payments' due-date hero both compose ("ends in February", "Friday 5
+/// September").
+String fullMonthName(int month) => _monthNames[month - 1];
+
+/// "2026-09-05" → "Friday 5 September" — no year, full weekday and month, matching how a
+/// renter actually reads a due date rather than the abbreviated calendar-entry shape
+/// [formatDisplayDate] uses everywhere else. Falls back to the input unchanged if it
+/// isn't `YYYY-MM-DD` shaped, same defensive posture as formatDisplayDate.
+String formatDueDate(String isoDate) {
+  final date = DateTime.tryParse(isoDate);
+  if (date == null) return isoDate;
+  return '${_weekdayNames[date.weekday - 1]} ${date.day} ${_monthNames[date.month - 1]}';
+}
 
 /// No `intl` dependency for a single call site — hand-rolled "Aug 18, 3:45 PM" in the
 /// device's local time, for the offline stale-cache banner (see cached_fetch.dart).
@@ -30,6 +83,7 @@ String formatDisplayDate(String isoDate) {
   final year = int.tryParse(parts[0]);
   final month = int.tryParse(parts[1]);
   final day = int.tryParse(parts[2]);
-  if (year == null || month == null || day == null || month < 1 || month > 12) return isoDate;
+  if (year == null || month == null || day == null || month < 1 || month > 12)
+    return isoDate;
   return '$day ${_monthAbbr[month - 1]} $year';
 }

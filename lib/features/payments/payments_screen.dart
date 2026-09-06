@@ -7,15 +7,59 @@ import '../../core/razorpay_checkout.dart';
 import '../../theme/nivasa_colors.dart';
 import '../../theme/nivasa_spacing.dart';
 import '../../theme/nivasa_text_styles.dart';
-import '../../widgets/nivasa_button.dart';
+import '../../widgets/nivasa_section_label.dart';
 import '../../widgets/nivasa_stale_banner.dart';
 import '../auth/auth_repository.dart';
 import 'payments_repository.dart';
 
-String _formatInr(int amountMinor) => '₹${(amountMinor / 100).toStringAsFixed(0)}';
+/// Indian digit grouping (last 3 digits, then pairs: ₹1,03,000) — the mock's own "₹3,300"
+/// needs it and no screen in this app has ever grouped digits at all (every other
+/// `_formatInr` prints "₹3300"). No `intl` dependency added for it: this is one small,
+/// pure function, not a locale system.
+String _formatInr(int amountMinor) {
+  final rupees = (amountMinor / 100).round();
+  final digits = rupees.toString();
+  if (digits.length <= 3) return '₹$digits';
+  final lastThree = digits.substring(digits.length - 3);
+  final rest = digits.substring(0, digits.length - 3);
+  final grouped = StringBuffer();
+  for (var i = 0; i < rest.length; i++) {
+    final positionFromEnd = rest.length - i;
+    grouped.write(rest[i]);
+    if (positionFromEnd > 1 && positionFromEnd.isOdd) grouped.write(',');
+  }
+  return '₹$grouped,$lastThree';
+}
 
+String _invoiceCountLabel(int count) =>
+    '$count invoice${count == 1 ? '' : 's'}';
+
+/// "Paid 5 Aug 2026 · UPI" — the mock's own copy drops the year ("Paid 5 Aug"), but
+/// formatDisplayDate's with-year shape is what every other screen in the app already
+/// shows a renter, and forking a year-less date formatter for one subtitle would cost
+/// more in app-wide consistency than it'd gain in mock fidelity.
+String _paymentSubtitle(TenantTransaction transaction) {
+  final paidOn = 'Paid ${formatDisplayDate(transaction.date)}';
+  return transaction.subtitle != null
+      ? '$paidOn · ${transaction.subtitle}'
+      : paidOn;
+}
+
+/// Redesigned (doc option "1c") from a single bordered box stacking a summary, a CTA and
+/// a nav row (IA-8) into: a gold hero that's the one place money-colour appears (amount +
+/// due date + invoice count, gold only ever meaning "this is what you owe"), a "See the
+/// invoices" row promoted out of the summary box, and a Pay button pinned in the thumb
+/// zone (TT-5) instead of scrolling away with the rest of the page. ₹ figures now render
+/// in Noto Sans Mono, and with real digit grouping — NivasaText.mono's own doc comment
+/// names "₹ amounts" as exactly what it's for.
 class PaymentsScreen extends StatefulWidget {
-  const PaymentsScreen({super.key, this.authRepository, this.paymentsRepository, this.cacheStore, this.checkout});
+  const PaymentsScreen({
+    super.key,
+    this.authRepository,
+    this.paymentsRepository,
+    this.cacheStore,
+    this.checkout,
+  });
 
   final AuthRepository? authRepository;
   final PaymentsRepository? paymentsRepository;
@@ -28,9 +72,12 @@ class PaymentsScreen extends StatefulWidget {
 
 class _PaymentsScreenState extends State<PaymentsScreen> {
   late final AuthRepository _auth = widget.authRepository ?? AuthRepository();
-  late final PaymentsRepository _payments = widget.paymentsRepository ?? PaymentsRepository();
-  late final CacheStore _cache = widget.cacheStore ?? const SharedPreferencesCacheStore();
-  late final RazorpayCheckout _checkout = widget.checkout ?? RealRazorpayCheckout();
+  late final PaymentsRepository _payments =
+      widget.paymentsRepository ?? PaymentsRepository();
+  late final CacheStore _cache =
+      widget.cacheStore ?? const SharedPreferencesCacheStore();
+  late final RazorpayCheckout _checkout =
+      widget.checkout ?? RealRazorpayCheckout();
 
   String? _token;
   List<PendingInvoice> _invoices = [];
@@ -64,7 +111,14 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
       final session = await _auth.currentSession();
       if (session == null) throw StateError('no active session');
       _token = session.accessToken;
-      final result = await fetchWithCache<PendingInvoices>(cache: _cache, cacheKey: 'payments_invoices', fetchNetwork: () => _payments.pendingInvoices(_token!), toJson: (p) => p.toJson(), fromJson: (json) => PendingInvoices.fromJson(json as Map<String, dynamic>));
+      final result = await fetchWithCache<PendingInvoices>(
+        cache: _cache,
+        cacheKey: 'payments_invoices',
+        fetchNetwork: () => _payments.pendingInvoices(_token!),
+        toJson: (p) => p.toJson(),
+        fromJson: (json) =>
+            PendingInvoices.fromJson(json as Map<String, dynamic>),
+      );
       if (!mounted) return;
       setState(() {
         _invoices = result.data.invoices;
@@ -87,7 +141,14 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
   // which is the part of this screen that actually matters.
   Future<void> _loadTransactions() async {
     try {
-      final result = await fetchWithCache<TenantTransactions>(cache: _cache, cacheKey: 'payments_transactions', fetchNetwork: () => _payments.recentTransactions(_token!), toJson: (t) => t.toJson(), fromJson: (json) => TenantTransactions.fromJson(json as Map<String, dynamic>));
+      final result = await fetchWithCache<TenantTransactions>(
+        cache: _cache,
+        cacheKey: 'payments_transactions',
+        fetchNetwork: () => _payments.recentTransactions(_token!),
+        toJson: (t) => t.toJson(),
+        fromJson: (json) =>
+            TenantTransactions.fromJson(json as Map<String, dynamic>),
+      );
       if (!mounted) return;
       setState(() {
         _transactions = result.data.transactions;
@@ -103,46 +164,76 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
     if (_token == null) return;
     setState(() => _payingInvoiceId = invoice.invoiceId);
     try {
-      final idempotencyKey = '${invoice.invoiceId}-${DateTime.now().microsecondsSinceEpoch}';
-      final order = await _payments.createOrder(_token!, invoiceId: invoice.invoiceId, idempotencyKey: idempotencyKey);
+      final idempotencyKey =
+          '${invoice.invoiceId}-${DateTime.now().microsecondsSinceEpoch}';
+      final order = await _payments.createOrder(
+        _token!,
+        invoiceId: invoice.invoiceId,
+        idempotencyKey: idempotencyKey,
+      );
       if (!mounted) return;
       if (order.keyId == null) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Payments are not configured yet — try again later')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Payments are not configured yet — try again later'),
+          ),
+        );
         setState(() => _payingInvoiceId = null);
         return;
       }
       _checkout.open(
-        order: CheckoutOrder(keyId: order.keyId!, razorpayOrderId: order.razorpayOrderId, amountMinorUnits: invoice.amount, currency: invoice.currency),
+        order: CheckoutOrder(
+          keyId: order.keyId!,
+          razorpayOrderId: order.razorpayOrderId,
+          amountMinorUnits: invoice.amount,
+          currency: invoice.currency,
+        ),
         name: 'NivasaOS',
         description: 'Rent payment',
         onSuccess: () {
           if (!mounted) return;
           setState(() => _payingInvoiceId = null);
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Payment submitted — pull to refresh in a moment to confirm')));
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Payment submitted — pull to refresh in a moment to confirm',
+              ),
+            ),
+          );
         },
         onError: (message) {
           if (!mounted) return;
           setState(() => _payingInvoiceId = null);
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(message)));
         },
       );
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() => _payingInvoiceId = null);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.message)));
     } catch (_) {
       if (!mounted) return;
       setState(() => _payingInvoiceId = null);
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not start payment — try again')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not start payment — try again')),
+      );
     }
   }
 
-  void _showBalanceDetails() {
+  void _showInvoices() {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: NivasaColors.white,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(NivasaRadius.bottomSheetTop))),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(NivasaRadius.bottomSheetTop),
+        ),
+      ),
       builder: (sheetContext) => SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(NivasaSpacing.s24),
@@ -150,10 +241,13 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Balance details', style: NivasaText.h3),
+              Text('Invoices', style: NivasaText.h3),
               const SizedBox(height: NivasaSpacing.s16),
               if (_invoices.isEmpty)
-                Text('Nothing to pay right now', style: NivasaText.body.copyWith(color: NivasaColors.ink500))
+                Text(
+                  'Nothing to pay right now',
+                  style: NivasaText.body.copyWith(color: NivasaColors.ink500),
+                )
               else
                 ..._invoices.map(
                   (invoice) => Padding(
@@ -164,16 +258,25 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(_formatInr(invoice.amount), style: NivasaText.h3.copyWith(fontFamily: 'Noto Sans Mono')),
+                              Text(
+                                _formatInr(invoice.amount),
+                                style: NivasaText.h3.copyWith(
+                                  fontFamily: 'Noto Sans Mono',
+                                ),
+                              ),
                               const SizedBox(height: NivasaSpacing.s4),
-                              Text('Due ${formatDisplayDate(invoice.dueDate)}', style: NivasaText.bodySmall.copyWith(color: NivasaColors.ink500)),
+                              Text(
+                                'Due ${formatDisplayDate(invoice.dueDate)}',
+                                style: NivasaText.bodySmall.copyWith(
+                                  color: NivasaColors.ink500,
+                                ),
+                              ),
                             ],
                           ),
                         ),
                         SizedBox(
                           width: 100,
-                          child: NivasaPrimaryButton(
-                            label: _stale ? 'Reconnect' : 'Pay',
+                          child: OutlinedButton(
                             onPressed: () {
                               Navigator.pop(sheetContext);
                               if (_stale) {
@@ -182,6 +285,7 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
                                 _pay(invoice);
                               }
                             },
+                            child: Text(_stale ? 'Reconnect' : 'Pay'),
                           ),
                         ),
                       ],
@@ -198,6 +302,8 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
   @override
   Widget build(BuildContext context) {
     final primaryInvoice = _invoices.isEmpty ? null : _invoices.first;
+    final payments = _transactions.where((t) => t.type == 'payment').toList();
+    final canPay = _totalDue > 0 && primaryInvoice != null;
     return Scaffold(
       appBar: AppBar(title: const Text('Payments')),
       body: SafeArea(
@@ -209,8 +315,16 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
                 children: [
                   if (_stale)
                     Padding(
-                      padding: const EdgeInsets.fromLTRB(NivasaSpacing.s24, NivasaSpacing.s24, NivasaSpacing.s24, 0),
-                      child: NivasaStaleBanner(lastSyncedAt: _lastSyncedAt, onRetry: _load),
+                      padding: const EdgeInsets.fromLTRB(
+                        NivasaSpacing.s24,
+                        NivasaSpacing.s24,
+                        NivasaSpacing.s24,
+                        0,
+                      ),
+                      child: NivasaStaleBanner(
+                        lastSyncedAt: _lastSyncedAt,
+                        onRetry: _load,
+                      ),
                     ),
                   Expanded(
                     child: RefreshIndicator(
@@ -218,60 +332,58 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
                       child: ListView(
                         padding: const EdgeInsets.all(NivasaSpacing.s24),
                         children: [
-                          Container(
-                            padding: const EdgeInsets.all(NivasaSpacing.s20),
-                            decoration: BoxDecoration(
-                              color: NivasaColors.white,
-                              border: Border.all(color: NivasaColors.line),
-                              borderRadius: BorderRadius.circular(NivasaRadius.card),
+                          if (_totalDue == 0)
+                            const _NothingDueCard()
+                          else
+                            _RentDueHero(
+                              totalDue: _totalDue,
+                              invoices: _invoices,
                             ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(_totalDue == 0 ? 'Nothing to Pay' : 'Amount Due', style: NivasaText.h3),
-                                const SizedBox(height: NivasaSpacing.s8),
-                                Text(_formatInr(_totalDue), style: NivasaText.display.copyWith(fontFamily: 'Noto Sans Mono')),
-                                const SizedBox(height: NivasaSpacing.s20),
-                                SizedBox(
-                                  width: double.infinity,
-                                  child: NivasaPrimaryButton(
-                                    label: _stale ? 'Reconnect' : 'Pay now',
-                                    loading: primaryInvoice != null && _payingInvoiceId == primaryInvoice.invoiceId,
-                                    loadingLabel: '…',
-                                    onPressed: _stale
-                                        ? _load
-                                        : primaryInvoice == null
-                                        ? null
-                                        : () => _pay(primaryInvoice),
-                                  ),
-                                ),
-                                const SizedBox(height: NivasaSpacing.s20),
-                                const Divider(height: 1),
-                                _ActionRow(icon: Icons.receipt_long_outlined, label: 'View Balance Details', onTap: _showBalanceDetails),
-                                //_ActionRow(icon: Icons.account_balance_wallet_outlined, label: 'Manage Payment Methods', onTap: _comingSoon, disabled: true),
-                                //_ActionRow(icon: Icons.autorenew, label: 'Manage Auto Payments', onTap: _comingSoon, disabled: true),
-                                //_ActionRow(icon: Icons.account_balance_outlined, label: 'Manage Refund Account', onTap: _comingSoon, disabled: true),
-                              ],
+                          if (_totalDue > 0) ...[
+                            const SizedBox(height: NivasaSpacing.s16),
+                            _SeeInvoicesButton(
+                              count: _invoices.length,
+                              onTap: _showInvoices,
                             ),
-                          ),
+                          ],
                           const SizedBox(height: NivasaSpacing.s24),
-                          Text('Recent transactions', style: NivasaText.label.copyWith(color: NivasaColors.ink700)),
+                          const NivasaSectionLabel('Recent payments'),
                           const SizedBox(height: NivasaSpacing.s12),
                           if (_transactionsError != null)
-                            Text(_transactionsError!, style: NivasaText.body.copyWith(color: NivasaColors.ink500))
-                          else if (_transactions.isEmpty)
-                            Text('No recent activity', style: NivasaText.body.copyWith(color: NivasaColors.ink500))
+                            Text(
+                              _transactionsError!,
+                              style: NivasaText.body.copyWith(
+                                color: NivasaColors.ink500,
+                              ),
+                            )
+                          else if (payments.isEmpty)
+                            Text(
+                              'No recent activity',
+                              style: NivasaText.body.copyWith(
+                                color: NivasaColors.ink500,
+                              ),
+                            )
                           else
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: NivasaSpacing.s16),
                               decoration: BoxDecoration(
                                 color: NivasaColors.white,
                                 border: Border.all(color: NivasaColors.line),
-                                borderRadius: BorderRadius.circular(NivasaRadius.card),
+                                borderRadius: BorderRadius.circular(
+                                  NivasaRadius.card,
+                                ),
                               ),
+                              clipBehavior: Clip.antiAlias,
                               child: Column(
                                 children: [
-                                  for (var i = 0; i < _transactions.length; i++) ...[_TransactionRow(transaction: _transactions[i]), if (i != _transactions.length - 1) const Divider(height: 1)],
+                                  for (var i = 0; i < payments.length; i++) ...[
+                                    _PaymentRow(transaction: payments[i]),
+                                    if (i != payments.length - 1)
+                                      const Divider(
+                                        height: 1,
+                                        indent: 36,
+                                        color: NivasaColors.line,
+                                      ),
+                                  ],
                                 ],
                               ),
                             ),
@@ -279,6 +391,14 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
                       ),
                     ),
                   ),
+                  if (canPay)
+                    _PayBar(
+                      label: _stale
+                          ? 'Reconnect'
+                          : 'Pay ${_formatInr(primaryInvoice.amount)}',
+                      loading: _payingInvoiceId == primaryInvoice.invoiceId,
+                      onPressed: _stale ? _load : () => _pay(primaryInvoice),
+                    ),
                 ],
               ),
       ),
@@ -286,27 +406,121 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
   }
 }
 
-class _ActionRow extends StatelessWidget {
-  const _ActionRow({required this.icon, required this.label, required this.onTap});
+class _RentDueHero extends StatelessWidget {
+  const _RentDueHero({required this.totalDue, required this.invoices});
 
-  final IconData icon;
-  final String label;
+  final int totalDue;
+  final List<PendingInvoice> invoices;
+
+  @override
+  Widget build(BuildContext context) {
+    final earliestDue = invoices.isEmpty ? null : invoices.first.dueDate;
+    return Container(
+      padding: const EdgeInsets.all(NivasaSpacing.s20),
+      decoration: BoxDecoration(
+        color: NivasaColors.gold100,
+        border: Border.all(color: NivasaColors.gold200),
+        borderRadius: BorderRadius.circular(NivasaRadius.card),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Rent due',
+            style: NivasaText.label.copyWith(color: NivasaColors.gold800),
+          ),
+          const SizedBox(height: NivasaSpacing.s8),
+          Text(
+            _formatInr(totalDue),
+            style: NivasaText.display.copyWith(
+              fontFamily: 'Noto Sans Mono',
+              color: NivasaColors.goldTextOn,
+            ),
+          ),
+          const SizedBox(height: NivasaSpacing.s8),
+          if (earliestDue != null)
+            Text(
+              '${formatDueDate(earliestDue)} · ${_invoiceCountLabel(invoices.length)}',
+              style: NivasaText.bodySmall.copyWith(color: NivasaColors.gold800),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _NothingDueCard extends StatelessWidget {
+  const _NothingDueCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(NivasaSpacing.s20),
+      decoration: BoxDecoration(
+        color: NivasaColors.white,
+        border: Border.all(color: NivasaColors.line),
+        borderRadius: BorderRadius.circular(NivasaRadius.card),
+      ),
+      child: Row(
+        children: [
+          const Icon(
+            Icons.check_circle,
+            color: NivasaColors.positiveFg,
+            size: 28,
+          ),
+          const SizedBox(width: NivasaSpacing.s12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Nothing to Pay', style: NivasaText.h3),
+                const SizedBox(height: NivasaSpacing.s4),
+                Text(
+                  "You're all caught up on rent.",
+                  style: NivasaText.body.copyWith(color: NivasaColors.ink500),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SeeInvoicesButton extends StatelessWidget {
+  const _SeeInvoicesButton({required this.count, required this.onTap});
+
+  final int count;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: NivasaSpacing.s12),
+      borderRadius: BorderRadius.circular(NivasaRadius.button),
+      child: Container(
+        height: 48,
+        decoration: BoxDecoration(
+          border: Border.all(color: NivasaColors.primary700, width: 1.5),
+          borderRadius: BorderRadius.circular(NivasaRadius.button),
+        ),
         child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 20, color: NivasaColors.ink700),
-            const SizedBox(width: NivasaSpacing.s12),
-            Expanded(
-              child: Text(label, style: NivasaText.body),
+            const Icon(
+              Icons.receipt_long_outlined,
+              size: 19,
+              color: NivasaColors.primary700,
             ),
-            const Icon(Icons.chevron_right, size: 20, color: NivasaColors.ink400),
+            const SizedBox(width: NivasaSpacing.s8),
+            Text(
+              'See the ${_invoiceCountLabel(count)}',
+              style: NivasaText.body.copyWith(
+                color: NivasaColors.primary700,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ],
         ),
       ),
@@ -314,32 +528,115 @@ class _ActionRow extends StatelessWidget {
   }
 }
 
-class _TransactionRow extends StatelessWidget {
-  const _TransactionRow({required this.transaction});
+class _PaymentRow extends StatelessWidget {
+  const _PaymentRow({required this.transaction});
 
   final TenantTransaction transaction;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: NivasaSpacing.s12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      padding: const EdgeInsets.symmetric(
+        horizontal: NivasaSpacing.s16,
+        vertical: 14,
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(transaction.title, style: NivasaText.body.copyWith(fontWeight: FontWeight.w600)),
-              ),
-              Text(
-                _formatInr(transaction.amount),
-                style: NivasaText.body.copyWith(fontWeight: FontWeight.w600, fontFamily: 'Noto Sans Mono'),
-              ),
-            ],
+          Container(
+            width: 8,
+            height: 8,
+            decoration: const BoxDecoration(
+              color: NivasaColors.positiveFg,
+              shape: BoxShape.circle,
+            ),
           ),
-          const SizedBox(height: NivasaSpacing.s4),
-          Text(transaction.subtitle ?? formatDisplayDate(transaction.date), style: NivasaText.caption),
+          const SizedBox(width: NivasaSpacing.s12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  transaction.title,
+                  style: NivasaText.body.copyWith(fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 2),
+                Text(_paymentSubtitle(transaction), style: NivasaText.caption),
+              ],
+            ),
+          ),
+          Text(
+            _formatInr(transaction.amount),
+            style: NivasaText.mono.copyWith(
+              fontSize: 15,
+              color: NivasaColors.ink900,
+            ),
+          ),
         ],
+      ),
+    );
+  }
+}
+
+/// Pinned in the thumb zone (TT-5) instead of scrolling away with the rest of the page —
+/// a Column+Expanded footer rather than the mock's CSS `position:absolute`, so it can
+/// never overlap the last row above it (the same class of bug 1e's redesign caption
+/// flags for Maintenance's FAB).
+class _PayBar extends StatelessWidget {
+  const _PayBar({
+    required this.label,
+    required this.loading,
+    required this.onPressed,
+  });
+
+  final String label;
+  final bool loading;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(
+        NivasaSpacing.s24,
+        NivasaSpacing.s12,
+        NivasaSpacing.s24,
+        NivasaSpacing.s24,
+      ),
+      decoration: const BoxDecoration(
+        color: NivasaColors.white,
+        border: Border(top: BorderSide(color: NivasaColors.line)),
+      ),
+      child: SizedBox(
+        height: 52,
+        child: ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: NivasaColors.gold500,
+            foregroundColor: NivasaColors.goldTextOn,
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(NivasaRadius.button),
+            ),
+          ),
+          onPressed: loading ? null : onPressed,
+          child: loading
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.2,
+                    valueColor: AlwaysStoppedAnimation(NivasaColors.goldTextOn),
+                  ),
+                )
+              : Text(
+                  label,
+                  style: const TextStyle(
+                    fontFamily: 'Noto Sans',
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: NivasaColors.goldTextOn,
+                  ),
+                ),
+        ),
       ),
     );
   }
