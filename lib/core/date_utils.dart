@@ -72,6 +72,25 @@ String formatSyncedAt(DateTime dt) {
   return '${_monthAbbr[local.month - 1]} ${local.day}, $hour12:$minute $period';
 }
 
+/// "2026-08-31" → "6 days ago" (today is 2026-09-06) — Maintenance's own list cards (doc
+/// option "1e") used to print `item.createdAt` straight to screen; day-granularity only,
+/// matching what a renter actually thinks in ("a few days ago", not "14 hours ago").
+/// Older than a month, this falls back to [formatDisplayDate] rather than an
+/// ever-growing "47 days ago". Falls back to the input unchanged if it isn't
+/// `YYYY-MM-DD` shaped.
+String formatRelativeDate(String isoDate) {
+  final date = DateTime.tryParse(isoDate);
+  if (date == null) return isoDate;
+  final today = DateTime.now();
+  final startOfToday = DateTime(today.year, today.month, today.day);
+  final startOfThat = DateTime(date.year, date.month, date.day);
+  final days = startOfToday.difference(startOfThat).inDays;
+  if (days <= 0) return 'Today';
+  if (days == 1) return 'Yesterday';
+  if (days < 30) return '$days days ago';
+  return formatDisplayDate(shortDate(isoDate));
+}
+
 /// "2026-08-20" → "20 Aug 2026" — for any already-`shortDate`d date rendered directly to
 /// the renter (Maintenance timestamps, Lease/agreement dates, transaction history, guest
 /// visit dates), replacing the raw ISO string most screens printed as-is. Falls back to

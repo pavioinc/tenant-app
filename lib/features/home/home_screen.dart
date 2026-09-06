@@ -38,7 +38,7 @@ final _paymentsMenuItem = _MenuItem(Icons.receipt_long_outlined, 'Payments', scr
 final _maintenanceMenuItem = _MenuItem(Icons.build_outlined, 'Maintenance', screenBuilder: (auth) => ComplaintsScreen(authRepository: auth));
 final _leaseMenuItem = _MenuItem(Icons.home_work_outlined, 'Lease', screenBuilder: (auth) => LeaseScreen(authRepository: auth));
 final _documentsMenuItem = _MenuItem(Icons.description_outlined, 'Documents', screenBuilder: (auth) => DocumentsScreen(authRepository: auth));
-final _guestsMenuItem = _MenuItem(Icons.person_add_alt_outlined, 'Guest Manager', screenBuilder: (auth) => GuestsScreen(authRepository: auth));
+final _guestsMenuItem = _MenuItem(Icons.person_add_alt_outlined, 'Guests', screenBuilder: (auth) => GuestsScreen(authRepository: auth));
 final _vehiclesMenuItem = _MenuItem(Icons.directions_car_outlined, 'Vehicles', screenBuilder: (auth) => VehiclesScreen(authRepository: auth));
 final _contactsMenuItem = _MenuItem(Icons.contacts_outlined, 'Contacts', screenBuilder: (auth) => ContactsScreen(authRepository: auth));
 
@@ -347,7 +347,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   children: [
                     NivasaMenuRow(
                       icon: Icons.person_add_alt_outlined,
-                      label: 'Guest Manager',
+                      label: 'Guests',
                       showCard: false,
                       onTap: () => _onMenuTap(_guestsMenuItem),
                     ),

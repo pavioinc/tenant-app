@@ -112,7 +112,7 @@ class _GuestsScreenState extends State<GuestsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Guest Manager')),
+      appBar: AppBar(title: const Text('Guests')),
       floatingActionButton: FloatingActionButton.extended(onPressed: _openAddSheet, label: const Text('Add guest'), icon: const Icon(Icons.add)),
       body: SafeArea(
         child: _loading
