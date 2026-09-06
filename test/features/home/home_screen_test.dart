@@ -28,16 +28,25 @@ class _InMemorySecureStore implements SecureStore {
   Future<void> delete(String key) async => _values.remove(key);
 }
 
-http.Response _json(Map<String, dynamic> body, int status) =>
-    http.Response(jsonEncode(body), status, headers: {'content-type': 'application/json'});
+http.Response _json(Map<String, dynamic> body, int status) => http.Response(
+  jsonEncode(body),
+  status,
+  headers: {'content-type': 'application/json'},
+);
 
-Widget _wrap(Widget child) => MaterialApp(theme: NivasaTheme.light(), home: child);
+Widget _wrap(Widget child) =>
+    MaterialApp(theme: NivasaTheme.light(), home: child);
 
-Future<_InMemorySecureStore> _storeWithSession({required bool connected}) async {
+Future<_InMemorySecureStore> _storeWithSession({
+  required bool connected,
+}) async {
   final store = _InMemorySecureStore();
   await store.write('nivasaos.access_token', 'access-token');
   await store.write('nivasaos.refresh_token', 'refresh-token');
-  await store.write('nivasaos.access_token_expires_at', DateTime.now().add(const Duration(minutes: 30)).toIso8601String());
+  await store.write(
+    'nivasaos.access_token_expires_at',
+    DateTime.now().add(const Duration(minutes: 30)).toIso8601String(),
+  );
   await store.write(
     'nivasaos.user',
     jsonEncode({
@@ -66,72 +75,93 @@ void _useTallSurface(WidgetTester tester) {
 }
 
 void main() {
-  testWidgets('shows the almost-there card with locked pills for an unconnected renter, silently re-checking on load', (tester) async {
-    _useTallSurface(tester);
-    final store = await _storeWithSession(connected: false);
-    var refreshCalled = false;
-    var meCalled = false;
-    final client = MockClient((request) async {
-      if (request.url.path == '/api/auth/v1/refresh') {
-        refreshCalled = true;
-        return _json({
-          'access_token': 'new-access',
-          'refresh_token': 'new-refresh',
-          'expires_at': DateTime.now().add(const Duration(minutes: 30)).toIso8601String(),
-        }, 200);
-      }
-      if (request.url.path == '/api/auth/v1/tenant/me') {
-        meCalled = true;
-        return _json({'user_id': 'account-1', 'name': 'Amit Kumar', 'role': 'tenant', 'connected': false}, 200);
-      }
-      throw StateError('unexpected request: ${request.url.path}');
-    });
-    final repo = AuthRepository(apiClient: ApiClient(httpClient: client), sessionStore: SessionStore(storage: store));
+  testWidgets(
+    'shows the almost-there card with locked pills for an unconnected renter, silently re-checking on load',
+    (tester) async {
+      _useTallSurface(tester);
+      final store = await _storeWithSession(connected: false);
+      var refreshCalled = false;
+      var meCalled = false;
+      final client = MockClient((request) async {
+        if (request.url.path == '/api/auth/v1/refresh') {
+          refreshCalled = true;
+          return _json({
+            'access_token': 'new-access',
+            'refresh_token': 'new-refresh',
+            'expires_at': DateTime.now()
+                .add(const Duration(minutes: 30))
+                .toIso8601String(),
+          }, 200);
+        }
+        if (request.url.path == '/api/auth/v1/tenant/me') {
+          meCalled = true;
+          return _json({
+            'user_id': 'account-1',
+            'name': 'Amit Kumar',
+            'role': 'tenant',
+            'connected': false,
+          }, 200);
+        }
+        throw StateError('unexpected request: ${request.url.path}');
+      });
+      final repo = AuthRepository(
+        apiClient: ApiClient(httpClient: client),
+        sessionStore: SessionStore(storage: store),
+      );
 
-    await tester.pumpWidget(_wrap(HomeScreen(authRepository: repo)));
-    await tester.pumpAndSettle();
+      await tester.pumpWidget(_wrap(HomeScreen(authRepository: repo)));
+      await tester.pumpAndSettle();
 
-    expect(refreshCalled, isTrue);
-    expect(meCalled, isTrue);
-    expect(find.text('Almost there'), findsOneWidget);
-    // The 7 locked areas render as chips, not tappable tiles — no grid, no lock icon.
-    expect(find.text('Maintenance'), findsOneWidget);
-    expect(find.text('Pay Rent'), findsNothing);
-    expect(find.byType(GridView), findsNothing);
-    expect(find.byIcon(Icons.lock_outline), findsNothing);
-  });
+      expect(refreshCalled, isTrue);
+      expect(meCalled, isTrue);
+      expect(find.text('Almost there'), findsOneWidget);
+      // The 7 locked areas render as chips, not tappable tiles — no grid, no lock icon.
+      expect(find.text('Maintenance'), findsOneWidget);
+      expect(find.text('Pay Rent'), findsNothing);
+      expect(find.byType(GridView), findsNothing);
+      expect(find.byIcon(Icons.lock_outline), findsNothing);
+    },
+  );
 
-  testWidgets('reflects a connection picked up during the silent check without user action', (tester) async {
-    _useTallSurface(tester);
-    final store = await _storeWithSession(connected: false);
-    final client = MockClient((request) async {
-      if (request.url.path == '/api/auth/v1/refresh') {
-        return _json({
-          'access_token': 'new-access',
-          'refresh_token': 'new-refresh',
-          'expires_at': DateTime.now().add(const Duration(minutes: 30)).toIso8601String(),
-        }, 200);
-      }
-      if (request.url.path == '/api/auth/v1/tenant/me') {
-        return _json({
-          'user_id': 'account-1',
-          'name': 'Amit Kumar',
-          'role': 'tenant',
-          'connected': true,
-          'org_id': 'org-1',
-          'property_id': 'prop-1',
-          'tenant_id': 'tenant-1',
-        }, 200);
-      }
-      throw StateError('unexpected request: ${request.url.path}');
-    });
-    final repo = AuthRepository(apiClient: ApiClient(httpClient: client), sessionStore: SessionStore(storage: store));
+  testWidgets(
+    'reflects a connection picked up during the silent check without user action',
+    (tester) async {
+      _useTallSurface(tester);
+      final store = await _storeWithSession(connected: false);
+      final client = MockClient((request) async {
+        if (request.url.path == '/api/auth/v1/refresh') {
+          return _json({
+            'access_token': 'new-access',
+            'refresh_token': 'new-refresh',
+            'expires_at': DateTime.now()
+                .add(const Duration(minutes: 30))
+                .toIso8601String(),
+          }, 200);
+        }
+        if (request.url.path == '/api/auth/v1/tenant/me') {
+          return _json({
+            'user_id': 'account-1',
+            'name': 'Amit Kumar',
+            'role': 'tenant',
+            'connected': true,
+            'org_id': 'org-1',
+            'property_id': 'prop-1',
+            'tenant_id': 'tenant-1',
+          }, 200);
+        }
+        throw StateError('unexpected request: ${request.url.path}');
+      });
+      final repo = AuthRepository(
+        apiClient: ApiClient(httpClient: client),
+        sessionStore: SessionStore(storage: store),
+      );
 
-    await tester.pumpWidget(_wrap(HomeScreen(authRepository: repo)));
-    await tester.pumpAndSettle();
+      await tester.pumpWidget(_wrap(HomeScreen(authRepository: repo)));
+      await tester.pumpAndSettle();
 
-    expect(find.text('Almost there'), findsNothing);
-  });
+      expect(find.text('Almost there'), findsNothing);
+    },
+  );
 
   testWidgets('a connected renter sees no almost-there card', (tester) async {
     _useTallSurface(tester);
@@ -147,7 +177,9 @@ void main() {
     expect(find.text('Almost there'), findsNothing);
   });
 
-  testWidgets('a connected renter tapping Payments navigates to PaymentsScreen', (tester) async {
+  testWidgets('a connected renter tapping Payments navigates to PaymentsScreen', (
+    tester,
+  ) async {
     _useTallSurface(tester);
     final store = await _storeWithSession(connected: true);
     final repo = AuthRepository(
@@ -166,22 +198,29 @@ void main() {
     expect(find.byType(PaymentsScreen), findsOneWidget);
   });
 
-  testWidgets('the resident hub and everything-else list stay hidden entirely for an unconnected renter', (tester) async {
-    _useTallSurface(tester);
-    final store = await _storeWithSession(connected: false);
-    final repo = AuthRepository(
-      apiClient: ApiClient(httpClient: MockClient((_) async => _json({}, 200))),
-      sessionStore: SessionStore(storage: store),
-    );
+  testWidgets(
+    'the resident hub and everything-else list stay hidden entirely for an unconnected renter',
+    (tester) async {
+      _useTallSurface(tester);
+      final store = await _storeWithSession(connected: false);
+      final repo = AuthRepository(
+        apiClient: ApiClient(
+          httpClient: MockClient((_) async => _json({}, 200)),
+        ),
+        sessionStore: SessionStore(storage: store),
+      );
 
-    await tester.pumpWidget(_wrap(HomeScreen(authRepository: repo)));
-    await tester.pumpAndSettle();
+      await tester.pumpWidget(_wrap(HomeScreen(authRepository: repo)));
+      await tester.pumpAndSettle();
 
-    expect(find.text('Resident Hub'), findsNothing);
-    expect(find.text('Everything else'), findsNothing);
-  });
+      expect(find.text('Resident Hub'), findsNothing);
+      expect(find.text('Everything else'), findsNothing);
+    },
+  );
 
-  testWidgets('a connected renter tapping Lease navigates to LeaseScreen', (tester) async {
+  testWidgets('a connected renter tapping Lease navigates to LeaseScreen', (
+    tester,
+  ) async {
     _useTallSurface(tester);
     final store = await _storeWithSession(connected: true);
     final repo = AuthRepository(
@@ -201,7 +240,53 @@ void main() {
     expect(find.byType(LeaseScreen), findsOneWidget);
   });
 
-  testWidgets('a connected renter tapping Contacts navigates to ContactsScreen', (tester) async {
+  testWidgets(
+    'a connected renter tapping Contacts navigates to ContactsScreen',
+    (tester) async {
+      _useTallSurface(tester);
+      final store = await _storeWithSession(connected: true);
+      final repo = AuthRepository(
+        apiClient: ApiClient(
+          httpClient: MockClient((_) async => _json({}, 200)),
+        ),
+        sessionStore: SessionStore(storage: store),
+      );
+
+      await tester.pumpWidget(_wrap(HomeScreen(authRepository: repo)));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Contacts'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(ContactsScreen), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'a connected renter tapping Vehicles navigates to VehiclesScreen',
+    (tester) async {
+      _useTallSurface(tester);
+      final store = await _storeWithSession(connected: true);
+      final repo = AuthRepository(
+        apiClient: ApiClient(
+          httpClient: MockClient((_) async => _json({}, 200)),
+        ),
+        sessionStore: SessionStore(storage: store),
+      );
+
+      await tester.pumpWidget(_wrap(HomeScreen(authRepository: repo)));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Vehicles'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(VehiclesScreen), findsOneWidget);
+    },
+  );
+
+  testWidgets('a connected renter tapping Guests navigates to GuestsScreen', (
+    tester,
+  ) async {
     _useTallSurface(tester);
     final store = await _storeWithSession(connected: true);
     final repo = AuthRepository(
@@ -212,118 +297,104 @@ void main() {
     await tester.pumpWidget(_wrap(HomeScreen(authRepository: repo)));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Contacts'));
-    await tester.pumpAndSettle();
-
-    expect(find.byType(ContactsScreen), findsOneWidget);
-  });
-
-  testWidgets('a connected renter tapping Vehicles navigates to VehiclesScreen', (tester) async {
-    _useTallSurface(tester);
-    final store = await _storeWithSession(connected: true);
-    final repo = AuthRepository(
-      apiClient: ApiClient(httpClient: MockClient((_) async => _json({}, 200))),
-      sessionStore: SessionStore(storage: store),
-    );
-
-    await tester.pumpWidget(_wrap(HomeScreen(authRepository: repo)));
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.text('Vehicles'));
-    await tester.pumpAndSettle();
-
-    expect(find.byType(VehiclesScreen), findsOneWidget);
-  });
-
-  testWidgets('a connected renter tapping Guest Manager navigates to GuestsScreen', (tester) async {
-    _useTallSurface(tester);
-    final store = await _storeWithSession(connected: true);
-    final repo = AuthRepository(
-      apiClient: ApiClient(httpClient: MockClient((_) async => _json({}, 200))),
-      sessionStore: SessionStore(storage: store),
-    );
-
-    await tester.pumpWidget(_wrap(HomeScreen(authRepository: repo)));
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.text('Guest Manager'));
+    await tester.tap(find.text('Guests'));
     await tester.pumpAndSettle();
 
     expect(find.byType(GuestsScreen), findsOneWidget);
   });
 
-  testWidgets('a connected renter tapping Documents navigates to DocumentsScreen', (tester) async {
-    _useTallSurface(tester);
-    final store = await _storeWithSession(connected: true);
-    final repo = AuthRepository(
-      apiClient: ApiClient(httpClient: MockClient((_) async => _json({}, 200))),
-      sessionStore: SessionStore(storage: store),
-    );
+  testWidgets(
+    'a connected renter tapping Documents navigates to DocumentsScreen',
+    (tester) async {
+      _useTallSurface(tester);
+      final store = await _storeWithSession(connected: true);
+      final repo = AuthRepository(
+        apiClient: ApiClient(
+          httpClient: MockClient((_) async => _json({}, 200)),
+        ),
+        sessionStore: SessionStore(storage: store),
+      );
 
-    await tester.pumpWidget(_wrap(HomeScreen(authRepository: repo)));
-    await tester.pumpAndSettle();
+      await tester.pumpWidget(_wrap(HomeScreen(authRepository: repo)));
+      await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Documents'));
-    await tester.pumpAndSettle();
+      await tester.tap(find.text('Documents'));
+      await tester.pumpAndSettle();
 
-    expect(find.byType(DocumentsScreen), findsOneWidget);
-  });
+      expect(find.byType(DocumentsScreen), findsOneWidget);
+    },
+  );
 
-  testWidgets('a connected renter tapping Maintenance navigates to ComplaintsScreen', (tester) async {
-    _useTallSurface(tester);
-    final store = await _storeWithSession(connected: true);
-    final repo = AuthRepository(
-      apiClient: ApiClient(httpClient: MockClient((_) async => _json({}, 200))),
-      sessionStore: SessionStore(storage: store),
-    );
+  testWidgets(
+    'a connected renter tapping Maintenance navigates to ComplaintsScreen',
+    (tester) async {
+      _useTallSurface(tester);
+      final store = await _storeWithSession(connected: true);
+      final repo = AuthRepository(
+        apiClient: ApiClient(
+          httpClient: MockClient((_) async => _json({}, 200)),
+        ),
+        sessionStore: SessionStore(storage: store),
+      );
 
-    await tester.pumpWidget(_wrap(HomeScreen(authRepository: repo)));
-    await tester.pumpAndSettle();
+      await tester.pumpWidget(_wrap(HomeScreen(authRepository: repo)));
+      await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Maintenance'));
-    await tester.pumpAndSettle();
+      await tester.tap(find.text('Maintenance'));
+      await tester.pumpAndSettle();
 
-    expect(find.byType(ComplaintsScreen), findsOneWidget);
-  });
+      expect(find.byType(ComplaintsScreen), findsOneWidget);
+    },
+  );
 
-  testWidgets('an unconnected renter tapping the header person icon navigates to UserScreen', (tester) async {
-    _useTallSurface(tester);
-    final store = await _storeWithSession(connected: false);
-    final repo = AuthRepository(
-      apiClient: ApiClient(httpClient: MockClient((_) async => _json({}, 200))),
-      sessionStore: SessionStore(storage: store),
-    );
+  testWidgets(
+    'an unconnected renter tapping the header person icon navigates to UserScreen',
+    (tester) async {
+      _useTallSurface(tester);
+      final store = await _storeWithSession(connected: false);
+      final repo = AuthRepository(
+        apiClient: ApiClient(
+          httpClient: MockClient((_) async => _json({}, 200)),
+        ),
+        sessionStore: SessionStore(storage: store),
+      );
 
-    await tester.pumpWidget(_wrap(HomeScreen(authRepository: repo)));
-    await tester.pumpAndSettle();
+      await tester.pumpWidget(_wrap(HomeScreen(authRepository: repo)));
+      await tester.pumpAndSettle();
 
-    await tester.tap(find.byKey(const Key('user-menu-button')));
-    // UserScreen's own data fetch uses a real ApiClient (HomeScreen only passes it an
-    // AuthRepository, not a fake ProfileRepository) — safe to settle anyway, since
-    // flutter_test's TestWidgetsFlutterBinding intercepts dart:io's HttpClient globally
-    // and synthesizes a 400 for anything not explicitly mocked, rather than making a real
-    // network call. This only asserts the navigation itself happened.
-    await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('user-menu-button')));
+      // UserScreen's own data fetch uses a real ApiClient (HomeScreen only passes it an
+      // AuthRepository, not a fake ProfileRepository) — safe to settle anyway, since
+      // flutter_test's TestWidgetsFlutterBinding intercepts dart:io's HttpClient globally
+      // and synthesizes a 400 for anything not explicitly mocked, rather than making a real
+      // network call. This only asserts the navigation itself happened.
+      await tester.pumpAndSettle();
 
-    expect(find.byType(UserScreen), findsOneWidget);
-  });
+      expect(find.byType(UserScreen), findsOneWidget);
+    },
+  );
 
-  testWidgets('a connected renter has no header person icon, and reaches UserScreen via "Your account" instead', (tester) async {
-    _useTallSurface(tester);
-    final store = await _storeWithSession(connected: true);
-    final repo = AuthRepository(
-      apiClient: ApiClient(httpClient: MockClient((_) async => _json({}, 200))),
-      sessionStore: SessionStore(storage: store),
-    );
+  testWidgets(
+    'a connected renter has no header person icon, and reaches UserScreen via "Your account" instead',
+    (tester) async {
+      _useTallSurface(tester);
+      final store = await _storeWithSession(connected: true);
+      final repo = AuthRepository(
+        apiClient: ApiClient(
+          httpClient: MockClient((_) async => _json({}, 200)),
+        ),
+        sessionStore: SessionStore(storage: store),
+      );
 
-    await tester.pumpWidget(_wrap(HomeScreen(authRepository: repo)));
-    await tester.pumpAndSettle();
+      await tester.pumpWidget(_wrap(HomeScreen(authRepository: repo)));
+      await tester.pumpAndSettle();
 
-    expect(find.byKey(const Key('user-menu-button')), findsNothing);
+      expect(find.byKey(const Key('user-menu-button')), findsNothing);
 
-    await tester.tap(find.text('Your account'));
-    await tester.pumpAndSettle();
+      await tester.tap(find.text('Your account'));
+      await tester.pumpAndSettle();
 
-    expect(find.byType(UserScreen), findsOneWidget);
-  });
+      expect(find.byType(UserScreen), findsOneWidget);
+    },
+  );
 }
