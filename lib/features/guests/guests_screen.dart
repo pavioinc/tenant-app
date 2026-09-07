@@ -4,15 +4,82 @@ import '../../core/cache_store.dart';
 import '../../core/cached_fetch.dart';
 import '../../core/date_utils.dart';
 import '../../theme/nivasa_colors.dart';
+import '../../theme/nivasa_elevation.dart';
 import '../../theme/nivasa_spacing.dart';
 import '../../theme/nivasa_text_styles.dart';
 import '../../widgets/nivasa_button.dart';
+import '../../widgets/nivasa_empty_state.dart';
+import '../../widgets/nivasa_skeleton.dart';
 import '../../widgets/nivasa_stale_banner.dart';
 import '../auth/auth_repository.dart';
 import 'guests_repository.dart';
 
+/// "2026-08-24T14:05:00Z" → "2:05 PM", device-local time — matches the format
+/// owner-dashboard's own Guests view (CLO-231) uses for "Inside since {time}".
+String _formatTime(String isoDateTime) {
+  final dt = DateTime.tryParse(isoDateTime)?.toLocal();
+  if (dt == null) return isoDateTime;
+  final hour12 = dt.hour % 12 == 0 ? 12 : dt.hour % 12;
+  final minute = dt.minute.toString().padLeft(2, '0');
+  return '$hour12:$minute ${dt.hour < 12 ? 'AM' : 'PM'}';
+}
+
+(Color bg, Color fg, String label) _guestStatusVisual(ExpectedGuest guest) {
+  return switch (guest.status) {
+    'arrived' => (
+      NivasaColors.positiveTint,
+      NivasaColors.positiveTextOnTint,
+      guest.arrivedAt != null
+          ? 'Inside since ${_formatTime(guest.arrivedAt!)}'
+          : 'Inside',
+    ),
+    'departed' => (
+      NivasaColors.offlineTint,
+      NivasaColors.offlineTextOnTint,
+      guest.departedAt != null
+          ? 'Departed ${_formatTime(guest.departedAt!)}'
+          : 'Departed',
+    ),
+    'denied' => (
+      NivasaColors.negativeTint,
+      NivasaColors.negativeTextOnTint,
+      'Denied entry',
+    ),
+    _ => (
+      NivasaColors.offlineTint,
+      NivasaColors.offlineTextOnTint,
+      'Not arrived yet',
+    ),
+  };
+}
+
+String _initials(String name) {
+  final parts = name
+      .trim()
+      .split(RegExp(r'\s+'))
+      .where((p) => p.isNotEmpty)
+      .toList();
+  if (parts.isEmpty) return '?';
+  if (parts.length == 1) return parts.first.substring(0, 1).toUpperCase();
+  return (parts.first.substring(0, 1) + parts.last.substring(0, 1))
+      .toUpperCase();
+}
+
+/// Redesigned (doc option "1g") — the empty state becomes a first screen: centred icon,
+/// a headline that says what the feature is for, one sentence on who can see it, and the
+/// action under the thumb instead of a corner FAB a top-left grey sentence quotes
+/// (finding ST-3, shared identically across all six list screens; NivasaEmptyState is
+/// the reusable piece that fix implies). The populated list gets the same bottom-bar
+/// treatment as this session's other redesigns, plus the guest's real arrival/departure
+/// status (CLO-231) — a tenant asking "did my guest get let in" is exactly what the
+/// front desk's own Guests view already answers for a manager.
 class GuestsScreen extends StatefulWidget {
-  const GuestsScreen({super.key, this.authRepository, this.guestsRepository, this.cacheStore});
+  const GuestsScreen({
+    super.key,
+    this.authRepository,
+    this.guestsRepository,
+    this.cacheStore,
+  });
 
   final AuthRepository? authRepository;
   final GuestsRepository? guestsRepository;
@@ -24,8 +91,10 @@ class GuestsScreen extends StatefulWidget {
 
 class _GuestsScreenState extends State<GuestsScreen> {
   late final AuthRepository _auth = widget.authRepository ?? AuthRepository();
-  late final GuestsRepository _guests = widget.guestsRepository ?? GuestsRepository();
-  late final CacheStore _cache = widget.cacheStore ?? const SharedPreferencesCacheStore();
+  late final GuestsRepository _guests =
+      widget.guestsRepository ?? GuestsRepository();
+  late final CacheStore _cache =
+      widget.cacheStore ?? const SharedPreferencesCacheStore();
 
   String? _token;
   List<ExpectedGuest> _items = [];
@@ -54,7 +123,9 @@ class _GuestsScreenState extends State<GuestsScreen> {
         cacheKey: 'guests',
         fetchNetwork: () => _guests.list(_token!),
         toJson: (items) => items.map((g) => g.toJson()).toList(),
-        fromJson: (json) => (json as List).map((g) => ExpectedGuest.fromJson(g as Map<String, dynamic>)).toList(),
+        fromJson: (json) => (json as List)
+            .map((g) => ExpectedGuest.fromJson(g as Map<String, dynamic>))
+            .toList(),
       );
       if (!mounted) return;
       setState(() {
@@ -77,10 +148,18 @@ class _GuestsScreenState extends State<GuestsScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Remove guest?'),
-        content: Text('"${guest.name}" will be removed from your guest list. This can\'t be undone.'),
+        content: Text(
+          '"${guest.name}" will be removed from your guest list. This can\'t be undone.',
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel')),
-          TextButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Remove')),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Remove'),
+          ),
         ],
       ),
     );
@@ -88,13 +167,19 @@ class _GuestsScreenState extends State<GuestsScreen> {
     try {
       await _guests.delete(_token!, guest.guestId);
       if (!mounted) return;
-      setState(() => _items = _items.where((g) => g.guestId != guest.guestId).toList());
+      setState(
+        () => _items = _items.where((g) => g.guestId != guest.guestId).toList(),
+      );
     } on ApiException catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.message)));
     } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not remove — try again')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not remove — try again')),
+      );
     }
   }
 
@@ -113,80 +198,192 @@ class _GuestsScreenState extends State<GuestsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Guests')),
-      floatingActionButton: FloatingActionButton.extended(onPressed: _openAddSheet, label: const Text('Add guest'), icon: const Icon(Icons.add)),
       body: SafeArea(
         child: _loading
-            ? const Center(child: CircularProgressIndicator())
+            ? const NivasaSkeletonList()
             : _error != null
             ? _ErrorState(message: _error!, onRetry: _load)
             : Column(
                 children: [
                   if (_stale)
                     Padding(
-                      padding: const EdgeInsets.fromLTRB(NivasaSpacing.s24, NivasaSpacing.s24, NivasaSpacing.s24, 0),
-                      child: NivasaStaleBanner(lastSyncedAt: _lastSyncedAt, onRetry: _load),
+                      padding: const EdgeInsets.fromLTRB(
+                        NivasaSpacing.s24,
+                        NivasaSpacing.s24,
+                        NivasaSpacing.s24,
+                        0,
+                      ),
+                      child: NivasaStaleBanner(
+                        lastSyncedAt: _lastSyncedAt,
+                        onRetry: _load,
+                      ),
                     ),
                   Expanded(
                     child: RefreshIndicator(
                       onRefresh: _load,
                       child: _items.isEmpty
-                          ? ListView(
-                              children: [
-                                Padding(
-                                  padding: const EdgeInsets.all(NivasaSpacing.s24),
-                                  child: Text(
-                                    'No expected guests yet — tap "Add guest" to add one.',
-                                    style: NivasaText.body.copyWith(color: NivasaColors.ink500),
+                          ? LayoutBuilder(
+                              builder: (context, constraints) => ListView(
+                                children: [
+                                  ConstrainedBox(
+                                    constraints: BoxConstraints(
+                                      minHeight: constraints.maxHeight,
+                                    ),
+                                    child: NivasaEmptyState(
+                                      icon: Icons.person_add_alt,
+                                      title: 'Expecting someone?',
+                                      message:
+                                          "Add your visitor here and the front desk will know they're coming. Only you and your property manager can see this list.",
+                                      actionIcon: Icons.add,
+                                      actionLabel: 'Add a guest',
+                                      onAction: _openAddSheet,
+                                    ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             )
                           : ListView.separated(
                               padding: const EdgeInsets.all(NivasaSpacing.s24),
                               itemCount: _items.length,
-                              separatorBuilder: (_, _) => const SizedBox(height: NivasaSpacing.s12),
-                              itemBuilder: (context, index) {
-                                final item = _items[index];
-                                return Container(
-                                  padding: const EdgeInsets.all(NivasaSpacing.s16),
-                                  decoration: BoxDecoration(
-                                    color: NivasaColors.white,
-                                    border: Border.all(color: NivasaColors.line),
-                                    borderRadius: BorderRadius.circular(NivasaRadius.card),
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Text(item.name, style: NivasaText.h3),
-                                            const SizedBox(height: NivasaSpacing.s4),
-                                            Text(
-                                              [formatDisplayDate(item.visitDate), if (item.phone != null) item.phone!].join(' · '),
-                                              style: NivasaText.bodySmall.copyWith(color: NivasaColors.ink500),
-                                            ),
-                                            if (item.notes != null) ...[
-                                              const SizedBox(height: NivasaSpacing.s4),
-                                              Text(item.notes!, style: NivasaText.body),
-                                            ],
-                                          ],
-                                        ),
-                                      ),
-                                      IconButton(
-                                        icon: Icon(Icons.delete_outline, color: NivasaColors.negativeFg),
-                                        tooltip: 'Delete',
-                                        onPressed: () => _delete(item),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              },
+                              separatorBuilder: (_, _) =>
+                                  const SizedBox(height: NivasaSpacing.s12),
+                              itemBuilder: (context, index) => _GuestCard(
+                                guest: _items[index],
+                                onDelete: () => _delete(_items[index]),
+                              ),
                             ),
                     ),
                   ),
+                  if (_items.isNotEmpty) _AddGuestBar(onPressed: _openAddSheet),
                 ],
               ),
+      ),
+    );
+  }
+}
+
+class _GuestCard extends StatelessWidget {
+  const _GuestCard({required this.guest, required this.onDelete});
+
+  final ExpectedGuest guest;
+  final VoidCallback onDelete;
+
+  @override
+  Widget build(BuildContext context) {
+    final (badgeBg, badgeFg, statusLabel) = _guestStatusVisual(guest);
+    return Container(
+      padding: const EdgeInsets.all(NivasaSpacing.s16),
+      decoration: BoxDecoration(
+        color: NivasaColors.white,
+        border: Border.all(color: NivasaColors.line),
+        borderRadius: BorderRadius.circular(NivasaRadius.card),
+        boxShadow: NivasaElevation.e1,
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: const BoxDecoration(
+              color: NivasaColors.primary50,
+              shape: BoxShape.circle,
+            ),
+            child: Center(
+              child: Text(
+                _initials(guest.name),
+                style: NivasaText.badge.copyWith(
+                  color: NivasaColors.primary700,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: NivasaSpacing.s12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  guest.name,
+                  style: NivasaText.h3,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: NivasaSpacing.s4),
+                Text(
+                  [
+                    formatDisplayDate(guest.visitDate),
+                    if (guest.phone != null) guest.phone!,
+                  ].join(' · '),
+                  style: NivasaText.bodySmall.copyWith(
+                    color: NivasaColors.ink500,
+                  ),
+                ),
+                const SizedBox(height: NivasaSpacing.s8),
+                // A badge next to the name overflows once its text is "Inside since
+                // 9:05 AM" rather than a single word like "Open" — its own row, so
+                // length here never fights the name for space.
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: badgeBg,
+                      borderRadius: BorderRadius.circular(NivasaRadius.pill),
+                    ),
+                    child: Text(
+                      statusLabel,
+                      style: NivasaText.badge.copyWith(color: badgeFg),
+                    ),
+                  ),
+                ),
+                if (guest.notes != null) ...[
+                  const SizedBox(height: NivasaSpacing.s8),
+                  Text(guest.notes!, style: NivasaText.body),
+                ],
+              ],
+            ),
+          ),
+          IconButton(
+            icon: Icon(Icons.delete_outline, color: NivasaColors.negativeFg),
+            tooltip: 'Delete',
+            onPressed: onDelete,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Pinned in the thumb zone instead of a floating FAB — same Column+Expanded footer
+/// pattern as this session's other redesigns (Payments/Maintenance/Documents).
+class _AddGuestBar extends StatelessWidget {
+  const _AddGuestBar({required this.onPressed});
+
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(
+        NivasaSpacing.s24,
+        NivasaSpacing.s12,
+        NivasaSpacing.s24,
+        NivasaSpacing.s24,
+      ),
+      decoration: const BoxDecoration(
+        color: NivasaColors.white,
+        border: Border(top: BorderSide(color: NivasaColors.line)),
+      ),
+      child: SizedBox(
+        height: 52,
+        child: ElevatedButton.icon(
+          onPressed: onPressed,
+          icon: const Icon(Icons.add, size: 20),
+          label: const Text('Add a guest'),
+        ),
       ),
     );
   }
@@ -220,7 +417,12 @@ class _AddGuestSheetState extends State<_AddGuestSheet> {
 
   Future<void> _pickVisitDate() async {
     final now = DateTime.now();
-    final picked = await showDatePicker(context: context, initialDate: _visitDate ?? now, firstDate: now, lastDate: now.add(const Duration(days: 365)));
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _visitDate ?? now,
+      firstDate: now,
+      lastDate: now.add(const Duration(days: 365)),
+    );
     if (picked != null) setState(() => _visitDate = picked);
   }
 
@@ -244,8 +446,12 @@ class _AddGuestSheetState extends State<_AddGuestSheet> {
         widget.token,
         name: _nameController.text.trim(),
         visitDate: visitDate,
-        phone: _phoneController.text.trim().isEmpty ? null : _phoneController.text.trim(),
-        notes: _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
+        phone: _phoneController.text.trim().isEmpty
+            ? null
+            : _phoneController.text.trim(),
+        notes: _notesController.text.trim().isEmpty
+            ? null
+            : _notesController.text.trim(),
       );
       if (!mounted) return;
       Navigator.of(context).pop(true);
@@ -261,16 +467,28 @@ class _AddGuestSheetState extends State<_AddGuestSheet> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
       child: Container(
         padding: const EdgeInsets.all(NivasaSpacing.s24),
-        decoration: const BoxDecoration(color: NivasaColors.white, borderRadius: BorderRadius.vertical(top: Radius.circular(NivasaRadius.bottomSheetTop))),
+        decoration: const BoxDecoration(
+          color: NivasaColors.white,
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(NivasaRadius.bottomSheetTop),
+          ),
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Center(
-              child: Container(width: 40, height: 4, margin: const EdgeInsets.only(bottom: NivasaSpacing.s16), color: NivasaColors.line),
+              child: Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: NivasaSpacing.s16),
+                color: NivasaColors.line,
+              ),
             ),
             Text('Add guest', style: NivasaText.h2),
             const SizedBox(height: NivasaSpacing.s16),
@@ -280,7 +498,11 @@ class _AddGuestSheetState extends State<_AddGuestSheet> {
             const SizedBox(height: NivasaSpacing.s16),
             Text('Phone (optional)', style: NivasaText.label),
             const SizedBox(height: NivasaSpacing.s8),
-            TextField(controller: _phoneController, keyboardType: TextInputType.phone, style: NivasaText.body),
+            TextField(
+              controller: _phoneController,
+              keyboardType: TextInputType.phone,
+              style: NivasaText.body,
+            ),
             const SizedBox(height: NivasaSpacing.s16),
             TextButton(
               onPressed: _submitting ? null : _pickVisitDate,
@@ -293,9 +515,19 @@ class _AddGuestSheetState extends State<_AddGuestSheet> {
             const SizedBox(height: NivasaSpacing.s8),
             Text('Notes (optional)', style: NivasaText.label),
             const SizedBox(height: NivasaSpacing.s8),
-            TextField(controller: _notesController, maxLines: 2, style: NivasaText.body, decoration: InputDecoration(errorText: _error)),
+            TextField(
+              controller: _notesController,
+              maxLines: 2,
+              style: NivasaText.body,
+              decoration: InputDecoration(errorText: _error),
+            ),
             const SizedBox(height: NivasaSpacing.s24),
-            NivasaPrimaryButton(label: 'Add', loading: _submitting, loadingLabel: 'Adding…', onPressed: _submit),
+            NivasaPrimaryButton(
+              label: 'Add',
+              loading: _submitting,
+              loadingLabel: 'Adding…',
+              onPressed: _submit,
+            ),
             const SizedBox(height: NivasaSpacing.s8),
           ],
         ),
@@ -318,7 +550,11 @@ class _ErrorState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(message, style: NivasaText.body.copyWith(color: NivasaColors.ink500), textAlign: TextAlign.center),
+            Text(
+              message,
+              style: NivasaText.body.copyWith(color: NivasaColors.ink500),
+              textAlign: TextAlign.center,
+            ),
             const SizedBox(height: NivasaSpacing.s16),
             TextButton(onPressed: onRetry, child: const Text('Try again')),
           ],

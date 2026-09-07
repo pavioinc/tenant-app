@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../core/date_utils.dart';
 import '../../core/session_store.dart';
 import '../../theme/nivasa_colors.dart';
@@ -34,13 +35,41 @@ class _MenuItem {
 /// unconnected locked-pills row (`_AlmostThereCard`) dispatches through one of these
 /// shared `_MenuItem` instances, so navigation and coming-soon handling only live once
 /// (see `_onMenuTap`).
-final _paymentsMenuItem = _MenuItem(Icons.receipt_long_outlined, 'Payments', screenBuilder: (auth) => PaymentsScreen(authRepository: auth));
-final _maintenanceMenuItem = _MenuItem(Icons.build_outlined, 'Maintenance', screenBuilder: (auth) => ComplaintsScreen(authRepository: auth));
-final _leaseMenuItem = _MenuItem(Icons.home_work_outlined, 'Lease', screenBuilder: (auth) => LeaseScreen(authRepository: auth));
-final _documentsMenuItem = _MenuItem(Icons.description_outlined, 'Documents', screenBuilder: (auth) => DocumentsScreen(authRepository: auth));
-final _guestsMenuItem = _MenuItem(Icons.person_add_alt_outlined, 'Guests', screenBuilder: (auth) => GuestsScreen(authRepository: auth));
-final _vehiclesMenuItem = _MenuItem(Icons.directions_car_outlined, 'Vehicles', screenBuilder: (auth) => VehiclesScreen(authRepository: auth));
-final _contactsMenuItem = _MenuItem(Icons.contacts_outlined, 'Contacts', screenBuilder: (auth) => ContactsScreen(authRepository: auth));
+final _paymentsMenuItem = _MenuItem(
+  Icons.receipt_long_outlined,
+  'Payments',
+  screenBuilder: (auth) => PaymentsScreen(authRepository: auth),
+);
+final _maintenanceMenuItem = _MenuItem(
+  Icons.build_outlined,
+  'Maintenance',
+  screenBuilder: (auth) => ComplaintsScreen(authRepository: auth),
+);
+final _leaseMenuItem = _MenuItem(
+  Icons.home_work_outlined,
+  'Lease',
+  screenBuilder: (auth) => LeaseScreen(authRepository: auth),
+);
+final _documentsMenuItem = _MenuItem(
+  Icons.description_outlined,
+  'Documents',
+  screenBuilder: (auth) => DocumentsScreen(authRepository: auth),
+);
+final _guestsMenuItem = _MenuItem(
+  Icons.person_add_alt_outlined,
+  'Guests',
+  screenBuilder: (auth) => GuestsScreen(authRepository: auth),
+);
+final _vehiclesMenuItem = _MenuItem(
+  Icons.directions_car_outlined,
+  'Vehicles',
+  screenBuilder: (auth) => VehiclesScreen(authRepository: auth),
+);
+final _contactsMenuItem = _MenuItem(
+  Icons.contacts_outlined,
+  'Contacts',
+  screenBuilder: (auth) => ContactsScreen(authRepository: auth),
+);
 
 /// All seven destinations, in the order the locked state's "Unlocks once you're
 /// connected" chip row lists them (see `_AlmostThereCard`) — independent of how the
@@ -82,12 +111,21 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
+String _firstName(String? fullName) {
+  if (fullName == null || fullName.trim().isEmpty) return '…';
+  return fullName.trim().split(RegExp(r'\s+')).first;
+}
+
 class _HomeScreenState extends State<HomeScreen> {
   late final AuthRepository _auth = widget.authRepository ?? AuthRepository();
-  late final PaymentsRepository _payments = widget.paymentsRepository ?? PaymentsRepository();
-  late final ComplaintsRepository _complaints = widget.complaintsRepository ?? ComplaintsRepository();
-  late final RentalRepository _rentals = widget.rentalRepository ?? RentalRepository();
-  late final DocumentsRepository _documents = widget.documentsRepository ?? DocumentsRepository();
+  late final PaymentsRepository _payments =
+      widget.paymentsRepository ?? PaymentsRepository();
+  late final ComplaintsRepository _complaints =
+      widget.complaintsRepository ?? ComplaintsRepository();
+  late final RentalRepository _rentals =
+      widget.rentalRepository ?? RentalRepository();
+  late final DocumentsRepository _documents =
+      widget.documentsRepository ?? DocumentsRepository();
 
   TenantUser? _user;
   bool _checkingConnection = false;
@@ -136,13 +174,25 @@ class _HomeScreenState extends State<HomeScreen> {
       setState(() => _user = session.user);
       if (session.user.connected) _loadSummary(session.accessToken);
       if (!silent && session.user.connected) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("You're connected to your property!")));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("You're connected to your property!")),
+        );
       } else if (!silent) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Not connected yet — check back after your manager adds you.')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Not connected yet — check back after your manager adds you.',
+            ),
+          ),
+        );
       }
     } catch (_) {
       if (!silent && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not check connection — try again')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Could not check connection — try again'),
+          ),
+        );
       }
     } finally {
       if (mounted) setState(() => _checkingConnection = false);
@@ -162,7 +212,9 @@ class _HomeScreenState extends State<HomeScreen> {
       if (!mounted) return;
       setState(() {
         _totalDue = invoices.totalDue;
-        _nextDueDate = invoices.invoices.isEmpty ? null : invoices.invoices.first.dueDate;
+        _nextDueDate = invoices.invoices.isEmpty
+            ? null
+            : invoices.invoices.first.dueDate;
       });
     } catch (_) {
       // Non-fatal — tile just renders with no subtitle.
@@ -173,7 +225,11 @@ class _HomeScreenState extends State<HomeScreen> {
     try {
       final complaints = await _complaints.list(token);
       if (!mounted) return;
-      setState(() => _openComplaints = complaints.where((c) => c.status != 'resolved').length);
+      setState(
+        () => _openComplaints = complaints
+            .where((c) => c.status != 'resolved')
+            .length,
+      );
     } catch (_) {
       // Non-fatal — see above.
     }
@@ -203,40 +259,54 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _openUserMenu() {
-    Navigator.of(context).push(MaterialPageRoute(builder: (_) => UserScreen(authRepository: _auth)));
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => UserScreen(authRepository: _auth)),
+    );
   }
 
   // Only ever called from a locked pill's would-be tap target — the connected Resident
   // Hub tiles below now navigate directly, each to its own real destination.
   void _onMenuTap(_MenuItem item) {
     if (item.screenBuilder != null) {
-      Navigator.of(context).push(MaterialPageRoute(builder: (_) => item.screenBuilder!(_auth)));
+      Navigator.of(
+        context,
+      ).push(MaterialPageRoute(builder: (_) => item.screenBuilder!(_auth)));
       return;
     }
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${item.label} is coming soon')));
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text('${item.label} is coming soon')));
   }
 
   String? get _paymentsSubtitle {
     if (_totalDue == null) return null;
     if (_totalDue == 0) return 'All paid up';
     final due = '₹${(_totalDue! / 100).toStringAsFixed(0)} due';
-    return _nextDueDate == null ? due : '$due · ${formatDisplayDate(_nextDueDate!)}';
+    return _nextDueDate == null
+        ? due
+        : '$due · ${formatDisplayDate(_nextDueDate!)}';
   }
 
   String? get _maintenanceSubtitle {
     if (_openComplaints == null) return null;
-    return _openComplaints == 0 ? 'No open requests' : '$_openComplaints open request${_openComplaints == 1 ? '' : 's'}';
+    return _openComplaints == 0
+        ? 'No open requests'
+        : '$_openComplaints open request${_openComplaints == 1 ? '' : 's'}';
   }
 
   String? get _leaseSubtitle {
     if (_leaseStatus == null) return null;
     final status = _leaseStatus![0].toUpperCase() + _leaseStatus!.substring(1);
-    return _leaseEndDate == null ? status : '$status · ends ${formatDisplayDate(_leaseEndDate!)}';
+    return _leaseEndDate == null
+        ? status
+        : '$status · ends ${formatDisplayDate(_leaseEndDate!)}';
   }
 
   String? get _documentsSubtitle {
     if (_documentCount == null) return null;
-    return _documentCount == 0 ? 'No files yet' : '$_documentCount file${_documentCount == 1 ? '' : 's'}';
+    return _documentCount == 0
+        ? 'No files yet'
+        : '$_documentCount file${_documentCount == 1 ? '' : 's'}';
   }
 
   @override
@@ -253,7 +323,12 @@ class _HomeScreenState extends State<HomeScreen> {
                 children: [
                   const NivasaLogoMark(size: 36),
                   const SizedBox(width: NivasaSpacing.s12),
-                  Text('NivasaOS', style: NivasaText.h3.copyWith(color: NivasaColors.primary800)),
+                  Text(
+                    'NivasaOS',
+                    style: NivasaText.h3.copyWith(
+                      color: NivasaColors.primary800,
+                    ),
+                  ),
                   const Spacer(),
                   // Account access lives in the "Everything else" list once connected
                   // (doc option "1a" — pulls it out of the header's far corner, TT-4);
@@ -269,12 +344,25 @@ class _HomeScreenState extends State<HomeScreen> {
                 ],
               ),
               const SizedBox(height: NivasaSpacing.s24),
-              Text('Namaskaram 🙏', style: NivasaText.body.copyWith(color: NivasaColors.ink500)),
+              Text(
+                'Namaskaram 🙏',
+                style: NivasaText.body.copyWith(color: NivasaColors.ink500),
+              ),
               const SizedBox(height: NivasaSpacing.s4),
-              Text(_user?.name ?? '…', style: NivasaText.h1),
+              // The locked state (1n) greets by first name only — "Amit", not
+              // "Amit Kumar" — since the mock's hero heading is meant to read as
+              // a single short word next to the emoji line above it.
+              Text(
+                connected ? (_user?.name ?? '…') : _firstName(_user?.name),
+                style: NivasaText.h1,
+              ),
               const SizedBox(height: NivasaSpacing.s24),
               if (!connected)
-                _AlmostThereCard(checking: _checkingConnection, onCheck: () => _checkConnection())
+                _AlmostThereCard(
+                  email: _user?.email,
+                  checking: _checkingConnection,
+                  onCheck: () => _checkConnection(),
+                )
               else ...[
                 Text('Resident Hub', style: NivasaText.label),
                 const SizedBox(height: NivasaSpacing.s12),
@@ -293,7 +381,9 @@ class _HomeScreenState extends State<HomeScreen> {
                           iconColor: NivasaColors.gold800,
                           title: 'Payments',
                           subtitle: _paymentsSubtitle,
-                          subtitleColor: _totalDue != null && _totalDue! > 0 ? NivasaColors.gold800 : null,
+                          subtitleColor: _totalDue != null && _totalDue! > 0
+                              ? NivasaColors.gold800
+                              : null,
                           onTap: () => _onMenuTap(_paymentsMenuItem),
                         ),
                       ),
@@ -363,7 +453,12 @@ class _HomeScreenState extends State<HomeScreen> {
                       showCard: false,
                       onTap: () => _onMenuTap(_contactsMenuItem),
                     ),
-                    NivasaMenuRow(icon: Icons.person_outline, label: 'Your account', showCard: false, onTap: _openUserMenu),
+                    NivasaMenuRow(
+                      icon: Icons.person_outline,
+                      label: 'Your account',
+                      showCard: false,
+                      onTap: _openUserMenu,
+                    ),
                   ],
                 ),
               ],
@@ -381,8 +476,13 @@ class _HomeScreenState extends State<HomeScreen> {
 /// ~2.3:1, below WCAG AA). The locked areas render as quiet chips, legible at full
 /// opacity, instead of six disabled buttons each inviting its own SnackBar.
 class _AlmostThereCard extends StatelessWidget {
-  const _AlmostThereCard({required this.checking, required this.onCheck});
+  const _AlmostThereCard({
+    required this.email,
+    required this.checking,
+    required this.onCheck,
+  });
 
+  final String? email;
   final bool checking;
   final VoidCallback onCheck;
 
@@ -402,15 +502,43 @@ class _AlmostThereCard extends StatelessWidget {
           Container(
             width: 52,
             height: 52,
-            decoration: const BoxDecoration(color: NivasaColors.infoTint, shape: BoxShape.circle),
-            child: Icon(Icons.link, size: 26, color: NivasaColors.infoTextOnTint),
+            decoration: const BoxDecoration(
+              color: NivasaColors.infoTint,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.link,
+              size: 26,
+              color: NivasaColors.infoTextOnTint,
+            ),
           ),
           const SizedBox(height: NivasaSpacing.s16),
           Text('Almost there', style: NivasaText.h3),
           const SizedBox(height: NivasaSpacing.s8),
-          Text(
-            "Your account is ready. Ask your property manager to add you using the email you signed up with — the moment they do, everything here unlocks on its own. There's no code to enter.",
-            style: NivasaText.body,
+          Text.rich(
+            TextSpan(
+              style: NivasaText.body,
+              children: [
+                const TextSpan(
+                  text:
+                      'Your account is ready. Ask your property manager to add ',
+                ),
+                if (email != null)
+                  TextSpan(
+                    text: email,
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  )
+                else
+                  const TextSpan(
+                    text: 'you using the email you signed up with',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                const TextSpan(
+                  text:
+                      " to your room — the moment they do, everything here unlocks on its own. There's no code to enter.",
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: NivasaSpacing.s16),
           SizedBox(
@@ -418,15 +546,46 @@ class _AlmostThereCard extends StatelessWidget {
             child: OutlinedButton.icon(
               onPressed: checking ? null : onCheck,
               icon: checking
-                  ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
                   : const Icon(Icons.refresh, size: 19),
               label: const Text('Check again'),
             ),
           ),
+          if (email != null) ...[
+            const SizedBox(height: NivasaSpacing.s8),
+            SizedBox(
+              width: double.infinity,
+              height: 44,
+              child: TextButton(
+                onPressed: () async {
+                  final messenger = ScaffoldMessenger.maybeOf(context);
+                  await Clipboard.setData(ClipboardData(text: email!));
+                  messenger?.showSnackBar(
+                    const SnackBar(content: Text('Email address copied')),
+                  );
+                },
+                child: Text(
+                  'Copy my email address',
+                  style: NivasaText.body.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: NivasaColors.ink500,
+                  ),
+                ),
+              ),
+            ),
+          ],
           const SizedBox(height: NivasaSpacing.s20),
           Text(
             'UNLOCKS ONCE YOU\'RE CONNECTED',
-            style: NivasaText.caption.copyWith(color: NivasaColors.ink500, fontWeight: FontWeight.w600, letterSpacing: 1.3),
+            style: NivasaText.caption.copyWith(
+              color: NivasaColors.ink500,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 1.3,
+            ),
           ),
           const SizedBox(height: NivasaSpacing.s12),
           Wrap(
@@ -448,14 +607,25 @@ class _LockedPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: NivasaSpacing.s12, vertical: NivasaSpacing.s8),
-      decoration: BoxDecoration(color: NivasaColors.offlineTint, borderRadius: BorderRadius.circular(NivasaRadius.pill)),
+      padding: const EdgeInsets.symmetric(
+        horizontal: NivasaSpacing.s12,
+        vertical: NivasaSpacing.s8,
+      ),
+      decoration: BoxDecoration(
+        color: NivasaColors.offlineTint,
+        borderRadius: BorderRadius.circular(NivasaRadius.pill),
+      ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(item.icon, size: 15, color: NivasaColors.offlineTextOnTint),
           const SizedBox(width: NivasaSpacing.s4),
-          Text(item.label, style: NivasaText.bodySmall.copyWith(color: NivasaColors.offlineTextOnTint)),
+          Text(
+            item.label,
+            style: NivasaText.bodySmall.copyWith(
+              color: NivasaColors.offlineTextOnTint,
+            ),
+          ),
         ],
       ),
     );
@@ -509,13 +679,18 @@ class _SummaryTile extends StatelessWidget {
               child: Icon(icon, size: 19, color: iconColor),
             ),
             const Spacer(),
-            Text(title, style: NivasaText.body.copyWith(fontWeight: FontWeight.w600)),
+            Text(
+              title,
+              style: NivasaText.body.copyWith(fontWeight: FontWeight.w600),
+            ),
             const SizedBox(height: NivasaSpacing.s4),
             Text(
               subtitle ?? '…',
               style: NivasaText.caption.copyWith(
                 color: subtitleColor ?? NivasaColors.ink500,
-                fontWeight: subtitleColor != null ? FontWeight.w700 : FontWeight.w500,
+                fontWeight: subtitleColor != null
+                    ? FontWeight.w700
+                    : FontWeight.w500,
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,

@@ -6,12 +6,44 @@ import '../../core/url_opener.dart';
 import '../../theme/nivasa_colors.dart';
 import '../../theme/nivasa_spacing.dart';
 import '../../theme/nivasa_text_styles.dart';
+import '../../widgets/nivasa_skeleton.dart';
 import '../../widgets/nivasa_stale_banner.dart';
 import '../auth/auth_repository.dart';
 import 'contacts_repository.dart';
 
+const _avatarColors = [
+  NivasaColors.primary700,
+  NivasaColors.primary600,
+  NivasaColors.primary500,
+];
+
+String _initials(String name) {
+  final parts = name
+      .trim()
+      .split(RegExp(r'\s+'))
+      .where((p) => p.isNotEmpty)
+      .toList();
+  if (parts.isEmpty) return '?';
+  if (parts.length == 1) return parts.first.substring(0, 1).toUpperCase();
+  return (parts.first.substring(0, 1) + parts.last.substring(0, 1))
+      .toUpperCase();
+}
+
+/// Redesigned (doc option "1h") — an avatar + Call/Email as real outlined buttons
+/// instead of the small inline tap-rows this screen already had (an earlier pass had
+/// already fixed the "Dead data" finding — phone/email used to be plain, unstyled
+/// `Text` — this redesign is the visual weight a "reach a human" screen's one real
+/// action deserves). A contact with only one reachable channel (no email on file, say)
+/// gets a single compact icon button inline with their name instead of a full-width row
+/// that would just be half-empty.
 class ContactsScreen extends StatefulWidget {
-  const ContactsScreen({super.key, this.authRepository, this.contactsRepository, this.cacheStore, this.urlOpener});
+  const ContactsScreen({
+    super.key,
+    this.authRepository,
+    this.contactsRepository,
+    this.cacheStore,
+    this.urlOpener,
+  });
 
   final AuthRepository? authRepository;
   final ContactsRepository? contactsRepository;
@@ -24,8 +56,10 @@ class ContactsScreen extends StatefulWidget {
 
 class _ContactsScreenState extends State<ContactsScreen> {
   late final AuthRepository _auth = widget.authRepository ?? AuthRepository();
-  late final ContactsRepository _contacts = widget.contactsRepository ?? ContactsRepository();
-  late final CacheStore _cache = widget.cacheStore ?? const SharedPreferencesCacheStore();
+  late final ContactsRepository _contacts =
+      widget.contactsRepository ?? ContactsRepository();
+  late final CacheStore _cache =
+      widget.cacheStore ?? const SharedPreferencesCacheStore();
   late final UrlOpener _urlOpener = widget.urlOpener ?? const RealUrlOpener();
 
   List<Contact> _items = [];
@@ -44,15 +78,21 @@ class _ContactsScreenState extends State<ContactsScreen> {
     try {
       final opened = await _urlOpener.open(url);
       if (!mounted || opened) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(failureMessage)));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(failureMessage)));
     } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(failureMessage)));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(failureMessage)));
     }
   }
 
-  void _call(String phone) => _launch('tel:$phone', 'No phone app found — call $phone directly');
-  void _email(String email) => _launch('mailto:$email', 'No email app found — write to $email directly');
+  void _call(String phone) =>
+      _launch('tel:$phone', 'No phone app found — call $phone directly');
+  void _email(String email) =>
+      _launch('mailto:$email', 'No email app found — write to $email directly');
 
   Future<void> _load() async {
     setState(() {
@@ -67,7 +107,9 @@ class _ContactsScreenState extends State<ContactsScreen> {
         cacheKey: 'contacts',
         fetchNetwork: () => _contacts.list(session.accessToken),
         toJson: (items) => items.map((c) => c.toJson()).toList(),
-        fromJson: (json) => (json as List).map((c) => Contact.fromJson(c as Map<String, dynamic>)).toList(),
+        fromJson: (json) => (json as List)
+            .map((c) => Contact.fromJson(c as Map<String, dynamic>))
+            .toList(),
       );
       if (!mounted) return;
       setState(() {
@@ -78,7 +120,9 @@ class _ContactsScreenState extends State<ContactsScreen> {
     } on ApiException catch (e) {
       setState(() => _error = e.message);
     } catch (_) {
-      setState(() => _error = "Could not load your property's contacts — try again");
+      setState(
+        () => _error = "Could not load your property's contacts — try again",
+      );
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -90,15 +134,23 @@ class _ContactsScreenState extends State<ContactsScreen> {
       appBar: AppBar(title: const Text('Contacts')),
       body: SafeArea(
         child: _loading
-            ? const Center(child: CircularProgressIndicator())
+            ? const NivasaSkeletonList()
             : _error != null
             ? _ErrorState(message: _error!, onRetry: _load)
             : Column(
                 children: [
                   if (_stale)
                     Padding(
-                      padding: const EdgeInsets.fromLTRB(NivasaSpacing.s24, NivasaSpacing.s24, NivasaSpacing.s24, 0),
-                      child: NivasaStaleBanner(lastSyncedAt: _lastSyncedAt, onRetry: _load),
+                      padding: const EdgeInsets.fromLTRB(
+                        NivasaSpacing.s24,
+                        NivasaSpacing.s24,
+                        NivasaSpacing.s24,
+                        0,
+                      ),
+                      child: NivasaStaleBanner(
+                        lastSyncedAt: _lastSyncedAt,
+                        onRetry: _load,
+                      ),
                     ),
                   Expanded(
                     child: RefreshIndicator(
@@ -107,16 +159,30 @@ class _ContactsScreenState extends State<ContactsScreen> {
                           ? ListView(
                               children: [
                                 Padding(
-                                  padding: const EdgeInsets.all(NivasaSpacing.s24),
-                                  child: Text('No contacts on file yet', style: NivasaText.body.copyWith(color: NivasaColors.ink500)),
+                                  padding: const EdgeInsets.all(
+                                    NivasaSpacing.s24,
+                                  ),
+                                  child: Text(
+                                    'No contacts on file yet',
+                                    style: NivasaText.body.copyWith(
+                                      color: NivasaColors.ink500,
+                                    ),
+                                  ),
                                 ),
                               ],
                             )
                           : ListView.separated(
                               padding: const EdgeInsets.all(NivasaSpacing.s24),
                               itemCount: _items.length,
-                              separatorBuilder: (_, _) => const SizedBox(height: NivasaSpacing.s12),
-                              itemBuilder: (context, index) => _ContactCard(contact: _items[index], onCall: _call, onEmail: _email),
+                              separatorBuilder: (_, _) =>
+                                  const SizedBox(height: NivasaSpacing.s12),
+                              itemBuilder: (context, index) => _ContactCard(
+                                contact: _items[index],
+                                avatarColor:
+                                    _avatarColors[index % _avatarColors.length],
+                                onCall: _call,
+                                onEmail: _email,
+                              ),
                             ),
                     ),
                   ),
@@ -128,39 +194,110 @@ class _ContactsScreenState extends State<ContactsScreen> {
 }
 
 class _ContactCard extends StatelessWidget {
-  const _ContactCard({required this.contact, required this.onCall, required this.onEmail});
+  const _ContactCard({
+    required this.contact,
+    required this.avatarColor,
+    required this.onCall,
+    required this.onEmail,
+  });
+
   final Contact contact;
+  final Color avatarColor;
   final ValueChanged<String> onCall;
   final ValueChanged<String> onEmail;
 
   @override
   Widget build(BuildContext context) {
+    final hasPhone = contact.phone != null;
+    final hasEmail = contact.email != null;
     return Container(
       padding: const EdgeInsets.all(NivasaSpacing.s16),
-      decoration: BoxDecoration(color: NivasaColors.white, border: Border.all(color: NivasaColors.line), borderRadius: BorderRadius.circular(NivasaRadius.card)),
+      decoration: BoxDecoration(
+        color: NivasaColors.white,
+        border: Border.all(color: NivasaColors.line),
+        borderRadius: BorderRadius.circular(NivasaRadius.card),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Expanded(child: Text(contact.name, style: NivasaText.h3)),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(color: NivasaColors.primary50, borderRadius: BorderRadius.circular(NivasaRadius.pill)),
-                child: Text(
-                  contactRoleLabel(contact.role),
-                  style: NivasaText.badge.copyWith(color: NivasaColors.primary700),
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: avatarColor,
+                  shape: BoxShape.circle,
+                ),
+                child: Center(
+                  child: Text(
+                    _initials(contact.name),
+                    style: NivasaText.body.copyWith(
+                      color: NivasaColors.white,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ),
               ),
+              const SizedBox(width: NivasaSpacing.s12 + 1),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      contact.name,
+                      style: NivasaText.body.copyWith(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 16,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      contactRoleLabel(contact.role),
+                      style: NivasaText.bodySmall.copyWith(
+                        color: NivasaColors.ink500,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+              // Exactly one reachable channel — a single icon button inline rather
+              // than a full-width row for the one that's missing.
+              if (hasPhone && !hasEmail)
+                _OutlinedIconAction(
+                  icon: Icons.call_outlined,
+                  onTap: () => onCall(contact.phone!),
+                ),
+              if (hasEmail && !hasPhone)
+                _OutlinedIconAction(
+                  icon: Icons.email_outlined,
+                  onTap: () => onEmail(contact.email!),
+                ),
             ],
           ),
-          if (contact.phone != null) ...[
-            const SizedBox(height: NivasaSpacing.s8),
-            _TapToContactRow(icon: Icons.call_outlined, label: contact.phone!, onTap: () => onCall(contact.phone!)),
-          ],
-          if (contact.email != null) ...[
-            const SizedBox(height: NivasaSpacing.s4),
-            _TapToContactRow(icon: Icons.email_outlined, label: contact.email!, onTap: () => onEmail(contact.email!)),
+          if (hasPhone && hasEmail) ...[
+            const SizedBox(height: NivasaSpacing.s16 - 2),
+            Row(
+              children: [
+                Expanded(
+                  child: _OutlinedLabelAction(
+                    icon: Icons.call_outlined,
+                    label: 'Call',
+                    onTap: () => onCall(contact.phone!),
+                  ),
+                ),
+                const SizedBox(width: NivasaSpacing.s8 + 2),
+                Expanded(
+                  child: _OutlinedLabelAction(
+                    icon: Icons.email_outlined,
+                    label: 'Email',
+                    onTap: () => onEmail(contact.email!),
+                  ),
+                ),
+              ],
+            ),
           ],
         ],
       ),
@@ -168,11 +305,12 @@ class _ContactCard extends StatelessWidget {
   }
 }
 
-/// Phone/email were plain, unstyled `Text` before this — a screen whose only purpose is
-/// "reach a human" made you copy the number out by hand and dial it yourself. `tel:`/
-/// `mailto:` via the same UrlOpener seam AppFeedbackScreen already uses for `mailto:`.
-class _TapToContactRow extends StatelessWidget {
-  const _TapToContactRow({required this.icon, required this.label, required this.onTap});
+class _OutlinedLabelAction extends StatelessWidget {
+  const _OutlinedLabelAction({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
 
   final IconData icon;
   final String label;
@@ -182,17 +320,53 @@ class _TapToContactRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(NivasaRadius.sm),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: NivasaSpacing.s4),
+      borderRadius: BorderRadius.circular(NivasaRadius.button),
+      child: Container(
+        height: 46,
+        decoration: BoxDecoration(
+          border: Border.all(color: NivasaColors.primary700, width: 1.5),
+          borderRadius: BorderRadius.circular(NivasaRadius.button),
+        ),
         child: Row(
-          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 16, color: NivasaColors.primary700),
-            const SizedBox(width: NivasaSpacing.s8),
-            Text(label, style: NivasaText.body.copyWith(color: NivasaColors.primary700)),
+            Icon(icon, size: 18, color: NivasaColors.primary700),
+            const SizedBox(width: NivasaSpacing.s4 + 3),
+            Text(
+              label,
+              style: NivasaText.body.copyWith(
+                color: NivasaColors.primary700,
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
+              ),
+            ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _OutlinedIconAction extends StatelessWidget {
+  const _OutlinedIconAction({required this.icon, required this.onTap});
+
+  final IconData icon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(NivasaRadius.button),
+      child: Container(
+        width: 46,
+        height: 46,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          border: Border.all(color: NivasaColors.primary700, width: 1.5),
+          borderRadius: BorderRadius.circular(NivasaRadius.button),
+        ),
+        child: Icon(icon, size: 19, color: NivasaColors.primary700),
       ),
     );
   }
@@ -212,7 +386,11 @@ class _ErrorState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(message, style: NivasaText.body.copyWith(color: NivasaColors.ink500), textAlign: TextAlign.center),
+            Text(
+              message,
+              style: NivasaText.body.copyWith(color: NivasaColors.ink500),
+              textAlign: TextAlign.center,
+            ),
             const SizedBox(height: NivasaSpacing.s16),
             TextButton(onPressed: onRetry, child: const Text('Try again')),
           ],

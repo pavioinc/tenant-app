@@ -47,16 +47,23 @@ class _InMemoryCacheStore implements CacheStore {
   Future<void> delete(String key) async => _values.remove(key);
 }
 
-http.Response _json(Map<String, dynamic> body, int status) =>
-    http.Response(jsonEncode(body), status, headers: {'content-type': 'application/json'});
+http.Response _json(Map<String, dynamic> body, int status) => http.Response(
+  jsonEncode(body),
+  status,
+  headers: {'content-type': 'application/json'},
+);
 
-Widget _wrap(Widget child) => MaterialApp(theme: NivasaTheme.light(), home: child);
+Widget _wrap(Widget child) =>
+    MaterialApp(theme: NivasaTheme.light(), home: child);
 
 Future<AuthRepository> _connectedAuth() async {
   final store = _InMemorySecureStore();
   await store.write('nivasaos.access_token', 'access-token');
   await store.write('nivasaos.refresh_token', 'refresh-token');
-  await store.write('nivasaos.access_token_expires_at', DateTime.now().add(const Duration(minutes: 30)).toIso8601String());
+  await store.write(
+    'nivasaos.access_token_expires_at',
+    DateTime.now().add(const Duration(minutes: 30)).toIso8601String(),
+  );
   await store.write(
     'nivasaos.user',
     jsonEncode({
@@ -81,7 +88,9 @@ void main() {
       _wrap(
         ContactsScreen(
           authRepository: auth,
-          contactsRepository: ContactsRepository(apiClient: ApiClient(httpClient: client)),
+          contactsRepository: ContactsRepository(
+            apiClient: ApiClient(httpClient: client),
+          ),
           cacheStore: _InMemoryCacheStore(),
         ),
       ),
@@ -91,42 +100,105 @@ void main() {
     expect(find.text('No contacts on file yet'), findsOneWidget);
   });
 
-  testWidgets('lists the org\'s managers and owners', (tester) async {
-    final auth = await _connectedAuth();
-    final client = MockClient(
-      (request) async => _json({
-        'contacts': [
-          {'name': 'Asha Manager', 'email': 'asha@example.com', 'phone': '+919876500000', 'role': 'manager'},
-        ],
-      }, 200),
-    );
+  testWidgets(
+    'lists a manager with both Call and Email actions and an avatar (1h mock)',
+    (tester) async {
+      final auth = await _connectedAuth();
+      final client = MockClient(
+        (request) async => _json({
+          'contacts': [
+            {
+              'name': 'Ravi Menon',
+              'email': 'ravi@example.com',
+              'phone': '+919876500000',
+              'role': 'manager',
+            },
+          ],
+        }, 200),
+      );
 
-    await tester.pumpWidget(
-      _wrap(
-        ContactsScreen(
-          authRepository: auth,
-          contactsRepository: ContactsRepository(apiClient: ApiClient(httpClient: client)),
-          cacheStore: _InMemoryCacheStore(),
+      await tester.pumpWidget(
+        _wrap(
+          ContactsScreen(
+            authRepository: auth,
+            contactsRepository: ContactsRepository(
+              apiClient: ApiClient(httpClient: client),
+            ),
+            cacheStore: _InMemoryCacheStore(),
+          ),
         ),
-      ),
-    );
-    await tester.pumpAndSettle();
+      );
+      await tester.pumpAndSettle();
 
-    expect(find.text('Asha Manager'), findsOneWidget);
-    expect(find.text('Manager'), findsOneWidget);
-    expect(find.text('+919876500000'), findsOneWidget);
-    expect(find.text('asha@example.com'), findsOneWidget);
-  });
+      expect(find.text('Ravi Menon'), findsOneWidget);
+      expect(find.text('Property manager'), findsOneWidget);
+      expect(find.text('RM'), findsOneWidget); // avatar initials
+      expect(find.text('Call'), findsOneWidget);
+      expect(find.text('Email'), findsOneWidget);
+      // Raw phone/email no longer printed as text — the buttons are the affordance.
+      expect(find.text('+919876500000'), findsNothing);
+      expect(find.text('ravi@example.com'), findsNothing);
+    },
+  );
+
+  testWidgets(
+    'a contact with only a phone gets a single compact icon button, not an Email row',
+    (tester) async {
+      final auth = await _connectedAuth();
+      final client = MockClient(
+        (request) async => _json({
+          'contacts': [
+            {
+              'name': 'Anitha K',
+              'email': null,
+              'phone': '+919895077410',
+              'role': 'owner',
+            },
+          ],
+        }, 200),
+      );
+
+      await tester.pumpWidget(
+        _wrap(
+          ContactsScreen(
+            authRepository: auth,
+            contactsRepository: ContactsRepository(
+              apiClient: ApiClient(httpClient: client),
+            ),
+            cacheStore: _InMemoryCacheStore(),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Anitha K'), findsOneWidget);
+      expect(find.text('Owner'), findsOneWidget);
+      expect(find.text('Call'), findsNothing);
+      expect(find.text('Email'), findsNothing);
+      expect(find.byIcon(Icons.call_outlined), findsOneWidget);
+      expect(find.byIcon(Icons.email_outlined), findsNothing);
+
+      await tester.tap(find.byIcon(Icons.call_outlined));
+      await tester.pumpAndSettle();
+    },
+  );
 
   testWidgets('shows an error state when the fetch fails', (tester) async {
     final auth = await _connectedAuth();
-    final client = MockClient((request) async => _json({'error': 'not_found', 'message': 'not connected to a property yet'}, 404));
+    final client = MockClient(
+      (request) async => _json({
+        'error': 'not_found',
+        'message': 'not connected to a property yet',
+      }, 404),
+    );
 
     await tester.pumpWidget(
       _wrap(
         ContactsScreen(
           authRepository: auth,
-          contactsRepository: ContactsRepository(apiClient: ApiClient(httpClient: client)),
+          contactsRepository: ContactsRepository(
+            apiClient: ApiClient(httpClient: client),
+          ),
           cacheStore: _InMemoryCacheStore(),
         ),
       ),
@@ -137,25 +209,36 @@ void main() {
     expect(find.text('Try again'), findsOneWidget);
   });
 
-  testWidgets('shows cached data with a stale banner when offline', (tester) async {
+  testWidgets('shows cached data with a stale banner when offline', (
+    tester,
+  ) async {
     final auth = await _connectedAuth();
     final cache = _InMemoryCacheStore();
     await cache.write(
       'contacts',
       jsonEncode({
         'data': [
-          {'name': 'Asha Manager', 'email': 'asha@example.com', 'phone': '+919876500000', 'role': 'manager'},
+          {
+            'name': 'Asha Manager',
+            'email': 'asha@example.com',
+            'phone': '+919876500000',
+            'role': 'manager',
+          },
         ],
         'cached_at': DateTime(2026, 8, 1, 9, 15).toIso8601String(),
       }),
     );
-    final client = MockClient((request) async => throw const SocketException('no route to host'));
+    final client = MockClient(
+      (request) async => throw const SocketException('no route to host'),
+    );
 
     await tester.pumpWidget(
       _wrap(
         ContactsScreen(
           authRepository: auth,
-          contactsRepository: ContactsRepository(apiClient: ApiClient(httpClient: client)),
+          contactsRepository: ContactsRepository(
+            apiClient: ApiClient(httpClient: client),
+          ),
           cacheStore: cache,
         ),
       ),
@@ -166,12 +249,17 @@ void main() {
     expect(find.textContaining('Showing saved data from'), findsOneWidget);
   });
 
-  testWidgets('tapping the phone number opens a tel: link', (tester) async {
+  testWidgets('tapping Call opens a tel: link', (tester) async {
     final auth = await _connectedAuth();
     final client = MockClient(
       (request) async => _json({
         'contacts': [
-          {'name': 'Asha Manager', 'email': 'asha@example.com', 'phone': '+919876500000', 'role': 'manager'},
+          {
+            'name': 'Asha Manager',
+            'email': 'asha@example.com',
+            'phone': '+919876500000',
+            'role': 'manager',
+          },
         ],
       }, 200),
     );
@@ -181,7 +269,9 @@ void main() {
       _wrap(
         ContactsScreen(
           authRepository: auth,
-          contactsRepository: ContactsRepository(apiClient: ApiClient(httpClient: client)),
+          contactsRepository: ContactsRepository(
+            apiClient: ApiClient(httpClient: client),
+          ),
           cacheStore: _InMemoryCacheStore(),
           urlOpener: opener,
         ),
@@ -189,39 +279,49 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('+919876500000'));
+    await tester.tap(find.text('Call'));
     await tester.pumpAndSettle();
 
     expect(opener.lastUrl, 'tel:+919876500000');
   });
 
-  testWidgets('tapping the email opens a mailto: link, with a fallback message when nothing handles it', (tester) async {
-    final auth = await _connectedAuth();
-    final client = MockClient(
-      (request) async => _json({
-        'contacts': [
-          {'name': 'Asha Manager', 'email': 'asha@example.com', 'phone': '+919876500000', 'role': 'manager'},
-        ],
-      }, 200),
-    );
-    final opener = _FakeUrlOpener(result: false);
+  testWidgets(
+    'tapping Email opens a mailto: link, with a fallback message when nothing handles it',
+    (tester) async {
+      final auth = await _connectedAuth();
+      final client = MockClient(
+        (request) async => _json({
+          'contacts': [
+            {
+              'name': 'Asha Manager',
+              'email': 'asha@example.com',
+              'phone': '+919876500000',
+              'role': 'manager',
+            },
+          ],
+        }, 200),
+      );
+      final opener = _FakeUrlOpener(result: false);
 
-    await tester.pumpWidget(
-      _wrap(
-        ContactsScreen(
-          authRepository: auth,
-          contactsRepository: ContactsRepository(apiClient: ApiClient(httpClient: client)),
-          cacheStore: _InMemoryCacheStore(),
-          urlOpener: opener,
+      await tester.pumpWidget(
+        _wrap(
+          ContactsScreen(
+            authRepository: auth,
+            contactsRepository: ContactsRepository(
+              apiClient: ApiClient(httpClient: client),
+            ),
+            cacheStore: _InMemoryCacheStore(),
+            urlOpener: opener,
+          ),
         ),
-      ),
-    );
-    await tester.pumpAndSettle();
+      );
+      await tester.pumpAndSettle();
 
-    await tester.tap(find.text('asha@example.com'));
-    await tester.pumpAndSettle();
+      await tester.tap(find.text('Email'));
+      await tester.pumpAndSettle();
 
-    expect(opener.lastUrl, 'mailto:asha@example.com');
-    expect(find.textContaining('No email app found'), findsOneWidget);
-  });
+      expect(opener.lastUrl, 'mailto:asha@example.com');
+      expect(find.textContaining('No email app found'), findsOneWidget);
+    },
+  );
 }

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
@@ -15,6 +16,7 @@ import 'package:nivasaos_tenant_app/features/auth/auth_repository.dart';
 import 'package:nivasaos_tenant_app/features/documents/documents_repository.dart';
 import 'package:nivasaos_tenant_app/features/documents/documents_screen.dart';
 import 'package:nivasaos_tenant_app/theme/nivasa_theme.dart';
+import 'package:nivasaos_tenant_app/widgets/nivasa_skeleton.dart';
 
 class _InMemorySecureStore implements SecureStore {
   final _values = <String, String>{};
@@ -107,6 +109,39 @@ Future<void> _tapMenuAction(WidgetTester tester, String label) async {
 }
 
 void main() {
+  testWidgets(
+    'shows a shimmer list skeleton while loading, not a bare spinner (1l mock)',
+    (tester) async {
+      final auth = await _connectedAuth();
+      final gate = Completer<void>();
+      final client = MockClient((request) async {
+        await gate.future;
+        return _json({'documents': []}, 200);
+      });
+
+      await tester.pumpWidget(
+        _wrap(
+          DocumentsScreen(
+            authRepository: auth,
+            documentsRepository: DocumentsRepository(
+              apiClient: ApiClient(httpClient: client),
+            ),
+            cacheStore: _InMemoryCacheStore(),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.byType(NivasaSkeletonListTile), findsWidgets);
+      expect(find.byType(CircularProgressIndicator), findsNothing);
+
+      gate.complete();
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('No documents yet'), findsOneWidget);
+    },
+  );
+
   testWidgets('shows an empty state with no documents', (tester) async {
     final auth = await _connectedAuth();
     final client = MockClient((request) async => _json({'documents': []}, 200));

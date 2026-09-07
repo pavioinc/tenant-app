@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
@@ -39,6 +40,7 @@ Widget _wrap(Widget child) =>
 
 Future<_InMemorySecureStore> _storeWithSession({
   required bool connected,
+  String? email,
 }) async {
   final store = _InMemorySecureStore();
   await store.write('nivasaos.access_token', 'access-token');
@@ -54,6 +56,7 @@ Future<_InMemorySecureStore> _storeWithSession({
       'name': 'Amit Kumar',
       'role': 'tenant',
       'connected': connected,
+      if (email != null) 'email': email,
       if (connected) 'org_id': 'org-1',
       if (connected) 'property_id': 'prop-1',
       if (connected) 'tenant_id': 'tenant-1',
@@ -120,6 +123,74 @@ void main() {
       expect(find.text('Pay Rent'), findsNothing);
       expect(find.byType(GridView), findsNothing);
       expect(find.byIcon(Icons.lock_outline), findsNothing);
+    },
+  );
+
+  testWidgets(
+    'the almost-there card (1n mock) greets by first name and bolds the real email, with a working copy action',
+    (tester) async {
+      _useTallSurface(tester);
+      final store = await _storeWithSession(
+        connected: false,
+        email: 'amit@example.com',
+      );
+      final client = MockClient((request) async {
+        if (request.url.path == '/api/auth/v1/refresh') {
+          return _json({
+            'access_token': 'new-access',
+            'refresh_token': 'new-refresh',
+            'expires_at': DateTime.now()
+                .add(const Duration(minutes: 30))
+                .toIso8601String(),
+          }, 200);
+        }
+        if (request.url.path == '/api/auth/v1/tenant/me') {
+          return _json({
+            'user_id': 'account-1',
+            'name': 'Amit Kumar',
+            'email': 'amit@example.com',
+            'role': 'tenant',
+            'connected': false,
+          }, 200);
+        }
+        throw StateError('unexpected request: ${request.url.path}');
+      });
+      final repo = AuthRepository(
+        apiClient: ApiClient(httpClient: client),
+        sessionStore: SessionStore(storage: store),
+      );
+
+      String? copiedText;
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        (call) async {
+          if (call.method == 'Clipboard.setData') {
+            copiedText = (call.arguments as Map)['text'] as String;
+          }
+          return null;
+        },
+      );
+      addTearDown(
+        () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          SystemChannels.platform,
+          null,
+        ),
+      );
+
+      await tester.pumpWidget(_wrap(HomeScreen(authRepository: repo)));
+      await tester.pumpAndSettle();
+
+      // First-name-only greeting in the locked state, not the full "Amit Kumar".
+      expect(find.text('Amit'), findsOneWidget);
+      expect(find.text('Amit Kumar'), findsNothing);
+      expect(find.textContaining('amit@example.com'), findsOneWidget);
+      expect(find.text('Copy my email address'), findsOneWidget);
+
+      await tester.tap(find.text('Copy my email address'));
+      await tester.pumpAndSettle();
+
+      expect(copiedText, 'amit@example.com');
+      expect(find.text('Email address copied'), findsOneWidget);
     },
   );
 

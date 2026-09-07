@@ -14,7 +14,8 @@ class FlutterSecureStore implements SecureStore {
   final FlutterSecureStorage _storage;
 
   @override
-  Future<void> write(String key, String value) => _storage.write(key: key, value: value);
+  Future<void> write(String key, String value) =>
+      _storage.write(key: key, value: value);
   @override
   Future<String?> read(String key) => _storage.read(key: key);
   @override
@@ -31,6 +32,7 @@ class TenantUser {
     required this.name,
     required this.role,
     required this.connected,
+    this.email,
     this.orgId,
     this.propertyId,
     this.tenantId,
@@ -40,6 +42,7 @@ class TenantUser {
   final String name;
   final String role;
   final bool connected;
+  final String? email;
   final String? orgId;
   final String? propertyId;
   final String? tenantId;
@@ -49,6 +52,7 @@ class TenantUser {
     'name': name,
     'role': role,
     'connected': connected,
+    if (email != null) 'email': email,
     if (orgId != null) 'org_id': orgId,
     if (propertyId != null) 'property_id': propertyId,
     if (tenantId != null) 'tenant_id': tenantId,
@@ -59,6 +63,7 @@ class TenantUser {
     name: json['name'] as String,
     role: json['role'] as String,
     connected: json['connected'] as bool? ?? false,
+    email: json['email'] as String?,
     orgId: json['org_id'] as String?,
     propertyId: json['property_id'] as String?,
     tenantId: json['tenant_id'] as String?,
@@ -66,11 +71,17 @@ class TenantUser {
 }
 
 class Session {
-  const Session({required this.accessToken, required this.refreshToken, required this.user, this.accessTokenExpiresAt});
+  const Session({
+    required this.accessToken,
+    required this.refreshToken,
+    required this.user,
+    this.accessTokenExpiresAt,
+  });
 
   final String accessToken;
   final String refreshToken;
   final TenantUser user;
+
   /// Null for sessions saved before this field existed — treated as "unknown, refresh
   /// to be safe" by AuthRepository.currentSession(), not as "definitely still valid".
   final DateTime? accessTokenExpiresAt;
@@ -81,7 +92,8 @@ class Session {
 /// plain-text storage on the owner-dashboard side (there it's localStorage, the browser's
 /// closest equivalent boundary; here it's the OS-backed secure store).
 class SessionStore {
-  SessionStore({SecureStore? storage}) : _storage = storage ?? const FlutterSecureStore();
+  SessionStore({SecureStore? storage})
+    : _storage = storage ?? const FlutterSecureStore();
 
   final SecureStore _storage;
 
@@ -95,7 +107,10 @@ class SessionStore {
     await _storage.write(_refreshTokenKey, session.refreshToken);
     await _storage.write(_userKey, jsonEncode(session.user.toJson()));
     if (session.accessTokenExpiresAt != null) {
-      await _storage.write(_accessTokenExpiresAtKey, session.accessTokenExpiresAt!.toIso8601String());
+      await _storage.write(
+        _accessTokenExpiresAtKey,
+        session.accessTokenExpiresAt!.toIso8601String(),
+      );
     } else {
       await _storage.delete(_accessTokenExpiresAtKey);
     }
@@ -105,13 +120,16 @@ class SessionStore {
     final accessToken = await _storage.read(_accessTokenKey);
     final refreshToken = await _storage.read(_refreshTokenKey);
     final userJson = await _storage.read(_userKey);
-    if (accessToken == null || refreshToken == null || userJson == null) return null;
+    if (accessToken == null || refreshToken == null || userJson == null)
+      return null;
     final expiresAtRaw = await _storage.read(_accessTokenExpiresAtKey);
     return Session(
       accessToken: accessToken,
       refreshToken: refreshToken,
       user: TenantUser.fromJson(jsonDecode(userJson) as Map<String, dynamic>),
-      accessTokenExpiresAt: expiresAtRaw != null ? DateTime.parse(expiresAtRaw) : null,
+      accessTokenExpiresAt: expiresAtRaw != null
+          ? DateTime.parse(expiresAtRaw)
+          : null,
     );
   }
 

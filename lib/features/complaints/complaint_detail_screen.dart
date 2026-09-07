@@ -4,6 +4,7 @@ import '../../core/date_utils.dart';
 import '../../theme/nivasa_colors.dart';
 import '../../theme/nivasa_spacing.dart';
 import '../../theme/nivasa_text_styles.dart';
+import '../../widgets/nivasa_skeleton.dart';
 import '../auth/auth_repository.dart';
 import 'complaints_repository.dart';
 
@@ -15,7 +16,12 @@ import 'complaints_repository.dart';
 /// NivasaColors' existing chatCanvas/inboundBubble/outboundBubble tokens — defined for
 /// exactly this "Product Pattern" but unused anywhere until now.
 class ComplaintDetailScreen extends StatefulWidget {
-  const ComplaintDetailScreen({super.key, required this.complaint, this.authRepository, this.complaintsRepository});
+  const ComplaintDetailScreen({
+    super.key,
+    required this.complaint,
+    this.authRepository,
+    this.complaintsRepository,
+  });
 
   final Complaint complaint;
   final AuthRepository? authRepository;
@@ -27,7 +33,8 @@ class ComplaintDetailScreen extends StatefulWidget {
 
 class _ComplaintDetailScreenState extends State<ComplaintDetailScreen> {
   late final AuthRepository _auth = widget.authRepository ?? AuthRepository();
-  late final ComplaintsRepository _complaints = widget.complaintsRepository ?? ComplaintsRepository();
+  late final ComplaintsRepository _complaints =
+      widget.complaintsRepository ?? ComplaintsRepository();
   final _messageController = TextEditingController();
 
   String? _token;
@@ -57,7 +64,10 @@ class _ComplaintDetailScreenState extends State<ComplaintDetailScreen> {
       final session = await _auth.currentSession();
       if (session == null) throw StateError('no active session');
       _token = session.accessToken;
-      final notes = await _complaints.listNotes(_token!, widget.complaint.complaintId);
+      final notes = await _complaints.listNotes(
+        _token!,
+        widget.complaint.complaintId,
+      );
       if (!mounted) return;
       setState(() => _notes = notes);
     } on ApiException catch (e) {
@@ -74,16 +84,24 @@ class _ComplaintDetailScreenState extends State<ComplaintDetailScreen> {
     if (text.isEmpty || _token == null || _sending) return;
     setState(() => _sending = true);
     try {
-      final note = await _complaints.addNote(_token!, widget.complaint.complaintId, text);
+      final note = await _complaints.addNote(
+        _token!,
+        widget.complaint.complaintId,
+        text,
+      );
       if (!mounted) return;
       setState(() => _notes = [..._notes, note]);
       _messageController.clear();
     } on ApiException catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.message)));
     } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not send — try again')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not send — try again')),
+      );
     } finally {
       if (mounted) setState(() => _sending = false);
     }
@@ -110,12 +128,29 @@ class _ComplaintDetailScreenState extends State<ComplaintDetailScreen> {
                   Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(color: badgeBg, borderRadius: BorderRadius.circular(NivasaRadius.pill)),
-                        child: Text(complaintStatusLabels[widget.complaint.status] ?? widget.complaint.status, style: NivasaText.badge.copyWith(color: badgeFg)),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: badgeBg,
+                          borderRadius: BorderRadius.circular(
+                            NivasaRadius.pill,
+                          ),
+                        ),
+                        child: Text(
+                          complaintStatusLabels[widget.complaint.status] ??
+                              widget.complaint.status,
+                          style: NivasaText.badge.copyWith(color: badgeFg),
+                        ),
                       ),
                       const SizedBox(width: NivasaSpacing.s8),
-                      Text(formatDisplayDate(widget.complaint.createdAt), style: NivasaText.bodySmall.copyWith(color: NivasaColors.ink500)),
+                      Text(
+                        formatDisplayDate(widget.complaint.createdAt),
+                        style: NivasaText.bodySmall.copyWith(
+                          color: NivasaColors.ink500,
+                        ),
+                      ),
                     ],
                   ),
                   const SizedBox(height: NivasaSpacing.s8),
@@ -127,7 +162,7 @@ class _ComplaintDetailScreenState extends State<ComplaintDetailScreen> {
               child: Container(
                 color: NivasaColors.chatCanvas,
                 child: _loading
-                    ? const Center(child: CircularProgressIndicator())
+                    ? const _NotesLoadingSkeleton()
                     : _error != null
                     ? Center(
                         child: Padding(
@@ -137,11 +172,16 @@ class _ComplaintDetailScreenState extends State<ComplaintDetailScreen> {
                             children: [
                               Text(
                                 _error!,
-                                style: NivasaText.body.copyWith(color: NivasaColors.ink500),
+                                style: NivasaText.body.copyWith(
+                                  color: NivasaColors.ink500,
+                                ),
                                 textAlign: TextAlign.center,
                               ),
                               const SizedBox(height: NivasaSpacing.s16),
-                              TextButton(onPressed: _load, child: const Text('Try again')),
+                              TextButton(
+                                onPressed: _load,
+                                child: const Text('Try again'),
+                              ),
                             ],
                           ),
                         ),
@@ -152,7 +192,9 @@ class _ComplaintDetailScreenState extends State<ComplaintDetailScreen> {
                           padding: const EdgeInsets.all(NivasaSpacing.s24),
                           child: Text(
                             'No updates yet — your property manager will reply here.',
-                            style: NivasaText.body.copyWith(color: NivasaColors.ink500),
+                            style: NivasaText.body.copyWith(
+                              color: NivasaColors.ink500,
+                            ),
                             textAlign: TextAlign.center,
                           ),
                         ),
@@ -160,12 +202,18 @@ class _ComplaintDetailScreenState extends State<ComplaintDetailScreen> {
                     : ListView.builder(
                         padding: const EdgeInsets.all(NivasaSpacing.s16),
                         itemCount: _notes.length,
-                        itemBuilder: (context, index) => _NoteBubble(note: _notes[index]),
+                        itemBuilder: (context, index) =>
+                            _NoteBubble(note: _notes[index]),
                       ),
               ),
             ),
             Container(
-              padding: const EdgeInsets.fromLTRB(NivasaSpacing.s16, NivasaSpacing.s12, NivasaSpacing.s16, NivasaSpacing.s12),
+              padding: const EdgeInsets.fromLTRB(
+                NivasaSpacing.s16,
+                NivasaSpacing.s12,
+                NivasaSpacing.s16,
+                NivasaSpacing.s12,
+              ),
               decoration: const BoxDecoration(
                 color: NivasaColors.white,
                 border: Border(top: BorderSide(color: NivasaColors.line)),
@@ -179,20 +227,61 @@ class _ComplaintDetailScreenState extends State<ComplaintDetailScreen> {
                       minLines: 1,
                       maxLines: 4,
                       textCapitalization: TextCapitalization.sentences,
-                      decoration: const InputDecoration(hintText: 'Add an update…'),
+                      decoration: const InputDecoration(
+                        hintText: 'Add an update…',
+                      ),
                       onSubmitted: (_) => _send(),
                     ),
                   ),
                   const SizedBox(width: NivasaSpacing.s8),
                   IconButton.filled(
                     onPressed: _sending ? null : _send,
-                    icon: _sending ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: NivasaColors.white)) : const Icon(Icons.send_outlined),
+                    icon: _sending
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: NivasaColors.white,
+                            ),
+                          )
+                        : const Icon(Icons.send_outlined),
                   ),
                 ],
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Mirrors the chat timeline's real shape (doc option "1l") — bubble-sized bones
+/// alternating sides, so the thread doesn't jump from a spinner straight into bubbles.
+class _NotesLoadingSkeleton extends StatelessWidget {
+  const _NotesLoadingSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    Widget bubble(double width, {required bool left}) => Align(
+      alignment: left ? Alignment.centerLeft : Alignment.centerRight,
+      child: NivasaSkeleton(
+        width: width,
+        height: 44,
+        borderRadius: NivasaRadius.lg,
+      ),
+    );
+    return Padding(
+      padding: const EdgeInsets.all(NivasaSpacing.s16),
+      child: Column(
+        children: [
+          bubble(200, left: true),
+          const SizedBox(height: NivasaSpacing.s12),
+          bubble(160, left: false),
+          const SizedBox(height: NivasaSpacing.s12),
+          bubble(230, left: true),
+        ],
       ),
     );
   }
@@ -212,10 +301,17 @@ class _NoteBubble extends StatelessWidget {
     return Align(
       alignment: isMine ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
-        constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.78),
+        constraints: BoxConstraints(
+          maxWidth: MediaQuery.of(context).size.width * 0.78,
+        ),
         margin: const EdgeInsets.only(bottom: NivasaSpacing.s8),
         padding: const EdgeInsets.all(NivasaSpacing.s12),
-        decoration: BoxDecoration(color: isMine ? NivasaColors.outboundBubble : NivasaColors.inboundBubble, borderRadius: BorderRadius.circular(NivasaRadius.md)),
+        decoration: BoxDecoration(
+          color: isMine
+              ? NivasaColors.outboundBubble
+              : NivasaColors.inboundBubble,
+          borderRadius: BorderRadius.circular(NivasaRadius.md),
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
@@ -223,7 +319,12 @@ class _NoteBubble extends StatelessWidget {
             if (!isMine)
               Padding(
                 padding: const EdgeInsets.only(bottom: NivasaSpacing.s4),
-                child: Text(note.authorName ?? 'Property manager', style: NivasaText.badge.copyWith(color: NivasaColors.primary700)),
+                child: Text(
+                  note.authorName ?? 'Property manager',
+                  style: NivasaText.badge.copyWith(
+                    color: NivasaColors.primary700,
+                  ),
+                ),
               ),
             Text(note.body, style: NivasaText.body),
             const SizedBox(height: NivasaSpacing.s4),

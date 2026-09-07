@@ -34,16 +34,23 @@ class _InMemoryCacheStore implements CacheStore {
   Future<void> delete(String key) async => _values.remove(key);
 }
 
-http.Response _json(Map<String, dynamic> body, int status) =>
-    http.Response(jsonEncode(body), status, headers: {'content-type': 'application/json'});
+http.Response _json(Map<String, dynamic> body, int status) => http.Response(
+  jsonEncode(body),
+  status,
+  headers: {'content-type': 'application/json'},
+);
 
-Widget _wrap(Widget child) => MaterialApp(theme: NivasaTheme.light(), home: child);
+Widget _wrap(Widget child) =>
+    MaterialApp(theme: NivasaTheme.light(), home: child);
 
 Future<AuthRepository> _connectedAuth() async {
   final store = _InMemorySecureStore();
   await store.write('nivasaos.access_token', 'access-token');
   await store.write('nivasaos.refresh_token', 'refresh-token');
-  await store.write('nivasaos.access_token_expires_at', DateTime.now().add(const Duration(minutes: 30)).toIso8601String());
+  await store.write(
+    'nivasaos.access_token_expires_at',
+    DateTime.now().add(const Duration(minutes: 30)).toIso8601String(),
+  );
   await store.write(
     'nivasaos.user',
     jsonEncode({
@@ -68,7 +75,9 @@ void main() {
       _wrap(
         VehiclesScreen(
           authRepository: auth,
-          vehiclesRepository: VehiclesRepository(apiClient: ApiClient(httpClient: client)),
+          vehiclesRepository: VehiclesRepository(
+            apiClient: ApiClient(httpClient: client),
+          ),
           cacheStore: _InMemoryCacheStore(),
         ),
       ),
@@ -76,14 +85,23 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.textContaining('No vehicles yet'), findsOneWidget);
+    // Inline dashed row, not a FAB, per the 1h mock — always present, empty or not.
+    expect(find.text('Add a vehicle'), findsOneWidget);
   });
 
-  testWidgets('lists existing vehicles', (tester) async {
+  testWidgets('lists a vehicle with a mono plate and type icon (1h mock)', (
+    tester,
+  ) async {
     final auth = await _connectedAuth();
     final client = MockClient(
       (request) async => _json({
         'vehicles': [
-          {'vehicle_id': 'vehicle-1', 'plate_number': 'KA01AB1234', 'vehicle_type': 'car', 'color': 'White'},
+          {
+            'vehicle_id': 'vehicle-1',
+            'plate_number': 'KA01AB1234',
+            'vehicle_type': 'car',
+            'color': 'White',
+          },
         ],
       }, 200),
     );
@@ -92,7 +110,9 @@ void main() {
       _wrap(
         VehiclesScreen(
           authRepository: auth,
-          vehiclesRepository: VehiclesRepository(apiClient: ApiClient(httpClient: client)),
+          vehiclesRepository: VehiclesRepository(
+            apiClient: ApiClient(httpClient: client),
+          ),
           cacheStore: _InMemoryCacheStore(),
         ),
       ),
@@ -101,107 +121,182 @@ void main() {
 
     expect(find.text('KA01AB1234'), findsOneWidget);
     expect(find.text('Car · White'), findsOneWidget);
+    expect(find.byIcon(Icons.directions_car), findsOneWidget);
+    // No bare delete icon any more — it's behind the overflow menu.
+    expect(find.byIcon(Icons.delete_outline), findsNothing);
+    expect(find.byIcon(Icons.more_vert), findsOneWidget);
   });
 
-  testWidgets('adds a vehicle and reloads the list', (tester) async {
+  testWidgets('a two-wheeler gets the two_wheeler icon', (tester) async {
     final auth = await _connectedAuth();
-    var posted = false;
-    var listCount = 0;
-    final client = MockClient((request) async {
-      if (request.method == 'POST') {
-        posted = true;
-        return _json({'vehicle_id': 'vehicle-1', 'plate_number': 'KA01AB1234', 'vehicle_type': 'car', 'color': null}, 201);
-      }
-      listCount += 1;
-      if (listCount == 1) return _json({'vehicles': []}, 200);
-      return _json({
+    final client = MockClient(
+      (request) async => _json({
         'vehicles': [
-          {'vehicle_id': 'vehicle-1', 'plate_number': 'KA01AB1234', 'vehicle_type': 'car', 'color': null},
+          {
+            'vehicle_id': 'vehicle-1',
+            'plate_number': 'KL07CE4412',
+            'vehicle_type': 'bike',
+            'color': 'Black',
+          },
         ],
-      }, 200);
-    });
+      }, 200),
+    );
 
     await tester.pumpWidget(
       _wrap(
         VehiclesScreen(
           authRepository: auth,
-          vehiclesRepository: VehiclesRepository(apiClient: ApiClient(httpClient: client)),
+          vehiclesRepository: VehiclesRepository(
+            apiClient: ApiClient(httpClient: client),
+          ),
           cacheStore: _InMemoryCacheStore(),
         ),
       ),
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Add vehicle'));
-    await tester.pumpAndSettle();
-
-    await tester.enterText(find.byType(TextField).first, 'KA01AB1234');
-    await tester.tap(find.text('Add'));
-    await tester.pumpAndSettle();
-
-    expect(posted, isTrue);
-    expect(find.text('KA01AB1234'), findsOneWidget);
+    expect(find.byIcon(Icons.two_wheeler), findsOneWidget);
   });
 
-  testWidgets('deletes a vehicle', (tester) async {
-    final auth = await _connectedAuth();
-    var deleted = false;
-    var listCount = 0;
-    final client = MockClient((request) async {
-      if (request.method == 'DELETE') {
-        deleted = true;
-        return http.Response('', 204);
-      }
-      listCount += 1;
-      if (listCount == 1) {
+  testWidgets(
+    'adds a vehicle from the inline dashed row and reloads the list',
+    (tester) async {
+      final auth = await _connectedAuth();
+      var posted = false;
+      var listCount = 0;
+      final client = MockClient((request) async {
+        if (request.method == 'POST') {
+          posted = true;
+          return _json({
+            'vehicle_id': 'vehicle-1',
+            'plate_number': 'KA01AB1234',
+            'vehicle_type': 'car',
+            'color': null,
+          }, 201);
+        }
+        listCount += 1;
+        if (listCount == 1) return _json({'vehicles': []}, 200);
         return _json({
           'vehicles': [
-            {'vehicle_id': 'vehicle-1', 'plate_number': 'KA01AB1234', 'vehicle_type': 'car', 'color': null},
+            {
+              'vehicle_id': 'vehicle-1',
+              'plate_number': 'KA01AB1234',
+              'vehicle_type': 'car',
+              'color': null,
+            },
           ],
         }, 200);
-      }
-      return _json({'vehicles': []}, 200);
-    });
+      });
 
-    await tester.pumpWidget(
-      _wrap(
-        VehiclesScreen(
-          authRepository: auth,
-          vehiclesRepository: VehiclesRepository(apiClient: ApiClient(httpClient: client)),
-          cacheStore: _InMemoryCacheStore(),
+      await tester.pumpWidget(
+        _wrap(
+          VehiclesScreen(
+            authRepository: auth,
+            vehiclesRepository: VehiclesRepository(
+              apiClient: ApiClient(httpClient: client),
+            ),
+            cacheStore: _InMemoryCacheStore(),
+          ),
         ),
-      ),
-    );
-    await tester.pumpAndSettle();
+      );
+      await tester.pumpAndSettle();
 
-    await tester.tap(find.byIcon(Icons.delete_outline));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Remove'));
-    await tester.pumpAndSettle();
+      await tester.tap(find.text('Add a vehicle'));
+      await tester.pumpAndSettle();
 
-    expect(deleted, isTrue);
-    expect(find.text('KA01AB1234'), findsNothing);
-  });
+      await tester.enterText(find.byType(TextField).first, 'KA01AB1234');
+      await tester.tap(find.text('Add'));
+      await tester.pumpAndSettle();
 
-  testWidgets('shows cached data with a stale banner when offline', (tester) async {
+      expect(posted, isTrue);
+      expect(find.text('KA01AB1234'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'deletes a vehicle via the overflow menu, still behind a confirm dialog',
+    (tester) async {
+      final auth = await _connectedAuth();
+      var deleted = false;
+      var listCount = 0;
+      final client = MockClient((request) async {
+        if (request.method == 'DELETE') {
+          deleted = true;
+          return http.Response('', 204);
+        }
+        listCount += 1;
+        if (listCount == 1) {
+          return _json({
+            'vehicles': [
+              {
+                'vehicle_id': 'vehicle-1',
+                'plate_number': 'KA01AB1234',
+                'vehicle_type': 'car',
+                'color': null,
+              },
+            ],
+          }, 200);
+        }
+        return _json({'vehicles': []}, 200);
+      });
+
+      await tester.pumpWidget(
+        _wrap(
+          VehiclesScreen(
+            authRepository: auth,
+            vehiclesRepository: VehiclesRepository(
+              apiClient: ApiClient(httpClient: client),
+            ),
+            cacheStore: _InMemoryCacheStore(),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byIcon(Icons.more_vert));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Delete…'));
+      await tester.pumpAndSettle();
+      expect(deleted, isFalse);
+
+      await tester.tap(find.text('Remove'));
+      await tester.pumpAndSettle();
+
+      expect(deleted, isTrue);
+      expect(find.text('KA01AB1234'), findsNothing);
+    },
+  );
+
+  testWidgets('shows cached data with a stale banner when offline', (
+    tester,
+  ) async {
     final auth = await _connectedAuth();
     final cache = _InMemoryCacheStore();
     await cache.write(
       'vehicles',
       jsonEncode({
         'data': [
-          {'vehicle_id': 'vehicle-1', 'plate_number': 'KA01AB1234', 'vehicle_type': 'car', 'color': 'White'},
+          {
+            'vehicle_id': 'vehicle-1',
+            'plate_number': 'KA01AB1234',
+            'vehicle_type': 'car',
+            'color': 'White',
+          },
         ],
         'cached_at': DateTime(2026, 8, 1, 9, 15).toIso8601String(),
       }),
     );
-    final client = MockClient((request) async => throw const SocketException('no route to host'));
+    final client = MockClient(
+      (request) async => throw const SocketException('no route to host'),
+    );
 
     await tester.pumpWidget(
       _wrap(
         VehiclesScreen(
           authRepository: auth,
-          vehiclesRepository: VehiclesRepository(apiClient: ApiClient(httpClient: client)),
+          vehiclesRepository: VehiclesRepository(
+            apiClient: ApiClient(httpClient: client),
+          ),
           cacheStore: cache,
         ),
       ),

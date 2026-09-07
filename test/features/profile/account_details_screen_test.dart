@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -12,6 +13,7 @@ import 'package:nivasaos_tenant_app/features/kyc/kyc_repository.dart';
 import 'package:nivasaos_tenant_app/features/profile/account_details_screen.dart';
 import 'package:nivasaos_tenant_app/features/profile/profile_repository.dart';
 import 'package:nivasaos_tenant_app/theme/nivasa_theme.dart';
+import 'package:nivasaos_tenant_app/widgets/nivasa_skeleton.dart';
 
 class _InMemorySecureStore implements SecureStore {
   final _values = <String, String>{};
@@ -35,10 +37,14 @@ class _InMemoryCacheStore implements CacheStore {
   Future<void> delete(String key) async => _values.remove(key);
 }
 
-http.Response _json(Map<String, dynamic> body, int status) =>
-    http.Response(jsonEncode(body), status, headers: {'content-type': 'application/json'});
+http.Response _json(Map<String, dynamic> body, int status) => http.Response(
+  jsonEncode(body),
+  status,
+  headers: {'content-type': 'application/json'},
+);
 
-Widget _wrap(Widget child) => MaterialApp(theme: NivasaTheme.light(), home: child);
+Widget _wrap(Widget child) =>
+    MaterialApp(theme: NivasaTheme.light(), home: child);
 
 void _useTallSurface(WidgetTester tester) {
   tester.view.physicalSize = const Size(400, 1600);
@@ -47,7 +53,11 @@ void _useTallSurface(WidgetTester tester) {
   addTearDown(tester.view.resetDevicePixelRatio);
 }
 
-Map<String, dynamic> _kycStatusJson({String status = 'not_started', String? aadhaarLast4, String? verifiedAt}) => {
+Map<String, dynamic> _kycStatusJson({
+  String status = 'not_started',
+  String? aadhaarLast4,
+  String? verifiedAt,
+}) => {
   'status': status,
   'aadhaar_last4': aadhaarLast4,
   'verified_at': verifiedAt,
@@ -82,7 +92,10 @@ Future<AuthRepository> _connectedAuth() async {
   final store = _InMemorySecureStore();
   await store.write('nivasaos.access_token', 'access-token');
   await store.write('nivasaos.refresh_token', 'refresh-token');
-  await store.write('nivasaos.access_token_expires_at', DateTime.now().add(const Duration(minutes: 30)).toIso8601String());
+  await store.write(
+    'nivasaos.access_token_expires_at',
+    DateTime.now().add(const Duration(minutes: 30)).toIso8601String(),
+  );
   await store.write(
     'nivasaos.user',
     jsonEncode({
@@ -98,7 +111,11 @@ Future<AuthRepository> _connectedAuth() async {
   return AuthRepository(sessionStore: SessionStore(storage: store));
 }
 
-Widget _accountDetailsScreen({required AuthRepository auth, required http.Client client, CacheStore? cacheStore}) {
+Widget _accountDetailsScreen({
+  required AuthRepository auth,
+  required http.Client client,
+  CacheStore? cacheStore,
+}) {
   final apiClient = ApiClient(httpClient: client);
   return AccountDetailsScreen(
     authRepository: auth,
@@ -109,19 +126,61 @@ Widget _accountDetailsScreen({required AuthRepository auth, required http.Client
 }
 
 void main() {
-  testWidgets('loads and displays name, email, property, and phone', (tester) async {
+  testWidgets(
+    'shows a shimmer skeleton while loading, not a bare spinner (1l mock)',
+    (tester) async {
+      final auth = await _connectedAuth();
+      final gate = Completer<void>();
+      final client = MockClient((request) async {
+        await gate.future;
+        if (request.url.path == '/api/tenants/v1/tenant/me' &&
+            request.method == 'GET') {
+          return _json(_profileJson(), 200);
+        }
+        if (request.url.path == '/api/tenants/v1/tenant/me/kyc/status') {
+          return _json(_kycStatusJson(), 200);
+        }
+        throw StateError(
+          'unexpected request: ${request.method} ${request.url.path}',
+        );
+      });
+
+      await tester.pumpWidget(
+        _wrap(_accountDetailsScreen(auth: auth, client: client)),
+      );
+      await tester.pump();
+
+      expect(find.byType(NivasaSkeleton), findsWidgets);
+      expect(find.byType(CircularProgressIndicator), findsNothing);
+      expect(find.text('Amit Kumar'), findsNothing);
+
+      gate.complete();
+      await tester.pumpAndSettle();
+
+      expect(find.text('Amit Kumar'), findsOneWidget);
+    },
+  );
+
+  testWidgets('loads and displays name, email, property, and phone', (
+    tester,
+  ) async {
     final auth = await _connectedAuth();
     final client = MockClient((request) async {
-      if (request.url.path == '/api/tenants/v1/tenant/me' && request.method == 'GET') {
+      if (request.url.path == '/api/tenants/v1/tenant/me' &&
+          request.method == 'GET') {
         return _json(_profileJson(), 200);
       }
       if (request.url.path == '/api/tenants/v1/tenant/me/kyc/status') {
         return _json(_kycStatusJson(), 200);
       }
-      throw StateError('unexpected request: ${request.method} ${request.url.path}');
+      throw StateError(
+        'unexpected request: ${request.method} ${request.url.path}',
+      );
     });
 
-    await tester.pumpWidget(_wrap(_accountDetailsScreen(auth: auth, client: client)));
+    await tester.pumpWidget(
+      _wrap(_accountDetailsScreen(auth: auth, client: client)),
+    );
     await tester.pumpAndSettle();
 
     expect(find.text('Amit Kumar'), findsOneWidget);
@@ -133,79 +192,130 @@ void main() {
     expect(find.text('Verify now'), findsOneWidget);
   });
 
-  testWidgets('saves an updated phone and permanent address, without touching language or emergency contact', (tester) async {
-    _useTallSurface(tester);
-    final auth = await _connectedAuth();
-    var patchedBody = <String, dynamic>{};
-    final client = MockClient((request) async {
-      if (request.url.path == '/api/tenants/v1/tenant/me' && request.method == 'GET') {
-        return _json(_profileJson(), 200);
-      }
-      if (request.url.path == '/api/tenants/v1/tenant/me' && request.method == 'PATCH') {
-        patchedBody = jsonDecode(request.body) as Map<String, dynamic>;
-        return _json(_profileJson(phone: '+919999999999', permanentAddress: '221B Baker Street'), 200);
-      }
-      if (request.url.path == '/api/tenants/v1/tenant/me/kyc/status') {
-        return _json(_kycStatusJson(), 200);
-      }
-      throw StateError('unexpected request: ${request.method} ${request.url.path}');
-    });
+  testWidgets(
+    'saves an updated phone and permanent address, without touching language or emergency contact',
+    (tester) async {
+      _useTallSurface(tester);
+      final auth = await _connectedAuth();
+      var patchedBody = <String, dynamic>{};
+      final client = MockClient((request) async {
+        if (request.url.path == '/api/tenants/v1/tenant/me' &&
+            request.method == 'GET') {
+          return _json(_profileJson(), 200);
+        }
+        if (request.url.path == '/api/tenants/v1/tenant/me' &&
+            request.method == 'PATCH') {
+          patchedBody = jsonDecode(request.body) as Map<String, dynamic>;
+          return _json(
+            _profileJson(
+              phone: '+919999999999',
+              permanentAddress: '221B Baker Street',
+            ),
+            200,
+          );
+        }
+        if (request.url.path == '/api/tenants/v1/tenant/me/kyc/status') {
+          return _json(_kycStatusJson(), 200);
+        }
+        throw StateError(
+          'unexpected request: ${request.method} ${request.url.path}',
+        );
+      });
 
-    await tester.pumpWidget(_wrap(_accountDetailsScreen(auth: auth, client: client)));
-    await tester.pumpAndSettle();
+      await tester.pumpWidget(
+        _wrap(_accountDetailsScreen(auth: auth, client: client)),
+      );
+      await tester.pumpAndSettle();
 
-    await tester.enterText(find.widgetWithText(TextField, '+919876543210'), '+919999999999');
-    await tester.enterText(find.widgetWithText(TextField, 'Optional'), '221B Baker Street');
-    await tester.tap(find.text('Save'));
-    await tester.pumpAndSettle();
+      await tester.enterText(
+        find.widgetWithText(TextField, '+919876543210'),
+        '+919999999999',
+      );
+      await tester.enterText(
+        find.widgetWithText(TextField, 'Optional'),
+        '221B Baker Street',
+      );
+      await tester.tap(find.text('Save'));
+      await tester.pumpAndSettle();
 
-    expect(patchedBody['phone'], '+919999999999');
-    expect(patchedBody['permanent_address'], '221B Baker Street');
-    expect(patchedBody.containsKey('language'), isFalse);
-    expect(patchedBody.containsKey('emergency_contact_name'), isFalse);
-    expect(find.text('Account details updated'), findsOneWidget);
-  });
+      expect(patchedBody['phone'], '+919999999999');
+      expect(patchedBody['permanent_address'], '221B Baker Street');
+      expect(patchedBody.containsKey('language'), isFalse);
+      expect(patchedBody.containsKey('emergency_contact_name'), isFalse);
+      expect(find.text('Account details updated'), findsOneWidget);
+    },
+  );
 
   testWidgets('shows an error state when the fetch fails', (tester) async {
     final auth = await _connectedAuth();
-    final client = MockClient((request) async => _json({'error': 'internal_error', 'message': 'boom'}, 500));
+    final client = MockClient(
+      (request) async =>
+          _json({'error': 'internal_error', 'message': 'boom'}, 500),
+    );
 
-    await tester.pumpWidget(_wrap(_accountDetailsScreen(auth: auth, client: client)));
+    await tester.pumpWidget(
+      _wrap(_accountDetailsScreen(auth: auth, client: client)),
+    );
     await tester.pumpAndSettle();
 
     expect(find.text('boom'), findsOneWidget);
     expect(find.text('Try again'), findsOneWidget);
   });
 
-  testWidgets('shows cached data with a stale banner when offline', (tester) async {
+  testWidgets('shows cached data with a stale banner when offline', (
+    tester,
+  ) async {
     final auth = await _connectedAuth();
     final cache = _InMemoryCacheStore();
     await cache.write(
       'profile',
-      jsonEncode({'data': _profileJson(phone: '+919000000000'), 'cached_at': DateTime(2026, 8, 1, 9, 15).toIso8601String()}),
+      jsonEncode({
+        'data': _profileJson(phone: '+919000000000'),
+        'cached_at': DateTime(2026, 8, 1, 9, 15).toIso8601String(),
+      }),
     );
-    final client = MockClient((request) async => throw const SocketException('no route to host'));
+    final client = MockClient(
+      (request) async => throw const SocketException('no route to host'),
+    );
 
-    await tester.pumpWidget(_wrap(_accountDetailsScreen(auth: auth, client: client, cacheStore: cache)));
+    await tester.pumpWidget(
+      _wrap(
+        _accountDetailsScreen(auth: auth, client: client, cacheStore: cache),
+      ),
+    );
     await tester.pumpAndSettle();
 
     expect(find.widgetWithText(TextField, '+919000000000'), findsOneWidget);
     expect(find.textContaining('Showing saved data from'), findsOneWidget);
   });
 
-  testWidgets('shows Verified and no button once KYC is verified', (tester) async {
+  testWidgets('shows Verified and no button once KYC is verified', (
+    tester,
+  ) async {
     final auth = await _connectedAuth();
     final client = MockClient((request) async {
-      if (request.url.path == '/api/tenants/v1/tenant/me' && request.method == 'GET') {
+      if (request.url.path == '/api/tenants/v1/tenant/me' &&
+          request.method == 'GET') {
         return _json(_profileJson(), 200);
       }
       if (request.url.path == '/api/tenants/v1/tenant/me/kyc/status') {
-        return _json(_kycStatusJson(status: 'verified', aadhaarLast4: '9012', verifiedAt: '2026-08-21T12:00:00Z'), 200);
+        return _json(
+          _kycStatusJson(
+            status: 'verified',
+            aadhaarLast4: '9012',
+            verifiedAt: '2026-08-21T12:00:00Z',
+          ),
+          200,
+        );
       }
-      throw StateError('unexpected request: ${request.method} ${request.url.path}');
+      throw StateError(
+        'unexpected request: ${request.method} ${request.url.path}',
+      );
     });
 
-    await tester.pumpWidget(_wrap(_accountDetailsScreen(auth: auth, client: client)));
+    await tester.pumpWidget(
+      _wrap(_accountDetailsScreen(auth: auth, client: client)),
+    );
     await tester.pumpAndSettle();
 
     expect(find.text('Verified'), findsOneWidget);
@@ -217,16 +327,21 @@ void main() {
     _useTallSurface(tester);
     final auth = await _connectedAuth();
     final client = MockClient((request) async {
-      if (request.url.path == '/api/tenants/v1/tenant/me' && request.method == 'GET') {
+      if (request.url.path == '/api/tenants/v1/tenant/me' &&
+          request.method == 'GET') {
         return _json(_profileJson(), 200);
       }
       if (request.url.path == '/api/tenants/v1/tenant/me/kyc/status') {
         return _json(_kycStatusJson(), 200);
       }
-      throw StateError('unexpected request: ${request.method} ${request.url.path}');
+      throw StateError(
+        'unexpected request: ${request.method} ${request.url.path}',
+      );
     });
 
-    await tester.pumpWidget(_wrap(_accountDetailsScreen(auth: auth, client: client)));
+    await tester.pumpWidget(
+      _wrap(_accountDetailsScreen(auth: auth, client: client)),
+    );
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('Verify now'));
@@ -235,20 +350,27 @@ void main() {
     expect(find.text('Verify with Aadhaar'), findsOneWidget);
   });
 
-  testWidgets('tapping Change password opens ChangePasswordScreen', (tester) async {
+  testWidgets('tapping Change password opens ChangePasswordScreen', (
+    tester,
+  ) async {
     _useTallSurface(tester);
     final auth = await _connectedAuth();
     final client = MockClient((request) async {
-      if (request.url.path == '/api/tenants/v1/tenant/me' && request.method == 'GET') {
+      if (request.url.path == '/api/tenants/v1/tenant/me' &&
+          request.method == 'GET') {
         return _json(_profileJson(), 200);
       }
       if (request.url.path == '/api/tenants/v1/tenant/me/kyc/status') {
         return _json(_kycStatusJson(), 200);
       }
-      throw StateError('unexpected request: ${request.method} ${request.url.path}');
+      throw StateError(
+        'unexpected request: ${request.method} ${request.url.path}',
+      );
     });
 
-    await tester.pumpWidget(_wrap(_accountDetailsScreen(auth: auth, client: client)));
+    await tester.pumpWidget(
+      _wrap(_accountDetailsScreen(auth: auth, client: client)),
+    );
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('Change password'));

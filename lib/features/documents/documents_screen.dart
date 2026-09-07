@@ -9,6 +9,7 @@ import '../../core/url_opener.dart';
 import '../../theme/nivasa_colors.dart';
 import '../../theme/nivasa_spacing.dart';
 import '../../theme/nivasa_text_styles.dart';
+import '../../widgets/nivasa_skeleton.dart';
 import '../../widgets/nivasa_stale_banner.dart';
 import '../auth/auth_repository.dart';
 import 'documents_repository.dart';
@@ -256,7 +257,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
       appBar: AppBar(title: const Text('Documents')),
       body: SafeArea(
         child: _loading
-            ? const Center(child: CircularProgressIndicator())
+            ? const NivasaSkeletonList()
             : _error != null
             ? _ErrorState(message: _error!, onRetry: _load)
             : Column(

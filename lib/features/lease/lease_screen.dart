@@ -10,6 +10,7 @@ import '../../theme/nivasa_spacing.dart';
 import '../../theme/nivasa_text_styles.dart';
 import '../../widgets/nivasa_button.dart';
 import '../../widgets/nivasa_section_label.dart';
+import '../../widgets/nivasa_skeleton.dart';
 import '../../widgets/nivasa_stale_banner.dart';
 import '../auth/auth_repository.dart';
 import '../rental/agreement_sign_screen.dart';
@@ -272,7 +273,7 @@ class _LeaseScreenState extends State<LeaseScreen> {
       appBar: AppBar(title: const Text('Lease')),
       body: SafeArea(
         child: _loading
-            ? const Center(child: CircularProgressIndicator())
+            ? const _LeaseLoadingSkeleton()
             : rental == null
             ? _ErrorState(
                 message: _error ?? 'Could not load your lease details',
@@ -436,6 +437,86 @@ class _LeaseScreenState extends State<LeaseScreen> {
                 ],
               ),
       ),
+    );
+  }
+}
+
+/// Mirrors the loaded body's real shape (doc option "1l") — hero card, facts card, and
+/// renewal card, in the same three-section layout the real content renders once the
+/// fetch resolves, replacing the old `Center(child: CircularProgressIndicator())`.
+class _LeaseLoadingSkeleton extends StatelessWidget {
+  const _LeaseLoadingSkeleton();
+
+  static Widget _card({required List<Widget> children}) => Container(
+    padding: const EdgeInsets.all(NivasaSpacing.s20),
+    decoration: BoxDecoration(
+      color: NivasaColors.white,
+      border: Border.all(color: NivasaColors.line),
+      borderRadius: BorderRadius.circular(NivasaRadius.card),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: children,
+    ),
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      padding: const EdgeInsets.all(NivasaSpacing.s24),
+      children: [
+        _card(
+          children: const [
+            Row(
+              children: [
+                NivasaSkeleton(
+                  width: 70,
+                  height: 24,
+                  borderRadius: NivasaRadius.pill,
+                ),
+                Spacer(),
+                NivasaSkeleton(width: 90, height: 13),
+              ],
+            ),
+            SizedBox(height: NivasaSpacing.s16),
+            NivasaSkeleton(height: 6, borderRadius: NivasaRadius.pill),
+            SizedBox(height: NivasaSpacing.s8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                NivasaSkeleton(width: 70, height: 12),
+                NivasaSkeleton(width: 70, height: 12),
+              ],
+            ),
+          ],
+        ),
+        const SizedBox(height: NivasaSpacing.s24),
+        const NivasaSkeleton(width: 90, height: 11),
+        const SizedBox(height: NivasaSpacing.s12),
+        _card(
+          children: const [
+            NivasaSkeleton(width: 200, height: 15),
+            SizedBox(height: NivasaSpacing.s16),
+            NivasaSkeleton(width: 140, height: 15),
+            SizedBox(height: NivasaSpacing.s16),
+            NivasaSkeleton(width: 100, height: 15),
+            SizedBox(height: NivasaSpacing.s16),
+            NivasaSkeleton(width: 160, height: 15),
+          ],
+        ),
+        const SizedBox(height: NivasaSpacing.s24),
+        const NivasaSkeleton(width: 70, height: 11),
+        const SizedBox(height: NivasaSpacing.s12),
+        _card(
+          children: const [
+            NivasaSkeleton(height: 13),
+            SizedBox(height: NivasaSpacing.s8),
+            NivasaSkeleton(width: 220, height: 13),
+            SizedBox(height: NivasaSpacing.s16),
+            NivasaSkeleton(height: 52, borderRadius: NivasaRadius.button),
+          ],
+        ),
+      ],
     );
   }
 }

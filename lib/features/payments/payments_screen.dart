@@ -8,6 +8,7 @@ import '../../theme/nivasa_colors.dart';
 import '../../theme/nivasa_spacing.dart';
 import '../../theme/nivasa_text_styles.dart';
 import '../../widgets/nivasa_section_label.dart';
+import '../../widgets/nivasa_skeleton.dart';
 import '../../widgets/nivasa_stale_banner.dart';
 import '../auth/auth_repository.dart';
 import 'payments_repository.dart';
@@ -308,7 +309,7 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
       appBar: AppBar(title: const Text('Payments')),
       body: SafeArea(
         child: _loading
-            ? const Center(child: CircularProgressIndicator())
+            ? const _PaymentsLoadingSkeleton()
             : _error != null
             ? _ErrorState(message: _error!, onRetry: _load)
             : Column(
@@ -402,6 +403,49 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
                 ],
               ),
       ),
+    );
+  }
+}
+
+/// Mirrors the loaded body's real shape (doc option "1l") — hero card, "See invoices"
+/// button, "Recent payments" section, three list rows — so nothing jumps into place once
+/// the fetch resolves, replacing the old `Center(child: CircularProgressIndicator())`.
+class _PaymentsLoadingSkeleton extends StatelessWidget {
+  const _PaymentsLoadingSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      padding: const EdgeInsets.all(NivasaSpacing.s24),
+      children: [
+        Container(
+          padding: const EdgeInsets.all(NivasaSpacing.s20),
+          decoration: BoxDecoration(
+            color: NivasaColors.white,
+            border: Border.all(color: NivasaColors.line),
+            borderRadius: BorderRadius.circular(NivasaRadius.card),
+          ),
+          child: const Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              NivasaSkeleton(width: 64, height: 11),
+              SizedBox(height: NivasaSpacing.s8),
+              NivasaSkeleton(width: 140, height: 36),
+              SizedBox(height: NivasaSpacing.s8),
+              NivasaSkeleton(width: 120, height: 13),
+            ],
+          ),
+        ),
+        const SizedBox(height: NivasaSpacing.s16),
+        const NivasaSkeleton(height: 48, borderRadius: NivasaRadius.button),
+        const SizedBox(height: NivasaSpacing.s24),
+        const NivasaSkeleton(width: 130, height: 11),
+        const SizedBox(height: NivasaSpacing.s12),
+        for (var i = 0; i < 3; i++) ...[
+          if (i > 0) const SizedBox(height: NivasaSpacing.s12),
+          const NivasaSkeletonListTile(),
+        ],
+      ],
     );
   }
 }

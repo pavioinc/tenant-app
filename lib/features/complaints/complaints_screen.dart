@@ -8,6 +8,7 @@ import '../../theme/nivasa_elevation.dart';
 import '../../theme/nivasa_spacing.dart';
 import '../../theme/nivasa_text_styles.dart';
 import '../../widgets/nivasa_button.dart';
+import '../../widgets/nivasa_skeleton.dart';
 import '../../widgets/nivasa_stale_banner.dart';
 import '../auth/auth_repository.dart';
 import '../rental/rental_repository.dart';
@@ -168,7 +169,7 @@ class _ComplaintsScreenState extends State<ComplaintsScreen> {
       appBar: AppBar(title: const Text('Maintenance')),
       body: SafeArea(
         child: _loading
-            ? const Center(child: CircularProgressIndicator())
+            ? const NivasaSkeletonList()
             : _error != null
             ? Center(
                 child: Padding(
