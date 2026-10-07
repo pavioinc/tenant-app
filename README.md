@@ -366,7 +366,7 @@ blocks login/signup/logout. Rent-due reminders are the first event wired to this
 channel — see notification-service/src/handlers.ts's `handleRentDueEvent` and
 providers.ts's `PushNotificationProvider`.
 
-**Client-side setup is done** (2026-08-23) — Firebase project `pavio` exists, both
+**Client-side setup is done** (2026-08-23) — Firebase project `nivasaos` exists, both
 apps are registered, and both platforms are wired and verified end to end (real device
 build + the native "Would Like to Send You Notifications" permission prompt firing on
 both a booted iOS simulator and an Android emulator):

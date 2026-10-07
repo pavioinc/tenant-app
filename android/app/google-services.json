@@ -1,8 +1,8 @@
 {
   "project_info": {
     "project_number": "715765261922",
-    "project_id": "pavio",
-    "storage_bucket": "pavio.firebasestorage.app"
+    "project_id": "nivasaos",
+    "storage_bucket": "nivasaos.firebasestorage.app"
   },
   "client": [
     {
