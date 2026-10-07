@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import '../../core/url_opener.dart';
-import '../../theme/nivasa_colors.dart';
-import '../../theme/nivasa_spacing.dart';
-import '../../theme/nivasa_text_styles.dart';
-import '../../widgets/nivasa_button.dart';
+import '../../theme/pavio_colors.dart';
+import '../../theme/pavio_spacing.dart';
+import '../../theme/pavio_text_styles.dart';
+import '../../widgets/pavio_button.dart';
 
-const supportEmail = 'support@nivasaos.io';
+const supportEmail = 'support@pavio.tech';
 
 /// UserScreen's "App Feedback" row. There's no feedback-submission API anywhere in the
 /// backend (checked tenant-service, notification-service — the closest thing is the
@@ -43,7 +43,7 @@ class _AppFeedbackScreenState extends State<AppFeedbackScreen> {
       _sending = true;
       _error = null;
     });
-    final mailto = Uri(scheme: 'mailto', path: supportEmail, queryParameters: {'subject': 'NivasaOS app feedback', 'body': message});
+    final mailto = Uri(scheme: 'mailto', path: supportEmail, queryParameters: {'subject': 'Pavio app feedback', 'body': message});
     try {
       final opened = await _urlOpener.open(mailto.toString());
       if (!mounted) return;
@@ -66,23 +66,23 @@ class _AppFeedbackScreenState extends State<AppFeedbackScreen> {
       appBar: AppBar(title: const Text('App Feedback')),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(NivasaSpacing.s24),
+          padding: const EdgeInsets.all(PavioSpacing.s24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Tell us what’s working, what’s not, or what you wish the app did.', style: NivasaText.body.copyWith(color: NivasaColors.ink500)),
-              const SizedBox(height: NivasaSpacing.s24),
-              Text('Your feedback', style: NivasaText.label),
-              const SizedBox(height: NivasaSpacing.s8),
-              TextField(controller: _messageController, style: NivasaText.body, minLines: 5, maxLines: 10),
-              const SizedBox(height: NivasaSpacing.s8),
-              Text('Sent as an email to $supportEmail', style: NivasaText.caption),
+              Text('Tell us what’s working, what’s not, or what you wish the app did.', style: PavioText.body.copyWith(color: PavioColors.ink500)),
+              const SizedBox(height: PavioSpacing.s24),
+              Text('Your feedback', style: PavioText.label),
+              const SizedBox(height: PavioSpacing.s8),
+              TextField(controller: _messageController, style: PavioText.body, minLines: 5, maxLines: 10),
+              const SizedBox(height: PavioSpacing.s8),
+              Text('Sent as an email to $supportEmail', style: PavioText.caption),
               if (_error != null) ...[
-                const SizedBox(height: NivasaSpacing.s16),
-                Text(_error!, style: NivasaText.body.copyWith(color: NivasaColors.negativeFg)),
+                const SizedBox(height: PavioSpacing.s16),
+                Text(_error!, style: PavioText.body.copyWith(color: PavioColors.negativeFg)),
               ],
-              const SizedBox(height: NivasaSpacing.s24),
-              NivasaPrimaryButton(label: 'Send', loading: _sending, loadingLabel: 'Sending…', onPressed: _send),
+              const SizedBox(height: PavioSpacing.s24),
+              PavioPrimaryButton(label: 'Send', loading: _sending, loadingLabel: 'Sending…', onPressed: _send),
             ],
           ),
         ),

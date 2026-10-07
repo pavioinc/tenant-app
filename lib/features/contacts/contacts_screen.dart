@@ -3,18 +3,18 @@ import '../../core/api_client.dart';
 import '../../core/cache_store.dart';
 import '../../core/cached_fetch.dart';
 import '../../core/url_opener.dart';
-import '../../theme/nivasa_colors.dart';
-import '../../theme/nivasa_spacing.dart';
-import '../../theme/nivasa_text_styles.dart';
-import '../../widgets/nivasa_skeleton.dart';
-import '../../widgets/nivasa_stale_banner.dart';
+import '../../theme/pavio_colors.dart';
+import '../../theme/pavio_spacing.dart';
+import '../../theme/pavio_text_styles.dart';
+import '../../widgets/pavio_skeleton.dart';
+import '../../widgets/pavio_stale_banner.dart';
 import '../auth/auth_repository.dart';
 import 'contacts_repository.dart';
 
 const _avatarColors = [
-  NivasaColors.primary700,
-  NivasaColors.primary600,
-  NivasaColors.primary500,
+  PavioColors.primary700,
+  PavioColors.primary600,
+  PavioColors.primary500,
 ];
 
 String _initials(String name) {
@@ -134,7 +134,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
       appBar: AppBar(title: const Text('Contacts')),
       body: SafeArea(
         child: _loading
-            ? const NivasaSkeletonList()
+            ? const PavioSkeletonList()
             : _error != null
             ? _ErrorState(message: _error!, onRetry: _load)
             : Column(
@@ -142,12 +142,12 @@ class _ContactsScreenState extends State<ContactsScreen> {
                   if (_stale)
                     Padding(
                       padding: const EdgeInsets.fromLTRB(
-                        NivasaSpacing.s24,
-                        NivasaSpacing.s24,
-                        NivasaSpacing.s24,
+                        PavioSpacing.s24,
+                        PavioSpacing.s24,
+                        PavioSpacing.s24,
                         0,
                       ),
-                      child: NivasaStaleBanner(
+                      child: PavioStaleBanner(
                         lastSyncedAt: _lastSyncedAt,
                         onRetry: _load,
                       ),
@@ -160,22 +160,22 @@ class _ContactsScreenState extends State<ContactsScreen> {
                               children: [
                                 Padding(
                                   padding: const EdgeInsets.all(
-                                    NivasaSpacing.s24,
+                                    PavioSpacing.s24,
                                   ),
                                   child: Text(
                                     'No contacts on file yet',
-                                    style: NivasaText.body.copyWith(
-                                      color: NivasaColors.ink500,
+                                    style: PavioText.body.copyWith(
+                                      color: PavioColors.ink500,
                                     ),
                                   ),
                                 ),
                               ],
                             )
                           : ListView.separated(
-                              padding: const EdgeInsets.all(NivasaSpacing.s24),
+                              padding: const EdgeInsets.all(PavioSpacing.s24),
                               itemCount: _items.length,
                               separatorBuilder: (_, _) =>
-                                  const SizedBox(height: NivasaSpacing.s12),
+                                  const SizedBox(height: PavioSpacing.s12),
                               itemBuilder: (context, index) => _ContactCard(
                                 contact: _items[index],
                                 avatarColor:
@@ -211,11 +211,11 @@ class _ContactCard extends StatelessWidget {
     final hasPhone = contact.phone != null;
     final hasEmail = contact.email != null;
     return Container(
-      padding: const EdgeInsets.all(NivasaSpacing.s16),
+      padding: const EdgeInsets.all(PavioSpacing.s16),
       decoration: BoxDecoration(
-        color: NivasaColors.white,
-        border: Border.all(color: NivasaColors.line),
-        borderRadius: BorderRadius.circular(NivasaRadius.card),
+        color: PavioColors.white,
+        border: Border.all(color: PavioColors.line),
+        borderRadius: BorderRadius.circular(PavioRadius.card),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -232,21 +232,21 @@ class _ContactCard extends StatelessWidget {
                 child: Center(
                   child: Text(
                     _initials(contact.name),
-                    style: NivasaText.body.copyWith(
-                      color: NivasaColors.white,
+                    style: PavioText.body.copyWith(
+                      color: PavioColors.white,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
               ),
-              const SizedBox(width: NivasaSpacing.s12 + 1),
+              const SizedBox(width: PavioSpacing.s12 + 1),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       contact.name,
-                      style: NivasaText.body.copyWith(
+                      style: PavioText.body.copyWith(
                         fontWeight: FontWeight.w600,
                         fontSize: 16,
                       ),
@@ -255,8 +255,8 @@ class _ContactCard extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       contactRoleLabel(contact.role),
-                      style: NivasaText.bodySmall.copyWith(
-                        color: NivasaColors.ink500,
+                      style: PavioText.bodySmall.copyWith(
+                        color: PavioColors.ink500,
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -278,7 +278,7 @@ class _ContactCard extends StatelessWidget {
             ],
           ),
           if (hasPhone && hasEmail) ...[
-            const SizedBox(height: NivasaSpacing.s16 - 2),
+            const SizedBox(height: PavioSpacing.s16 - 2),
             Row(
               children: [
                 Expanded(
@@ -288,7 +288,7 @@ class _ContactCard extends StatelessWidget {
                     onTap: () => onCall(contact.phone!),
                   ),
                 ),
-                const SizedBox(width: NivasaSpacing.s8 + 2),
+                const SizedBox(width: PavioSpacing.s8 + 2),
                 Expanded(
                   child: _OutlinedLabelAction(
                     icon: Icons.email_outlined,
@@ -320,22 +320,22 @@ class _OutlinedLabelAction extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(NivasaRadius.button),
+      borderRadius: BorderRadius.circular(PavioRadius.button),
       child: Container(
         height: 46,
         decoration: BoxDecoration(
-          border: Border.all(color: NivasaColors.primary700, width: 1.5),
-          borderRadius: BorderRadius.circular(NivasaRadius.button),
+          border: Border.all(color: PavioColors.primary700, width: 1.5),
+          borderRadius: BorderRadius.circular(PavioRadius.button),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 18, color: NivasaColors.primary700),
-            const SizedBox(width: NivasaSpacing.s4 + 3),
+            Icon(icon, size: 18, color: PavioColors.primary700),
+            const SizedBox(width: PavioSpacing.s4 + 3),
             Text(
               label,
-              style: NivasaText.body.copyWith(
-                color: NivasaColors.primary700,
+              style: PavioText.body.copyWith(
+                color: PavioColors.primary700,
                 fontWeight: FontWeight.w600,
                 fontSize: 14,
               ),
@@ -357,16 +357,16 @@ class _OutlinedIconAction extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(NivasaRadius.button),
+      borderRadius: BorderRadius.circular(PavioRadius.button),
       child: Container(
         width: 46,
         height: 46,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          border: Border.all(color: NivasaColors.primary700, width: 1.5),
-          borderRadius: BorderRadius.circular(NivasaRadius.button),
+          border: Border.all(color: PavioColors.primary700, width: 1.5),
+          borderRadius: BorderRadius.circular(PavioRadius.button),
         ),
-        child: Icon(icon, size: 19, color: NivasaColors.primary700),
+        child: Icon(icon, size: 19, color: PavioColors.primary700),
       ),
     );
   }
@@ -382,16 +382,16 @@ class _ErrorState extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(NivasaSpacing.s24),
+        padding: const EdgeInsets.all(PavioSpacing.s24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
               message,
-              style: NivasaText.body.copyWith(color: NivasaColors.ink500),
+              style: PavioText.body.copyWith(color: PavioColors.ink500),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: NivasaSpacing.s16),
+            const SizedBox(height: PavioSpacing.s16),
             TextButton(onPressed: onRetry, child: const Text('Try again')),
           ],
         ),

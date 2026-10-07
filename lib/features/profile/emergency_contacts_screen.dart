@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import '../../core/api_client.dart';
 import '../../core/cache_store.dart';
 import '../../core/cached_fetch.dart';
-import '../../theme/nivasa_colors.dart';
-import '../../theme/nivasa_spacing.dart';
-import '../../theme/nivasa_text_styles.dart';
-import '../../widgets/nivasa_button.dart';
-import '../../widgets/nivasa_skeleton.dart';
-import '../../widgets/nivasa_stale_banner.dart';
+import '../../theme/pavio_colors.dart';
+import '../../theme/pavio_spacing.dart';
+import '../../theme/pavio_text_styles.dart';
+import '../../widgets/pavio_button.dart';
+import '../../widgets/pavio_skeleton.dart';
+import '../../widgets/pavio_stale_banner.dart';
 import '../auth/auth_repository.dart';
 import 'emergency_contacts_repository.dart';
 
@@ -170,7 +170,7 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
       ),
       body: SafeArea(
         child: _loading
-            ? const NivasaSkeletonList()
+            ? const PavioSkeletonList()
             : _error != null
             ? _ErrorState(message: _error!, onRetry: _load)
             : Column(
@@ -178,12 +178,12 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
                   if (_stale)
                     Padding(
                       padding: const EdgeInsets.fromLTRB(
-                        NivasaSpacing.s24,
-                        NivasaSpacing.s24,
-                        NivasaSpacing.s24,
+                        PavioSpacing.s24,
+                        PavioSpacing.s24,
+                        PavioSpacing.s24,
                         0,
                       ),
-                      child: NivasaStaleBanner(
+                      child: PavioStaleBanner(
                         lastSyncedAt: _lastSyncedAt,
                         onRetry: _load,
                       ),
@@ -196,40 +196,40 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
                               children: [
                                 Padding(
                                   padding: const EdgeInsets.all(
-                                    NivasaSpacing.s24,
+                                    PavioSpacing.s24,
                                   ),
                                   child: Text(
                                     'No emergency contacts yet — tap "Add contact" to add one.',
-                                    style: NivasaText.body.copyWith(
-                                      color: NivasaColors.ink500,
+                                    style: PavioText.body.copyWith(
+                                      color: PavioColors.ink500,
                                     ),
                                   ),
                                 ),
                               ],
                             )
                           : ListView.separated(
-                              padding: const EdgeInsets.all(NivasaSpacing.s24),
+                              padding: const EdgeInsets.all(PavioSpacing.s24),
                               itemCount: _items.length,
                               separatorBuilder: (_, _) =>
-                                  const SizedBox(height: NivasaSpacing.s12),
+                                  const SizedBox(height: PavioSpacing.s12),
                               itemBuilder: (context, index) {
                                 final item = _items[index];
                                 return InkWell(
                                   onTap: () => _openEditSheet(item),
                                   borderRadius: BorderRadius.circular(
-                                    NivasaRadius.card,
+                                    PavioRadius.card,
                                   ),
                                   child: Container(
                                     padding: const EdgeInsets.all(
-                                      NivasaSpacing.s16,
+                                      PavioSpacing.s16,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: NivasaColors.white,
+                                      color: PavioColors.white,
                                       border: Border.all(
-                                        color: NivasaColors.line,
+                                        color: PavioColors.line,
                                       ),
                                       borderRadius: BorderRadius.circular(
-                                        NivasaRadius.card,
+                                        PavioRadius.card,
                                       ),
                                     ),
                                     child: Row(
@@ -244,14 +244,14 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
                                                   Flexible(
                                                     child: Text(
                                                       item.name,
-                                                      style: NivasaText.h3,
+                                                      style: PavioText.h3,
                                                       overflow:
                                                           TextOverflow.ellipsis,
                                                     ),
                                                   ),
                                                   if (item.isPrimary) ...[
                                                     const SizedBox(
-                                                      width: NivasaSpacing.s8,
+                                                      width: PavioSpacing.s8,
                                                     ),
                                                     Container(
                                                       padding:
@@ -260,18 +260,18 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
                                                             vertical: 4,
                                                           ),
                                                       decoration: BoxDecoration(
-                                                        color: NivasaColors
+                                                        color: PavioColors
                                                             .primary50,
                                                         borderRadius:
                                                             BorderRadius.circular(
-                                                              NivasaRadius.pill,
+                                                              PavioRadius.pill,
                                                             ),
                                                       ),
                                                       child: Text(
                                                         'Primary',
-                                                        style: NivasaText.badge
+                                                        style: PavioText.badge
                                                             .copyWith(
-                                                              color: NivasaColors
+                                                              color: PavioColors
                                                                   .primary700,
                                                             ),
                                                       ),
@@ -280,7 +280,7 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
                                                 ],
                                               ),
                                               const SizedBox(
-                                                height: NivasaSpacing.s4,
+                                                height: PavioSpacing.s4,
                                               ),
                                               Text(
                                                 [
@@ -288,15 +288,15 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
                                                   if (item.relationship != null)
                                                     item.relationship!,
                                                 ].join(' · '),
-                                                style: NivasaText.bodySmall
+                                                style: PavioText.bodySmall
                                                     .copyWith(
                                                       color:
-                                                          NivasaColors.ink500,
+                                                          PavioColors.ink500,
                                                     ),
                                               ),
                                               if (!item.isPrimary) ...[
                                                 const SizedBox(
-                                                  height: NivasaSpacing.s8,
+                                                  height: PavioSpacing.s8,
                                                 ),
                                                 Align(
                                                   alignment:
@@ -326,7 +326,7 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
                                         IconButton(
                                           icon: Icon(
                                             Icons.delete_outline,
-                                            color: NivasaColors.negativeFg,
+                                            color: PavioColors.negativeFg,
                                           ),
                                           tooltip: 'Delete',
                                           onPressed: () => _delete(item),
@@ -433,11 +433,11 @@ class _ContactSheetState extends State<_ContactSheet> {
         bottom: MediaQuery.of(context).viewInsets.bottom,
       ),
       child: Container(
-        padding: const EdgeInsets.all(NivasaSpacing.s24),
+        padding: const EdgeInsets.all(PavioSpacing.s24),
         decoration: const BoxDecoration(
-          color: NivasaColors.white,
+          color: PavioColors.white,
           borderRadius: BorderRadius.vertical(
-            top: Radius.circular(NivasaRadius.bottomSheetTop),
+            top: Radius.circular(PavioRadius.bottomSheetTop),
           ),
         ),
         child: Column(
@@ -448,45 +448,45 @@ class _ContactSheetState extends State<_ContactSheet> {
               child: Container(
                 width: 40,
                 height: 4,
-                margin: const EdgeInsets.only(bottom: NivasaSpacing.s16),
-                color: NivasaColors.line,
+                margin: const EdgeInsets.only(bottom: PavioSpacing.s16),
+                color: PavioColors.line,
               ),
             ),
             Text(
               _isEditing ? 'Edit contact' : 'Add contact',
-              style: NivasaText.h2,
+              style: PavioText.h2,
             ),
-            const SizedBox(height: NivasaSpacing.s16),
-            Text('Name', style: NivasaText.label),
-            const SizedBox(height: NivasaSpacing.s8),
-            TextField(controller: _nameController, style: NivasaText.body),
-            const SizedBox(height: NivasaSpacing.s16),
-            Text('Phone', style: NivasaText.label),
-            const SizedBox(height: NivasaSpacing.s8),
+            const SizedBox(height: PavioSpacing.s16),
+            Text('Name', style: PavioText.label),
+            const SizedBox(height: PavioSpacing.s8),
+            TextField(controller: _nameController, style: PavioText.body),
+            const SizedBox(height: PavioSpacing.s16),
+            Text('Phone', style: PavioText.label),
+            const SizedBox(height: PavioSpacing.s8),
             TextField(
               controller: _phoneController,
               keyboardType: TextInputType.phone,
-              style: NivasaText.body,
+              style: PavioText.body,
             ),
-            const SizedBox(height: NivasaSpacing.s16),
-            Text('Relationship (optional)', style: NivasaText.label),
-            const SizedBox(height: NivasaSpacing.s8),
+            const SizedBox(height: PavioSpacing.s16),
+            Text('Relationship (optional)', style: PavioText.label),
+            const SizedBox(height: PavioSpacing.s8),
             TextField(
               controller: _relationshipController,
-              style: NivasaText.body,
+              style: PavioText.body,
               decoration: InputDecoration(
                 hintText: 'e.g. Parent, Spouse, Sibling',
                 errorText: _error,
               ),
             ),
-            const SizedBox(height: NivasaSpacing.s24),
-            NivasaPrimaryButton(
+            const SizedBox(height: PavioSpacing.s24),
+            PavioPrimaryButton(
               label: _isEditing ? 'Save' : 'Add',
               loading: _submitting,
               loadingLabel: _isEditing ? 'Saving…' : 'Adding…',
               onPressed: _submit,
             ),
-            const SizedBox(height: NivasaSpacing.s8),
+            const SizedBox(height: PavioSpacing.s8),
           ],
         ),
       ),
@@ -504,16 +504,16 @@ class _ErrorState extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(NivasaSpacing.s24),
+        padding: const EdgeInsets.all(PavioSpacing.s24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
               message,
-              style: NivasaText.body.copyWith(color: NivasaColors.ink500),
+              style: PavioText.body.copyWith(color: PavioColors.ink500),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: NivasaSpacing.s16),
+            const SizedBox(height: PavioSpacing.s16),
             TextButton(onPressed: onRetry, child: const Text('Try again')),
           ],
         ),

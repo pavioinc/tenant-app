@@ -1,6 +1,6 @@
 {
-    "name": "nivasaos_tenant_app",
-    "short_name": "nivasaos_tenant_app",
+    "name": "pavio_tenant_app",
+    "short_name": "pavio_tenant_app",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

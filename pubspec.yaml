@@ -1,5 +1,5 @@
-name: nivasaos_tenant_app
-description: "NivasaOS renter mobile app"
+name: pavio_tenant_app
+description: "Pavio renter mobile app"
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -119,7 +119,7 @@ flutter:
 # App icon (2026-08-23) — run `dart run flutter_launcher_icons` after changing this to
 # regenerate the Android mipmaps and iOS AppIcon.appiconset. assets/icon/app_icon.png is
 # a full-bleed (no rounded corners — the OS applies its own mask) export of the same gold
-# chevron mark as lib/widgets/nivasa_logo.dart's NivasaLogoMark, generated with the
+# chevron mark as lib/widgets/pavio_logo.dart's PavioLogoMark, generated with the
 # rotated shape re-centered in the canvas for legibility at small icon sizes (unlike
 # splash_logo.png below, which intentionally matches the in-app widget's exact placement).
 flutter_launcher_icons:
@@ -131,9 +131,9 @@ flutter_launcher_icons:
 # Native (pre-Flutter-engine) splash screen shown on cold start, replacing the default
 # white screen — run `dart run flutter_native_splash:create` after changing this to
 # regenerate the Android/iOS resources. splash_logo.png is a static export of
-# lib/widgets/nivasa_logo.dart's NivasaLogoMark (keep them in sync by eye if that widget
-# changes). Background color matches nivasa_theme.dart's scaffoldBackgroundColor
-# (NivasaColors.canvas) exactly, so there's no color flash when the first Flutter frame
+# lib/widgets/pavio_logo.dart's PavioLogoMark (keep them in sync by eye if that widget
+# changes). Background color matches pavio_theme.dart's scaffoldBackgroundColor
+# (PavioColors.canvas) exactly, so there's no color flash when the first Flutter frame
 # takes over from the native splash.
 flutter_native_splash:
   color: "#EEEDE8"

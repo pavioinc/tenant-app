@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../core/api_client.dart';
-import '../../theme/nivasa_colors.dart';
-import '../../theme/nivasa_spacing.dart';
-import '../../theme/nivasa_text_styles.dart';
-import '../../widgets/nivasa_button.dart';
+import '../../theme/pavio_colors.dart';
+import '../../theme/pavio_spacing.dart';
+import '../../theme/pavio_text_styles.dart';
+import '../../widgets/pavio_button.dart';
 import '../auth/auth_repository.dart';
 import 'rental_repository.dart';
 
@@ -75,75 +75,75 @@ class _AgreementSignScreenState extends State<AgreementSignScreen> {
       appBar: AppBar(title: const Text('Review & sign')),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(NivasaSpacing.s24),
+          padding: const EdgeInsets.all(PavioSpacing.s24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Rental Agreement', style: NivasaText.h2),
-              const SizedBox(height: NivasaSpacing.s16),
-              Text('Monthly rent', style: NivasaText.label.copyWith(color: NivasaColors.ink500)),
-              const SizedBox(height: NivasaSpacing.s4),
-              Text(_formatInr(agreement.monthlyRent), style: NivasaText.h3),
-              const SizedBox(height: NivasaSpacing.s16),
-              Text('Security deposit', style: NivasaText.label.copyWith(color: NivasaColors.ink500)),
-              const SizedBox(height: NivasaSpacing.s4),
-              Text(_formatInr(agreement.securityDeposit), style: NivasaText.h3),
-              const SizedBox(height: NivasaSpacing.s16),
-              Text('Term', style: NivasaText.label.copyWith(color: NivasaColors.ink500)),
-              const SizedBox(height: NivasaSpacing.s4),
+              Text('Rental Agreement', style: PavioText.h2),
+              const SizedBox(height: PavioSpacing.s16),
+              Text('Monthly rent', style: PavioText.label.copyWith(color: PavioColors.ink500)),
+              const SizedBox(height: PavioSpacing.s4),
+              Text(_formatInr(agreement.monthlyRent), style: PavioText.h3),
+              const SizedBox(height: PavioSpacing.s16),
+              Text('Security deposit', style: PavioText.label.copyWith(color: PavioColors.ink500)),
+              const SizedBox(height: PavioSpacing.s4),
+              Text(_formatInr(agreement.securityDeposit), style: PavioText.h3),
+              const SizedBox(height: PavioSpacing.s16),
+              Text('Term', style: PavioText.label.copyWith(color: PavioColors.ink500)),
+              const SizedBox(height: PavioSpacing.s4),
               Text(
                 agreement.endDate != null ? '${agreement.startDate} to ${agreement.endDate}' : 'Since ${agreement.startDate}',
-                style: NivasaText.body,
+                style: PavioText.body,
               ),
-              const SizedBox(height: NivasaSpacing.s24),
-              Text('Terms & Conditions', style: NivasaText.label.copyWith(color: NivasaColors.ink500)),
-              const SizedBox(height: NivasaSpacing.s8),
+              const SizedBox(height: PavioSpacing.s24),
+              Text('Terms & Conditions', style: PavioText.label.copyWith(color: PavioColors.ink500)),
+              const SizedBox(height: PavioSpacing.s8),
               for (var i = 0; i < clauses.length; i++)
                 Padding(
-                  padding: const EdgeInsets.only(bottom: NivasaSpacing.s8),
-                  child: Text('${i + 1}. ${clauses[i]}', style: NivasaText.body),
+                  padding: const EdgeInsets.only(bottom: PavioSpacing.s8),
+                  child: Text('${i + 1}. ${clauses[i]}', style: PavioText.body),
                 ),
-              const SizedBox(height: NivasaSpacing.s24),
-              Text('Full legal name', style: NivasaText.label),
-              const SizedBox(height: NivasaSpacing.s8),
+              const SizedBox(height: PavioSpacing.s24),
+              Text('Full legal name', style: PavioText.label),
+              const SizedBox(height: PavioSpacing.s8),
               TextField(
                 controller: _nameController,
-                style: NivasaText.body,
+                style: PavioText.body,
                 decoration: const InputDecoration(hintText: 'As it appears on your ID'),
                 onChanged: (_) => setState(() {}),
               ),
-              const SizedBox(height: NivasaSpacing.s16),
+              const SizedBox(height: PavioSpacing.s16),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Checkbox(
                     value: _agreed,
-                    activeColor: NivasaColors.ink900,
+                    activeColor: PavioColors.ink900,
                     onChanged: _submitting ? null : (v) => setState(() => _agreed = v ?? false),
                   ),
                   Expanded(
                     child: Padding(
-                      padding: const EdgeInsets.only(top: NivasaSpacing.s12),
-                      child: Text('I have read and agree to the terms of this Rental Agreement.', style: NivasaText.body),
+                      padding: const EdgeInsets.only(top: PavioSpacing.s12),
+                      child: Text('I have read and agree to the terms of this Rental Agreement.', style: PavioText.body),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: NivasaSpacing.s8),
+              const SizedBox(height: PavioSpacing.s8),
               Text(
                 'Typing your name above and submitting is a legally binding electronic signature under the Information Technology Act, 2000, Section 10A.',
-                style: NivasaText.caption,
+                style: PavioText.caption,
               ),
-              const SizedBox(height: NivasaSpacing.s24),
-              NivasaPrimaryButton(
+              const SizedBox(height: PavioSpacing.s24),
+              PavioPrimaryButton(
                 label: 'Sign & Submit',
                 loading: _submitting,
                 loadingLabel: 'Submitting…',
                 onPressed: _canSubmit ? _submit : null,
               ),
               if (_error != null) ...[
-                const SizedBox(height: NivasaSpacing.s16),
-                Text(_error!, style: NivasaText.body.copyWith(color: NivasaColors.negativeFg)),
+                const SizedBox(height: PavioSpacing.s16),
+                Text(_error!, style: PavioText.body.copyWith(color: PavioColors.negativeFg)),
               ],
             ],
           ),

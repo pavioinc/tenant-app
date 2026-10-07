@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import '../theme/nivasa_colors.dart';
+import '../theme/pavio_colors.dart';
 
 /// Primary button with a loading state — "button keeps its width; label swaps or is
 /// replaced by the spinner", per the design doc's Loading section. Wraps
-/// ElevatedButtonTheme (see NivasaTheme) rather than re-declaring size/radius/color.
-class NivasaPrimaryButton extends StatelessWidget {
-  const NivasaPrimaryButton({super.key, required this.label, required this.onPressed, this.loading = false, this.loadingLabel});
+/// ElevatedButtonTheme (see PavioTheme) rather than re-declaring size/radius/color.
+class PavioPrimaryButton extends StatelessWidget {
+  const PavioPrimaryButton({super.key, required this.label, required this.onPressed, this.loading = false, this.loadingLabel});
 
   final String label;
   final String? loadingLabel;
@@ -24,7 +24,7 @@ class NivasaPrimaryButton extends StatelessWidget {
                 const SizedBox(
                   width: 16,
                   height: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2.2, valueColor: AlwaysStoppedAnimation(NivasaColors.white)),
+                  child: CircularProgressIndicator(strokeWidth: 2.2, valueColor: AlwaysStoppedAnimation(PavioColors.white)),
                 ),
                 const SizedBox(width: 10),
                 Text(loadingLabel ?? 'Loading…'),

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../core/api_client.dart';
-import '../../theme/nivasa_colors.dart';
-import '../../theme/nivasa_spacing.dart';
-import '../../theme/nivasa_text_styles.dart';
-import '../../widgets/nivasa_button.dart';
+import '../../theme/pavio_colors.dart';
+import '../../theme/pavio_spacing.dart';
+import '../../theme/pavio_text_styles.dart';
+import '../../widgets/pavio_button.dart';
 import '../auth/auth_repository.dart';
 import 'kyc_repository.dart';
 
@@ -97,7 +97,7 @@ class _KycScreenState extends State<KycScreen> {
       appBar: AppBar(title: const Text('Identity verification')),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(NivasaSpacing.s24),
+          padding: const EdgeInsets.all(PavioSpacing.s24),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: _step == _KycStep.enterAadhaar ? _aadhaarStep() : _otpStep()),
         ),
       ),
@@ -106,49 +106,49 @@ class _KycScreenState extends State<KycScreen> {
 
   List<Widget> _aadhaarStep() {
     return [
-      Text('Verify with Aadhaar', style: NivasaText.h1),
-      const SizedBox(height: NivasaSpacing.s8),
+      Text('Verify with Aadhaar', style: PavioText.h1),
+      const SizedBox(height: PavioSpacing.s8),
       Text(
         "We'll send a one-time code to verify your identity. Your full Aadhaar number is never stored — only the last 4 digits.",
-        style: NivasaText.body.copyWith(color: NivasaColors.ink500),
+        style: PavioText.body.copyWith(color: PavioColors.ink500),
       ),
-      const SizedBox(height: NivasaSpacing.s24),
-      Text('Aadhaar number', style: NivasaText.label),
-      const SizedBox(height: NivasaSpacing.s8),
+      const SizedBox(height: PavioSpacing.s24),
+      Text('Aadhaar number', style: PavioText.label),
+      const SizedBox(height: PavioSpacing.s8),
       TextField(
         key: const Key('aadhaar-field'),
         controller: _aadhaarController,
         keyboardType: TextInputType.number,
         maxLength: 12,
-        style: NivasaText.body,
+        style: PavioText.body,
         decoration: InputDecoration(hintText: '123456789012', errorText: _error, counterText: ''),
         onSubmitted: (_) => _requestOtp(),
       ),
-      const SizedBox(height: NivasaSpacing.s24),
-      NivasaPrimaryButton(label: 'Send OTP', loading: _submitting, loadingLabel: 'Sending…', onPressed: _requestOtp),
+      const SizedBox(height: PavioSpacing.s24),
+      PavioPrimaryButton(label: 'Send OTP', loading: _submitting, loadingLabel: 'Sending…', onPressed: _requestOtp),
     ];
   }
 
   List<Widget> _otpStep() {
     return [
-      Text('Enter the OTP', style: NivasaText.h1),
-      const SizedBox(height: NivasaSpacing.s8),
-      Text('Enter the 6-digit code sent to verify your Aadhaar.', style: NivasaText.body.copyWith(color: NivasaColors.ink500)),
-      const SizedBox(height: NivasaSpacing.s24),
-      Text('OTP', style: NivasaText.label),
-      const SizedBox(height: NivasaSpacing.s8),
+      Text('Enter the OTP', style: PavioText.h1),
+      const SizedBox(height: PavioSpacing.s8),
+      Text('Enter the 6-digit code sent to verify your Aadhaar.', style: PavioText.body.copyWith(color: PavioColors.ink500)),
+      const SizedBox(height: PavioSpacing.s24),
+      Text('OTP', style: PavioText.label),
+      const SizedBox(height: PavioSpacing.s8),
       TextField(
         key: const Key('otp-field'),
         controller: _codeController,
         keyboardType: TextInputType.number,
         maxLength: 6,
-        style: NivasaText.body,
+        style: PavioText.body,
         decoration: InputDecoration(hintText: '123456', errorText: _error, counterText: ''),
         onSubmitted: (_) => _verifyOtp(),
       ),
-      const SizedBox(height: NivasaSpacing.s16),
-      NivasaPrimaryButton(label: 'Verify', loading: _submitting, loadingLabel: 'Verifying…', onPressed: _verifyOtp),
-      const SizedBox(height: NivasaSpacing.s12),
+      const SizedBox(height: PavioSpacing.s16),
+      PavioPrimaryButton(label: 'Verify', loading: _submitting, loadingLabel: 'Verifying…', onPressed: _verifyOtp),
+      const SizedBox(height: PavioSpacing.s12),
       Center(
         child: TextButton(
           onPressed: _submitting

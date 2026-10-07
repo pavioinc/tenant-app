@@ -16,7 +16,7 @@ abstract class CacheStore {
 class SharedPreferencesCacheStore implements CacheStore {
   const SharedPreferencesCacheStore();
 
-  static const _prefix = 'nivasaos.cache.';
+  static const _prefix = 'pavio.cache.';
 
   @override
   Future<void> write(String key, String value) async {
@@ -46,7 +46,7 @@ class SecureCacheStore implements CacheStore {
   const SecureCacheStore([this._storage = const FlutterSecureStorage()]);
   final FlutterSecureStorage _storage;
 
-  static const _prefix = 'nivasaos.cache.';
+  static const _prefix = 'pavio.cache.';
 
   @override
   Future<void> write(String key, String value) => _storage.write(key: '$_prefix$key', value: value);

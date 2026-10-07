@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
-import '../theme/nivasa_colors.dart';
-import '../theme/nivasa_spacing.dart';
-import '../theme/nivasa_text_styles.dart';
+import '../theme/pavio_colors.dart';
+import '../theme/pavio_spacing.dart';
+import '../theme/pavio_text_styles.dart';
 
 /// Shared "icon · label · trailing" row used by UserScreen and any sub-page that needs
 /// the same list-item look (e.g. AccountDetailsScreen's "Change password" row) — lifted
 /// out of the old SettingsScreen so the style stays in one place instead of copy-pasted
 /// per screen.
-class NivasaMenuRow extends StatelessWidget {
-  const NivasaMenuRow({
+class PavioMenuRow extends StatelessWidget {
+  const PavioMenuRow({
     super.key,
     required this.icon,
     required this.label,
@@ -35,18 +35,18 @@ class NivasaMenuRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(NivasaRadius.card),
+      borderRadius: BorderRadius.circular(PavioRadius.card),
       child: Container(
-        padding: const EdgeInsets.all(NivasaSpacing.s16),
+        padding: const EdgeInsets.all(PavioSpacing.s16),
         decoration: showCard
-            ? BoxDecoration(color: NivasaColors.white, border: Border.all(color: NivasaColors.line), borderRadius: BorderRadius.circular(NivasaRadius.card))
+            ? BoxDecoration(color: PavioColors.white, border: Border.all(color: PavioColors.line), borderRadius: BorderRadius.circular(PavioRadius.card))
             : null,
         child: Row(
           children: [
-            Icon(icon, color: iconColor ?? NivasaColors.ink500),
-            const SizedBox(width: NivasaSpacing.s12),
-            Expanded(child: Text(label, style: NivasaText.body.copyWith(color: labelColor))),
-            trailing ?? Icon(Icons.chevron_right, color: NivasaColors.ink500),
+            Icon(icon, color: iconColor ?? PavioColors.ink500),
+            const SizedBox(width: PavioSpacing.s12),
+            Expanded(child: Text(label, style: PavioText.body.copyWith(color: labelColor))),
+            trailing ?? Icon(Icons.chevron_right, color: PavioColors.ink500),
           ],
         ),
       ),
@@ -54,13 +54,13 @@ class NivasaMenuRow extends StatelessWidget {
   }
 }
 
-/// One card grouping several [NivasaMenuRow]s (each with `showCard: false`, since this
+/// One card grouping several [PavioMenuRow]s (each with `showCard: false`, since this
 /// container already supplies the white background/border/radius) with a plain [Divider]
 /// standing in for the per-row border the rows would otherwise need for separation. An
 /// optional [title] labels the group — pass null to use this purely as an unlabeled list
 /// card (e.g. HomeScreen's "Everything else").
-class NivasaMenuGroupCard extends StatelessWidget {
-  const NivasaMenuGroupCard({super.key, this.title, required this.children});
+class PavioMenuGroupCard extends StatelessWidget {
+  const PavioMenuGroupCard({super.key, this.title, required this.children});
 
   final String? title;
   final List<Widget> children;
@@ -68,7 +68,7 @@ class NivasaMenuGroupCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final card = Container(
-      decoration: BoxDecoration(color: NivasaColors.white, border: Border.all(color: NivasaColors.line), borderRadius: BorderRadius.circular(NivasaRadius.card)),
+      decoration: BoxDecoration(color: PavioColors.white, border: Border.all(color: PavioColors.line), borderRadius: BorderRadius.circular(PavioRadius.card)),
       child: Column(
         children: [
           for (var i = 0; i < children.length; i++) ...[children[i], if (i != children.length - 1) const Divider(height: 1)],
@@ -78,7 +78,7 @@ class NivasaMenuGroupCard extends StatelessWidget {
     if (title == null) return card;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: [Text(title!, style: NivasaText.label.copyWith(color: NivasaColors.ink500)), const SizedBox(height: NivasaSpacing.s8), card],
+      children: [Text(title!, style: PavioText.label.copyWith(color: PavioColors.ink500)), const SizedBox(height: PavioSpacing.s8), card],
     );
   }
 }

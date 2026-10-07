@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 
-/// Ported 1:1 from design_handoff_nivasaos/README.md's Design Tokens section — the same
+/// Ported 1:1 from design_handoff_pavio/README.md's Design Tokens section — the same
 /// source owner-dashboard/app/tokens.css encodes for the web. Keep both in sync by hand;
 /// there's no shared token package between the Next.js and Flutter apps.
-class NivasaColors {
-  NivasaColors._();
+class PavioColors {
+  PavioColors._();
 
-  // Primary — Nivasa Green
+  // Primary — Pavio Green
   static const primary900 = Color(0xFF08312A);
   static const primary800 = Color(0xFF0B4438);
   static const primary700 = Color(0xFF0F5C4A); // Base

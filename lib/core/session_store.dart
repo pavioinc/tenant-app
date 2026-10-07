@@ -97,10 +97,10 @@ class SessionStore {
 
   final SecureStore _storage;
 
-  static const _accessTokenKey = 'nivasaos.access_token';
-  static const _refreshTokenKey = 'nivasaos.refresh_token';
-  static const _userKey = 'nivasaos.user';
-  static const _accessTokenExpiresAtKey = 'nivasaos.access_token_expires_at';
+  static const _accessTokenKey = 'pavio.access_token';
+  static const _refreshTokenKey = 'pavio.refresh_token';
+  static const _userKey = 'pavio.user';
+  static const _accessTokenExpiresAtKey = 'pavio.access_token_expires_at';
 
   Future<void> save(Session session) async {
     await _storage.write(_accessTokenKey, session.accessToken);

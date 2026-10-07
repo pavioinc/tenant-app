@@ -1,13 +1,13 @@
-# NivasaOS Tenant App
+# Pavio Tenant App
 
-Flutter renter mobile app, built against the NivasaOS design system
-(`design_handoff_nivasaos/`) and talking to api-gateway only — same principle as
+Flutter renter mobile app, built against the Pavio design system
+(`design_handoff_pavio/`) and talking to api-gateway only — same principle as
 owner-dashboard, no direct backend-service calls.
 
 ## Sign-up model
 
 Renters are **not** created by a property manager first. Signup is a general,
-standalone NivasaOS platform account:
+standalone Pavio platform account:
 
 1. A renter opens the app and creates an account with **full name, email, and
    password** (`SignupScreen` → `POST /api/auth/v1/tenant/signup`) — no phone/OTP
@@ -110,7 +110,7 @@ deliberately doesn't attempt it.
   treated as a genuine connectivity problem, so `fetchWithCache` falls back to the cache
   and marks the result `stale: true` with the original `lastSyncedAt`. No cache entry
   means the original error still surfaces — there's nothing to fall back to.
-- `lib/widgets/nivasa_stale_banner.dart` — the "Showing saved data from `<time>` — check
+- `lib/widgets/pavio_stale_banner.dart` — the "Showing saved data from `<time>` — check
   your connection" banner shown at the top of a screen's content when `stale == true`.
   Pull-to-refresh (already on every one of these screens) is the retry mechanism; there's
   no separate retry button.
@@ -132,7 +132,7 @@ sitting under the same key.
 ## Resident Hub redesign (2026-08-18)
 
 The home screen was rebuilt against a reference screenshot the user provided (a
-competing property-management app), using only NivasaOS's existing design tokens — no
+competing property-management app), using only Pavio's existing design tokens — no
 new colors, no image assets (none exist in this app; the payment banner below is a
 gradient, not a photo).
 
@@ -347,7 +347,7 @@ authenticated a real API call that would otherwise have 401'd.
   2-column Resident Hub grid, locked/disabled when unconnected. `_MenuItem.screenBuilder`
   is null for tiles not built yet (tapping says so rather than pretending to work) and a
   real widget builder once wired.
-- `lib/theme/` — design tokens ported by hand from `design_handoff_nivasaos/`, the
+- `lib/theme/` — design tokens ported by hand from `design_handoff_pavio/`, the
   same source `owner-dashboard/app/tokens.css` encodes for the web. No shared package
   between Dart and TypeScript; keep both in sync manually.
 
@@ -366,7 +366,7 @@ blocks login/signup/logout. Rent-due reminders are the first event wired to this
 channel — see notification-service/src/handlers.ts's `handleRentDueEvent` and
 providers.ts's `PushNotificationProvider`.
 
-**Client-side setup is done** (2026-08-23) — Firebase project `nivasaos` exists, both
+**Client-side setup is done** (2026-08-23) — Firebase project `pavio` exists, both
 apps are registered, and both platforms are wired and verified end to end (real device
 build + the native "Would Like to Send You Notifications" permission prompt firing on
 both a booted iOS simulator and an Android emulator):
@@ -418,7 +418,7 @@ flutter run -d web-server --web-port=8765 --dart-define=API_BASE_URL=http://loca
 `API_BASE_URL` defaults to `http://localhost:4000` (`http://10.0.2.2:4000` on the
 Android emulator). Override it for a physical device or simulator pointed at your
 host's LAN IP. Requires api-gateway (and everything behind it) running — see the root
-`nivasaos/README.md`.
+`pavio/README.md`.
 
 No Android SDK or full Xcode is assumed to be installed; the web target
 (`flutter run -d web-server`) is the lowest-friction way to validate changes in a

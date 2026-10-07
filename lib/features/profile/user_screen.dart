@@ -4,12 +4,12 @@ import '../../core/api_client.dart';
 import '../../core/cache_store.dart';
 import '../../core/cached_fetch.dart';
 import '../../core/session_store.dart';
-import '../../theme/nivasa_colors.dart';
-import '../../theme/nivasa_spacing.dart';
-import '../../theme/nivasa_text_styles.dart';
-import '../../widgets/nivasa_menu_row.dart';
-import '../../widgets/nivasa_skeleton.dart';
-import '../../widgets/nivasa_stale_banner.dart';
+import '../../theme/pavio_colors.dart';
+import '../../theme/pavio_spacing.dart';
+import '../../theme/pavio_text_styles.dart';
+import '../../widgets/pavio_menu_row.dart';
+import '../../widgets/pavio_skeleton.dart';
+import '../../widgets/pavio_stale_banner.dart';
 import '../auth/auth_repository.dart';
 import '../auth/login_screen.dart';
 import '../kyc/kyc_repository.dart';
@@ -150,14 +150,14 @@ class _UserScreenState extends State<UserScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Padding(
-              padding: const EdgeInsets.all(NivasaSpacing.s16),
-              child: Text('Preferred language', style: NivasaText.h3),
+              padding: const EdgeInsets.all(PavioSpacing.s16),
+              child: Text('Preferred language', style: PavioText.h3),
             ),
             for (final code in supportedLanguages)
               ListTile(
                 title: Text(languageLabels[code] ?? code),
                 trailing: code == profile.language
-                    ? const Icon(Icons.check, color: NivasaColors.primary700)
+                    ? const Icon(Icons.check, color: PavioColors.primary700)
                     : null,
                 onTap: () => Navigator.of(context).pop(code),
               ),
@@ -233,12 +233,12 @@ class _UserScreenState extends State<UserScreen> {
                   if (_stale)
                     Padding(
                       padding: const EdgeInsets.fromLTRB(
-                        NivasaSpacing.s24,
-                        NivasaSpacing.s24,
-                        NivasaSpacing.s24,
+                        PavioSpacing.s24,
+                        PavioSpacing.s24,
+                        PavioSpacing.s24,
                         0,
                       ),
-                      child: NivasaStaleBanner(
+                      child: PavioStaleBanner(
                         lastSyncedAt: _lastSyncedAt,
                         onRetry: _load,
                       ),
@@ -247,7 +247,7 @@ class _UserScreenState extends State<UserScreen> {
                     child: RefreshIndicator(
                       onRefresh: _load,
                       child: ListView(
-                        padding: const EdgeInsets.all(NivasaSpacing.s24),
+                        padding: const EdgeInsets.all(PavioSpacing.s24),
                         children: [
                           Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -255,13 +255,13 @@ class _UserScreenState extends State<UserScreen> {
                               Expanded(
                                 child: Text(
                                   _profile!.name,
-                                  style: NivasaText.h2,
+                                  style: PavioText.h2,
                                 ),
                               ),
                               InkWell(
                                 key: const Key('user-avatar'),
                                 borderRadius: BorderRadius.circular(
-                                  NivasaRadius.pill,
+                                  PavioRadius.pill,
                                 ),
                                 onTap: () => Navigator.of(context).push(
                                   MaterialPageRoute(
@@ -274,18 +274,18 @@ class _UserScreenState extends State<UserScreen> {
                                   width: 40,
                                   height: 40,
                                   decoration: const BoxDecoration(
-                                    color: NivasaColors.primary50,
+                                    color: PavioColors.primary50,
                                     shape: BoxShape.circle,
                                   ),
                                   child: const Icon(
                                     Icons.person_outline,
-                                    color: NivasaColors.primary700,
+                                    color: PavioColors.primary700,
                                   ),
                                 ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: NivasaSpacing.s24),
+                          const SizedBox(height: PavioSpacing.s24),
                           _PropertyRow(
                             profile: _profile!,
                             expanded: _propertyExpanded,
@@ -293,15 +293,15 @@ class _UserScreenState extends State<UserScreen> {
                               () => _propertyExpanded = !_propertyExpanded,
                             ),
                           ),
-                          const SizedBox(height: NivasaSpacing.s24),
+                          const SizedBox(height: PavioSpacing.s24),
                           // Grouped into three cards (2026-08-31, doc option "1i") — the old
                           // flat list of eight identical rows had a real Identity/Preferences/
                           // Legal structure that only showed up as a single extra gap before
                           // "Privacy Policy"; every other boundary looked the same.
-                          NivasaMenuGroupCard(
+                          PavioMenuGroupCard(
                             title: 'Profile',
                             children: [
-                              NivasaMenuRow(
+                              PavioMenuRow(
                                 icon: Icons.badge_outlined,
                                 label: 'Account Details',
                                 showCard: false,
@@ -314,7 +314,7 @@ class _UserScreenState extends State<UserScreen> {
                                   ),
                                 ),
                               ),
-                              NivasaMenuRow(
+                              PavioMenuRow(
                                 icon: Icons.emergency_outlined,
                                 label: 'Emergency Contacts',
                                 showCard: false,
@@ -328,11 +328,11 @@ class _UserScreenState extends State<UserScreen> {
                               ),
                             ],
                           ),
-                          const SizedBox(height: NivasaSpacing.s16),
-                          NivasaMenuGroupCard(
+                          const SizedBox(height: PavioSpacing.s16),
+                          PavioMenuGroupCard(
                             title: 'Preferences',
                             children: [
-                              NivasaMenuRow(
+                              PavioMenuRow(
                                 icon: Icons.notifications_outlined,
                                 label: 'Notifications',
                                 showCard: false,
@@ -342,18 +342,18 @@ class _UserScreenState extends State<UserScreen> {
                                   ),
                                 ),
                               ),
-                              NivasaMenuRow(
+                              PavioMenuRow(
                                 icon: Icons.language_outlined,
                                 label:
                                     'Language: ${languageLabels[_profile!.language] ?? _profile!.language}',
                                 trailing: const Icon(
                                   Icons.keyboard_arrow_down,
-                                  color: NivasaColors.ink500,
+                                  color: PavioColors.ink500,
                                 ),
                                 showCard: false,
                                 onTap: _pickLanguage,
                               ),
-                              NivasaMenuRow(
+                              PavioMenuRow(
                                 icon: Icons.feedback_outlined,
                                 label: 'App Feedback',
                                 showCard: false,
@@ -365,11 +365,11 @@ class _UserScreenState extends State<UserScreen> {
                               ),
                             ],
                           ),
-                          const SizedBox(height: NivasaSpacing.s16),
-                          NivasaMenuGroupCard(
+                          const SizedBox(height: PavioSpacing.s16),
+                          PavioMenuGroupCard(
                             title: 'Legal',
                             children: [
-                              NivasaMenuRow(
+                              PavioMenuRow(
                                 icon: Icons.privacy_tip_outlined,
                                 label: 'Privacy Policy',
                                 showCard: false,
@@ -379,7 +379,7 @@ class _UserScreenState extends State<UserScreen> {
                                   ),
                                 ),
                               ),
-                              NivasaMenuRow(
+                              PavioMenuRow(
                                 icon: Icons.description_outlined,
                                 label: 'Terms & Conditions',
                                 showCard: false,
@@ -391,21 +391,21 @@ class _UserScreenState extends State<UserScreen> {
                               ),
                             ],
                           ),
-                          const SizedBox(height: NivasaSpacing.s16),
-                          NivasaMenuRow(
+                          const SizedBox(height: PavioSpacing.s16),
+                          PavioMenuRow(
                             icon: Icons.logout,
                             label: 'Sign Out',
-                            iconColor: NivasaColors.negativeFg,
-                            labelColor: NivasaColors.negativeFg,
+                            iconColor: PavioColors.negativeFg,
+                            labelColor: PavioColors.negativeFg,
                             trailing: const SizedBox.shrink(),
                             onTap: _confirmSignOut,
                           ),
                           if (_appVersion != null) ...[
-                            const SizedBox(height: NivasaSpacing.s24),
+                            const SizedBox(height: PavioSpacing.s24),
                             Center(
                               child: Text(
                                 _appVersion!,
-                                style: NivasaText.caption,
+                                style: PavioText.caption,
                               ),
                             ),
                           ],
@@ -439,7 +439,7 @@ class _UnconnectedAccountView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView(
-      padding: const EdgeInsets.all(NivasaSpacing.s24),
+      padding: const EdgeInsets.all(PavioSpacing.s24),
       children: [
         Row(
           crossAxisAlignment: CrossAxisAlignment.center,
@@ -448,25 +448,25 @@ class _UnconnectedAccountView extends StatelessWidget {
               width: 40,
               height: 40,
               decoration: const BoxDecoration(
-                color: NivasaColors.primary50,
+                color: PavioColors.primary50,
                 shape: BoxShape.circle,
               ),
               child: const Icon(
                 Icons.person_outline,
-                color: NivasaColors.primary700,
+                color: PavioColors.primary700,
               ),
             ),
-            const SizedBox(width: NivasaSpacing.s12),
+            const SizedBox(width: PavioSpacing.s12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(user.name, style: NivasaText.h3),
+                  Text(user.name, style: PavioText.h3),
                   if (user.email != null)
                     Text(
                       user.email!,
-                      style: NivasaText.bodySmall.copyWith(
-                        color: NivasaColors.ink500,
+                      style: PavioText.bodySmall.copyWith(
+                        color: PavioColors.ink500,
                       ),
                     ),
                 ],
@@ -474,12 +474,12 @@ class _UnconnectedAccountView extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: NivasaSpacing.s24),
+        const SizedBox(height: PavioSpacing.s24),
         Container(
-          padding: const EdgeInsets.all(NivasaSpacing.s16),
+          padding: const EdgeInsets.all(PavioSpacing.s16),
           decoration: BoxDecoration(
-            color: NivasaColors.infoTint,
-            borderRadius: BorderRadius.circular(NivasaRadius.card),
+            color: PavioColors.infoTint,
+            borderRadius: BorderRadius.circular(PavioRadius.card),
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -487,32 +487,32 @@ class _UnconnectedAccountView extends StatelessWidget {
               const Icon(
                 Icons.info_outline,
                 size: 20,
-                color: NivasaColors.infoTextOnTint,
+                color: PavioColors.infoTextOnTint,
               ),
-              const SizedBox(width: NivasaSpacing.s12),
+              const SizedBox(width: PavioSpacing.s12),
               Expanded(
                 child: Text(
                   "Account Details, Emergency Contacts, and your property will show up here once your property manager adds you.",
-                  style: NivasaText.body.copyWith(
-                    color: NivasaColors.infoTextOnTint,
+                  style: PavioText.body.copyWith(
+                    color: PavioColors.infoTextOnTint,
                   ),
                 ),
               ),
             ],
           ),
         ),
-        const SizedBox(height: NivasaSpacing.s24),
-        NivasaMenuRow(
+        const SizedBox(height: PavioSpacing.s24),
+        PavioMenuRow(
           icon: Icons.logout,
           label: 'Sign Out',
-          iconColor: NivasaColors.negativeFg,
-          labelColor: NivasaColors.negativeFg,
+          iconColor: PavioColors.negativeFg,
+          labelColor: PavioColors.negativeFg,
           trailing: const SizedBox.shrink(),
           onTap: onSignOut,
         ),
         if (appVersion != null) ...[
-          const SizedBox(height: NivasaSpacing.s24),
-          Center(child: Text(appVersion!, style: NivasaText.caption)),
+          const SizedBox(height: PavioSpacing.s24),
+          Center(child: Text(appVersion!, style: PavioText.caption)),
         ],
       ],
     );
@@ -527,23 +527,23 @@ class _UserScreenLoadingSkeleton extends StatelessWidget {
 
   static Widget _rowSkeleton() => const Padding(
     padding: EdgeInsets.symmetric(
-      horizontal: NivasaSpacing.s16,
-      vertical: NivasaSpacing.s16,
+      horizontal: PavioSpacing.s16,
+      vertical: PavioSpacing.s16,
     ),
     child: Row(
       children: [
-        NivasaSkeleton.circle(size: 22),
-        SizedBox(width: NivasaSpacing.s16),
-        NivasaSkeleton(width: 120, height: 15),
+        PavioSkeleton.circle(size: 22),
+        SizedBox(width: PavioSpacing.s16),
+        PavioSkeleton(width: 120, height: 15),
       ],
     ),
   );
 
   static Widget _groupCard(int rowCount) => Container(
     decoration: BoxDecoration(
-      color: NivasaColors.white,
-      border: Border.all(color: NivasaColors.line),
-      borderRadius: BorderRadius.circular(NivasaRadius.card),
+      color: PavioColors.white,
+      border: Border.all(color: PavioColors.line),
+      borderRadius: BorderRadius.circular(PavioRadius.card),
     ),
     child: Column(
       children: [
@@ -558,22 +558,22 @@ class _UserScreenLoadingSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView(
-      padding: const EdgeInsets.all(NivasaSpacing.s24),
+      padding: const EdgeInsets.all(PavioSpacing.s24),
       children: [
         Row(
           children: [
-            const NivasaSkeleton(width: 160, height: 22),
+            const PavioSkeleton(width: 160, height: 22),
             const Spacer(),
-            const NivasaSkeleton.circle(size: 40),
+            const PavioSkeleton.circle(size: 40),
           ],
         ),
-        const SizedBox(height: NivasaSpacing.s24),
-        const NivasaSkeleton(height: 76, borderRadius: NivasaRadius.card),
-        const SizedBox(height: NivasaSpacing.s24),
+        const SizedBox(height: PavioSpacing.s24),
+        const PavioSkeleton(height: 76, borderRadius: PavioRadius.card),
+        const SizedBox(height: PavioSpacing.s24),
         _groupCard(2),
-        const SizedBox(height: NivasaSpacing.s16),
+        const SizedBox(height: PavioSpacing.s16),
         _groupCard(3),
-        const SizedBox(height: NivasaSpacing.s16),
+        const SizedBox(height: PavioSpacing.s16),
         _groupCard(2),
       ],
     );
@@ -600,13 +600,13 @@ class _KycBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final (fg, tint) = switch (status?.status) {
       'verified' => (
-        NivasaColors.positiveTextOnTint,
-        NivasaColors.positiveTint,
+        PavioColors.positiveTextOnTint,
+        PavioColors.positiveTint,
       ),
-      'pending' => (NivasaColors.warningTextOnTint, NivasaColors.warningTint),
+      'pending' => (PavioColors.warningTextOnTint, PavioColors.warningTint),
       'failed' ||
-      'expired' => (NivasaColors.negativeTextOnTint, NivasaColors.negativeTint),
-      _ => (NivasaColors.offlineTextOnTint, NivasaColors.offlineTint),
+      'expired' => (PavioColors.negativeTextOnTint, PavioColors.negativeTint),
+      _ => (PavioColors.offlineTextOnTint, PavioColors.offlineTint),
     };
     return Row(
       mainAxisSize: MainAxisSize.min,
@@ -615,18 +615,18 @@ class _KycBadge extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
           decoration: BoxDecoration(
             color: tint,
-            borderRadius: BorderRadius.circular(NivasaRadius.pill),
+            borderRadius: BorderRadius.circular(PavioRadius.pill),
           ),
           child: Text(
             _kycBadgeLabels[status?.status] ?? 'Not verified',
-            style: NivasaText.caption.copyWith(
+            style: PavioText.caption.copyWith(
               color: fg,
               fontWeight: FontWeight.w600,
             ),
           ),
         ),
-        const SizedBox(width: NivasaSpacing.s8),
-        const Icon(Icons.chevron_right, color: NivasaColors.ink500),
+        const SizedBox(width: PavioSpacing.s8),
+        const Icon(Icons.chevron_right, color: PavioColors.ink500),
       ],
     );
   }
@@ -653,13 +653,13 @@ class _PropertyRow extends StatelessWidget {
         profile.propertyAddress != null && profile.propertyAddress!.isNotEmpty;
     return InkWell(
       onTap: hasAddress ? onTap : null,
-      borderRadius: BorderRadius.circular(NivasaRadius.card),
+      borderRadius: BorderRadius.circular(PavioRadius.card),
       child: Container(
-        padding: const EdgeInsets.all(NivasaSpacing.s16),
+        padding: const EdgeInsets.all(PavioSpacing.s16),
         decoration: BoxDecoration(
-          color: NivasaColors.white,
-          border: Border.all(color: NivasaColors.line),
-          borderRadius: BorderRadius.circular(NivasaRadius.card),
+          color: PavioColors.white,
+          border: Border.all(color: PavioColors.line),
+          borderRadius: BorderRadius.circular(PavioRadius.card),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -672,14 +672,14 @@ class _PropertyRow extends StatelessWidget {
                     children: [
                       Text(
                         profile.propertyName ?? 'No property on file',
-                        style: NivasaText.h3,
+                        style: PavioText.h3,
                       ),
                       if (profile.propertyCity != null) ...[
-                        const SizedBox(height: NivasaSpacing.s4),
+                        const SizedBox(height: PavioSpacing.s4),
                         Text(
                           profile.propertyCity!,
-                          style: NivasaText.bodySmall.copyWith(
-                            color: NivasaColors.ink500,
+                          style: PavioText.bodySmall.copyWith(
+                            color: PavioColors.ink500,
                           ),
                         ),
                       ],
@@ -691,17 +691,17 @@ class _PropertyRow extends StatelessWidget {
                     expanded
                         ? Icons.keyboard_arrow_up
                         : Icons.keyboard_arrow_down,
-                    color: NivasaColors.ink500,
+                    color: PavioColors.ink500,
                   ),
               ],
             ),
             if (expanded && hasAddress) ...[
-              const SizedBox(height: NivasaSpacing.s12),
+              const SizedBox(height: PavioSpacing.s12),
               const Divider(height: 1),
-              const SizedBox(height: NivasaSpacing.s12),
+              const SizedBox(height: PavioSpacing.s12),
               Text(
                 profile.propertyAddress!,
-                style: NivasaText.body.copyWith(color: NivasaColors.ink700),
+                style: PavioText.body.copyWith(color: PavioColors.ink700),
               ),
             ],
           ],
@@ -721,16 +721,16 @@ class _ErrorState extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(NivasaSpacing.s24),
+        padding: const EdgeInsets.all(PavioSpacing.s24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
               message,
-              style: NivasaText.body.copyWith(color: NivasaColors.ink500),
+              style: PavioText.body.copyWith(color: PavioColors.ink500),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: NivasaSpacing.s16),
+            const SizedBox(height: PavioSpacing.s16),
             TextButton(onPressed: onRetry, child: const Text('Try again')),
           ],
         ),

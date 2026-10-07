@@ -3,14 +3,14 @@ import '../../core/api_client.dart';
 import '../../core/cache_store.dart';
 import '../../core/cached_fetch.dart';
 import '../../core/date_utils.dart';
-import '../../theme/nivasa_colors.dart';
-import '../../theme/nivasa_elevation.dart';
-import '../../theme/nivasa_spacing.dart';
-import '../../theme/nivasa_text_styles.dart';
-import '../../widgets/nivasa_button.dart';
-import '../../widgets/nivasa_empty_state.dart';
-import '../../widgets/nivasa_skeleton.dart';
-import '../../widgets/nivasa_stale_banner.dart';
+import '../../theme/pavio_colors.dart';
+import '../../theme/pavio_elevation.dart';
+import '../../theme/pavio_spacing.dart';
+import '../../theme/pavio_text_styles.dart';
+import '../../widgets/pavio_button.dart';
+import '../../widgets/pavio_empty_state.dart';
+import '../../widgets/pavio_skeleton.dart';
+import '../../widgets/pavio_stale_banner.dart';
 import '../auth/auth_repository.dart';
 import 'guests_repository.dart';
 
@@ -27,27 +27,27 @@ String _formatTime(String isoDateTime) {
 (Color bg, Color fg, String label) _guestStatusVisual(ExpectedGuest guest) {
   return switch (guest.status) {
     'arrived' => (
-      NivasaColors.positiveTint,
-      NivasaColors.positiveTextOnTint,
+      PavioColors.positiveTint,
+      PavioColors.positiveTextOnTint,
       guest.arrivedAt != null
           ? 'Inside since ${_formatTime(guest.arrivedAt!)}'
           : 'Inside',
     ),
     'departed' => (
-      NivasaColors.offlineTint,
-      NivasaColors.offlineTextOnTint,
+      PavioColors.offlineTint,
+      PavioColors.offlineTextOnTint,
       guest.departedAt != null
           ? 'Departed ${_formatTime(guest.departedAt!)}'
           : 'Departed',
     ),
     'denied' => (
-      NivasaColors.negativeTint,
-      NivasaColors.negativeTextOnTint,
+      PavioColors.negativeTint,
+      PavioColors.negativeTextOnTint,
       'Denied entry',
     ),
     _ => (
-      NivasaColors.offlineTint,
-      NivasaColors.offlineTextOnTint,
+      PavioColors.offlineTint,
+      PavioColors.offlineTextOnTint,
       'Not arrived yet',
     ),
   };
@@ -68,7 +68,7 @@ String _initials(String name) {
 /// Redesigned (doc option "1g") — the empty state becomes a first screen: centred icon,
 /// a headline that says what the feature is for, one sentence on who can see it, and the
 /// action under the thumb instead of a corner FAB a top-left grey sentence quotes
-/// (finding ST-3, shared identically across all six list screens; NivasaEmptyState is
+/// (finding ST-3, shared identically across all six list screens; PavioEmptyState is
 /// the reusable piece that fix implies). The populated list gets the same bottom-bar
 /// treatment as this session's other redesigns, plus the guest's real arrival/departure
 /// status (CLO-231) — a tenant asking "did my guest get let in" is exactly what the
@@ -200,7 +200,7 @@ class _GuestsScreenState extends State<GuestsScreen> {
       appBar: AppBar(title: const Text('Guests')),
       body: SafeArea(
         child: _loading
-            ? const NivasaSkeletonList()
+            ? const PavioSkeletonList()
             : _error != null
             ? _ErrorState(message: _error!, onRetry: _load)
             : Column(
@@ -208,12 +208,12 @@ class _GuestsScreenState extends State<GuestsScreen> {
                   if (_stale)
                     Padding(
                       padding: const EdgeInsets.fromLTRB(
-                        NivasaSpacing.s24,
-                        NivasaSpacing.s24,
-                        NivasaSpacing.s24,
+                        PavioSpacing.s24,
+                        PavioSpacing.s24,
+                        PavioSpacing.s24,
                         0,
                       ),
-                      child: NivasaStaleBanner(
+                      child: PavioStaleBanner(
                         lastSyncedAt: _lastSyncedAt,
                         onRetry: _load,
                       ),
@@ -229,7 +229,7 @@ class _GuestsScreenState extends State<GuestsScreen> {
                                     constraints: BoxConstraints(
                                       minHeight: constraints.maxHeight,
                                     ),
-                                    child: NivasaEmptyState(
+                                    child: PavioEmptyState(
                                       icon: Icons.person_add_alt,
                                       title: 'Expecting someone?',
                                       message:
@@ -243,10 +243,10 @@ class _GuestsScreenState extends State<GuestsScreen> {
                               ),
                             )
                           : ListView.separated(
-                              padding: const EdgeInsets.all(NivasaSpacing.s24),
+                              padding: const EdgeInsets.all(PavioSpacing.s24),
                               itemCount: _items.length,
                               separatorBuilder: (_, _) =>
-                                  const SizedBox(height: NivasaSpacing.s12),
+                                  const SizedBox(height: PavioSpacing.s12),
                               itemBuilder: (context, index) => _GuestCard(
                                 guest: _items[index],
                                 onDelete: () => _delete(_items[index]),
@@ -272,12 +272,12 @@ class _GuestCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final (badgeBg, badgeFg, statusLabel) = _guestStatusVisual(guest);
     return Container(
-      padding: const EdgeInsets.all(NivasaSpacing.s16),
+      padding: const EdgeInsets.all(PavioSpacing.s16),
       decoration: BoxDecoration(
-        color: NivasaColors.white,
-        border: Border.all(color: NivasaColors.line),
-        borderRadius: BorderRadius.circular(NivasaRadius.card),
-        boxShadow: NivasaElevation.e1,
+        color: PavioColors.white,
+        border: Border.all(color: PavioColors.line),
+        borderRadius: BorderRadius.circular(PavioRadius.card),
+        boxShadow: PavioElevation.e1,
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -286,39 +286,39 @@ class _GuestCard extends StatelessWidget {
             width: 40,
             height: 40,
             decoration: const BoxDecoration(
-              color: NivasaColors.primary50,
+              color: PavioColors.primary50,
               shape: BoxShape.circle,
             ),
             child: Center(
               child: Text(
                 _initials(guest.name),
-                style: NivasaText.badge.copyWith(
-                  color: NivasaColors.primary700,
+                style: PavioText.badge.copyWith(
+                  color: PavioColors.primary700,
                 ),
               ),
             ),
           ),
-          const SizedBox(width: NivasaSpacing.s12),
+          const SizedBox(width: PavioSpacing.s12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   guest.name,
-                  style: NivasaText.h3,
+                  style: PavioText.h3,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: NivasaSpacing.s4),
+                const SizedBox(height: PavioSpacing.s4),
                 Text(
                   [
                     formatDisplayDate(guest.visitDate),
                     if (guest.phone != null) guest.phone!,
                   ].join(' · '),
-                  style: NivasaText.bodySmall.copyWith(
-                    color: NivasaColors.ink500,
+                  style: PavioText.bodySmall.copyWith(
+                    color: PavioColors.ink500,
                   ),
                 ),
-                const SizedBox(height: NivasaSpacing.s8),
+                const SizedBox(height: PavioSpacing.s8),
                 // A badge next to the name overflows once its text is "Inside since
                 // 9:05 AM" rather than a single word like "Open" — its own row, so
                 // length here never fights the name for space.
@@ -331,23 +331,23 @@ class _GuestCard extends StatelessWidget {
                     ),
                     decoration: BoxDecoration(
                       color: badgeBg,
-                      borderRadius: BorderRadius.circular(NivasaRadius.pill),
+                      borderRadius: BorderRadius.circular(PavioRadius.pill),
                     ),
                     child: Text(
                       statusLabel,
-                      style: NivasaText.badge.copyWith(color: badgeFg),
+                      style: PavioText.badge.copyWith(color: badgeFg),
                     ),
                   ),
                 ),
                 if (guest.notes != null) ...[
-                  const SizedBox(height: NivasaSpacing.s8),
-                  Text(guest.notes!, style: NivasaText.body),
+                  const SizedBox(height: PavioSpacing.s8),
+                  Text(guest.notes!, style: PavioText.body),
                 ],
               ],
             ),
           ),
           IconButton(
-            icon: Icon(Icons.delete_outline, color: NivasaColors.negativeFg),
+            icon: Icon(Icons.delete_outline, color: PavioColors.negativeFg),
             tooltip: 'Delete',
             onPressed: onDelete,
           ),
@@ -368,14 +368,14 @@ class _AddGuestBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.fromLTRB(
-        NivasaSpacing.s24,
-        NivasaSpacing.s12,
-        NivasaSpacing.s24,
-        NivasaSpacing.s24,
+        PavioSpacing.s24,
+        PavioSpacing.s12,
+        PavioSpacing.s24,
+        PavioSpacing.s24,
       ),
       decoration: const BoxDecoration(
-        color: NivasaColors.white,
-        border: Border(top: BorderSide(color: NivasaColors.line)),
+        color: PavioColors.white,
+        border: Border(top: BorderSide(color: PavioColors.line)),
       ),
       child: SizedBox(
         height: 52,
@@ -471,11 +471,11 @@ class _AddGuestSheetState extends State<_AddGuestSheet> {
         bottom: MediaQuery.of(context).viewInsets.bottom,
       ),
       child: Container(
-        padding: const EdgeInsets.all(NivasaSpacing.s24),
+        padding: const EdgeInsets.all(PavioSpacing.s24),
         decoration: const BoxDecoration(
-          color: NivasaColors.white,
+          color: PavioColors.white,
           borderRadius: BorderRadius.vertical(
-            top: Radius.circular(NivasaRadius.bottomSheetTop),
+            top: Radius.circular(PavioRadius.bottomSheetTop),
           ),
         ),
         child: Column(
@@ -486,24 +486,24 @@ class _AddGuestSheetState extends State<_AddGuestSheet> {
               child: Container(
                 width: 40,
                 height: 4,
-                margin: const EdgeInsets.only(bottom: NivasaSpacing.s16),
-                color: NivasaColors.line,
+                margin: const EdgeInsets.only(bottom: PavioSpacing.s16),
+                color: PavioColors.line,
               ),
             ),
-            Text('Add guest', style: NivasaText.h2),
-            const SizedBox(height: NivasaSpacing.s16),
-            Text('Name', style: NivasaText.label),
-            const SizedBox(height: NivasaSpacing.s8),
-            TextField(controller: _nameController, style: NivasaText.body),
-            const SizedBox(height: NivasaSpacing.s16),
-            Text('Phone (optional)', style: NivasaText.label),
-            const SizedBox(height: NivasaSpacing.s8),
+            Text('Add guest', style: PavioText.h2),
+            const SizedBox(height: PavioSpacing.s16),
+            Text('Name', style: PavioText.label),
+            const SizedBox(height: PavioSpacing.s8),
+            TextField(controller: _nameController, style: PavioText.body),
+            const SizedBox(height: PavioSpacing.s16),
+            Text('Phone (optional)', style: PavioText.label),
+            const SizedBox(height: PavioSpacing.s8),
             TextField(
               controller: _phoneController,
               keyboardType: TextInputType.phone,
-              style: NivasaText.body,
+              style: PavioText.body,
             ),
-            const SizedBox(height: NivasaSpacing.s16),
+            const SizedBox(height: PavioSpacing.s16),
             TextButton(
               onPressed: _submitting ? null : _pickVisitDate,
               child: Text(
@@ -512,23 +512,23 @@ class _AddGuestSheetState extends State<_AddGuestSheet> {
                     : 'Visit date: ${formatDisplayDate('${_visitDate!.year}-${_visitDate!.month.toString().padLeft(2, '0')}-${_visitDate!.day.toString().padLeft(2, '0')}')}',
               ),
             ),
-            const SizedBox(height: NivasaSpacing.s8),
-            Text('Notes (optional)', style: NivasaText.label),
-            const SizedBox(height: NivasaSpacing.s8),
+            const SizedBox(height: PavioSpacing.s8),
+            Text('Notes (optional)', style: PavioText.label),
+            const SizedBox(height: PavioSpacing.s8),
             TextField(
               controller: _notesController,
               maxLines: 2,
-              style: NivasaText.body,
+              style: PavioText.body,
               decoration: InputDecoration(errorText: _error),
             ),
-            const SizedBox(height: NivasaSpacing.s24),
-            NivasaPrimaryButton(
+            const SizedBox(height: PavioSpacing.s24),
+            PavioPrimaryButton(
               label: 'Add',
               loading: _submitting,
               loadingLabel: 'Adding…',
               onPressed: _submit,
             ),
-            const SizedBox(height: NivasaSpacing.s8),
+            const SizedBox(height: PavioSpacing.s8),
           ],
         ),
       ),
@@ -546,16 +546,16 @@ class _ErrorState extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(NivasaSpacing.s24),
+        padding: const EdgeInsets.all(PavioSpacing.s24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
               message,
-              style: NivasaText.body.copyWith(color: NivasaColors.ink500),
+              style: PavioText.body.copyWith(color: PavioColors.ink500),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: NivasaSpacing.s16),
+            const SizedBox(height: PavioSpacing.s16),
             TextButton(onPressed: onRetry, child: const Text('Try again')),
           ],
         ),

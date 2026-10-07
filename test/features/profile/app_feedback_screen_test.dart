@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:nivasaos_tenant_app/core/url_opener.dart';
-import 'package:nivasaos_tenant_app/features/profile/app_feedback_screen.dart';
-import 'package:nivasaos_tenant_app/theme/nivasa_theme.dart';
+import 'package:pavio_tenant_app/core/url_opener.dart';
+import 'package:pavio_tenant_app/features/profile/app_feedback_screen.dart';
+import 'package:pavio_tenant_app/theme/pavio_theme.dart';
 
 class _FakeUrlOpener implements UrlOpener {
   _FakeUrlOpener({this.result = true});
@@ -16,13 +16,13 @@ class _FakeUrlOpener implements UrlOpener {
   }
 }
 
-Widget _wrap(Widget child) => MaterialApp(theme: NivasaTheme.light(), home: child);
+Widget _wrap(Widget child) => MaterialApp(theme: PavioTheme.light(), home: child);
 
 // The success path calls Navigator.of(context).pop() — give it a real stack to pop from,
 // same reasoning as change_password_screen_test.dart's _wrap.
 Widget _wrapWithStack(UrlOpener opener) {
   return MaterialApp(
-    theme: NivasaTheme.light(),
+    theme: PavioTheme.light(),
     home: Builder(
       builder: (context) => Scaffold(
         body: Center(
