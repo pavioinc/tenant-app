@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../core/api_client.dart';
-import '../../theme/nivasa_spacing.dart';
-import '../../theme/nivasa_text_styles.dart';
-import '../../widgets/nivasa_button.dart';
-import '../../widgets/nivasa_password_field.dart';
+import '../../theme/pavio_spacing.dart';
+import '../../theme/pavio_text_styles.dart';
+import '../../widgets/pavio_button.dart';
+import '../../widgets/pavio_password_field.dart';
 import '../auth/auth_repository.dart';
 
 class ChangePasswordScreen extends StatefulWidget {
@@ -73,39 +73,39 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
       appBar: AppBar(title: const Text('Change password')),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(NivasaSpacing.s24),
+          padding: const EdgeInsets.all(PavioSpacing.s24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Current password', style: NivasaText.label),
-              const SizedBox(height: NivasaSpacing.s8),
-              NivasaPasswordField(
+              Text('Current password', style: PavioText.label),
+              const SizedBox(height: PavioSpacing.s8),
+              PavioPasswordField(
                 controller: _currentController,
                 autofillHints: const [AutofillHints.password],
                 hintText: 'Your current password',
                 errorText: _currentError,
               ),
-              const SizedBox(height: NivasaSpacing.s16),
-              Text('New password', style: NivasaText.label),
-              const SizedBox(height: NivasaSpacing.s8),
-              NivasaPasswordField(
+              const SizedBox(height: PavioSpacing.s16),
+              Text('New password', style: PavioText.label),
+              const SizedBox(height: PavioSpacing.s8),
+              PavioPasswordField(
                 controller: _newController,
                 autofillHints: const [AutofillHints.newPassword],
                 hintText: 'At least 8 characters',
                 errorText: _newError,
               ),
-              const SizedBox(height: NivasaSpacing.s16),
-              Text('Confirm new password', style: NivasaText.label),
-              const SizedBox(height: NivasaSpacing.s8),
-              NivasaPasswordField(
+              const SizedBox(height: PavioSpacing.s16),
+              Text('Confirm new password', style: PavioText.label),
+              const SizedBox(height: PavioSpacing.s8),
+              PavioPasswordField(
                 controller: _confirmController,
                 autofillHints: const [AutofillHints.newPassword],
                 hintText: 'Re-enter new password',
                 errorText: _confirmError,
                 onSubmitted: (_) => _submit(),
               ),
-              const SizedBox(height: NivasaSpacing.s24),
-              NivasaPrimaryButton(label: 'Update password', loading: _submitting, loadingLabel: 'Updating…', onPressed: _submit),
+              const SizedBox(height: PavioSpacing.s24),
+              PavioPrimaryButton(label: 'Update password', loading: _submitting, loadingLabel: 'Updating…', onPressed: _submit),
             ],
           ),
         ),

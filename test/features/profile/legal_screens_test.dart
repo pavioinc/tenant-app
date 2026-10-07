@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:nivasaos_tenant_app/features/profile/legal_screens.dart';
-import 'package:nivasaos_tenant_app/theme/nivasa_theme.dart';
+import 'package:pavio_tenant_app/features/profile/legal_screens.dart';
+import 'package:pavio_tenant_app/theme/pavio_theme.dart';
 
 void main() {
   testWidgets('PrivacyPolicyScreen renders its sections', (tester) async {
-    await tester.pumpWidget(MaterialApp(theme: NivasaTheme.light(), home: const PrivacyPolicyScreen()));
+    await tester.pumpWidget(MaterialApp(theme: PavioTheme.light(), home: const PrivacyPolicyScreen()));
 
     expect(find.text('Privacy Policy'), findsOneWidget);
     expect(find.text('Information we collect'), findsOneWidget);
@@ -13,7 +13,7 @@ void main() {
   });
 
   testWidgets('TermsScreen renders its sections', (tester) async {
-    await tester.pumpWidget(MaterialApp(theme: NivasaTheme.light(), home: const TermsScreen()));
+    await tester.pumpWidget(MaterialApp(theme: PavioTheme.light(), home: const TermsScreen()));
 
     expect(find.text('Terms & Conditions'), findsOneWidget);
     expect(find.text('Using the app'), findsOneWidget);

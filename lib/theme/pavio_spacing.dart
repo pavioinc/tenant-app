@@ -1,6 +1,6 @@
 /// Strict 4px base, per the design doc's Spacing section.
-class NivasaSpacing {
-  NivasaSpacing._();
+class PavioSpacing {
+  PavioSpacing._();
 
   static const s4 = 4.0;
   static const s8 = 8.0;
@@ -16,8 +16,8 @@ class NivasaSpacing {
   static const buttonHeightMobile = 48.0;
 }
 
-class NivasaRadius {
-  NivasaRadius._();
+class PavioRadius {
+  PavioRadius._();
 
   static const sm = 4.0;
   static const md = 8.0;
@@ -25,6 +25,8 @@ class NivasaRadius {
   static const pill = 999.0;
   static const card = 12.0;
   static const button = 9.0;
+  static const segment = 7.0;
+  static const accentBar = 2.0;
   static const input = 9.0;
   static const bottomSheetTop = 16.0;
   static const phoneFrameCard = 16.0;

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../theme/nivasa_colors.dart';
-import '../theme/nivasa_spacing.dart';
-import '../theme/nivasa_text_styles.dart';
+import '../theme/pavio_colors.dart';
+import '../theme/pavio_spacing.dart';
+import '../theme/pavio_text_styles.dart';
 
 /// The empty state as a first screen (doc option "1g") — centred icon, headline, one
 /// sentence saying what the feature is for and who can see it, and the action under the
@@ -9,8 +9,8 @@ import '../theme/nivasa_text_styles.dart';
 /// in the opposite corner (finding ST-3, repeated identically across all six list
 /// screens). First wired into Guests; the other five (Documents, Vehicles, Contacts,
 /// Maintenance, ...) can adopt the same widget without re-deriving this layout.
-class NivasaEmptyState extends StatelessWidget {
-  const NivasaEmptyState({
+class PavioEmptyState extends StatelessWidget {
+  const PavioEmptyState({
     super.key,
     required this.icon,
     required this.title,
@@ -33,7 +33,7 @@ class NivasaEmptyState extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.symmetric(
           horizontal: 40,
-          vertical: NivasaSpacing.s24,
+          vertical: PavioSpacing.s24,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -42,20 +42,20 @@ class NivasaEmptyState extends StatelessWidget {
               width: 88,
               height: 88,
               decoration: const BoxDecoration(
-                color: NivasaColors.primary50,
+                color: PavioColors.primary50,
                 shape: BoxShape.circle,
               ),
-              child: Icon(icon, size: 40, color: NivasaColors.primary700),
+              child: Icon(icon, size: 40, color: PavioColors.primary700),
             ),
-            const SizedBox(height: NivasaSpacing.s24 - 2),
-            Text(title, style: NivasaText.h2, textAlign: TextAlign.center),
-            const SizedBox(height: NivasaSpacing.s8 + 2),
+            const SizedBox(height: PavioSpacing.s24 - 2),
+            Text(title, style: PavioText.h2, textAlign: TextAlign.center),
+            const SizedBox(height: PavioSpacing.s8 + 2),
             Text(
               message,
-              style: NivasaText.body.copyWith(color: NivasaColors.ink700),
+              style: PavioText.body.copyWith(color: PavioColors.ink700),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: NivasaSpacing.s24 + 2),
+            const SizedBox(height: PavioSpacing.s24 + 2),
             SizedBox(
               width: double.infinity,
               height: 52,

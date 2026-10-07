@@ -4,14 +4,14 @@ import '../../core/cache_store.dart';
 import '../../core/cached_fetch.dart';
 import '../../core/date_utils.dart';
 import '../../core/url_opener.dart';
-import '../../theme/nivasa_colors.dart';
-import '../../theme/nivasa_elevation.dart';
-import '../../theme/nivasa_spacing.dart';
-import '../../theme/nivasa_text_styles.dart';
-import '../../widgets/nivasa_button.dart';
-import '../../widgets/nivasa_section_label.dart';
-import '../../widgets/nivasa_skeleton.dart';
-import '../../widgets/nivasa_stale_banner.dart';
+import '../../theme/pavio_colors.dart';
+import '../../theme/pavio_elevation.dart';
+import '../../theme/pavio_spacing.dart';
+import '../../theme/pavio_text_styles.dart';
+import '../../widgets/pavio_button.dart';
+import '../../widgets/pavio_section_label.dart';
+import '../../widgets/pavio_skeleton.dart';
+import '../../widgets/pavio_stale_banner.dart';
 import '../auth/auth_repository.dart';
 import '../rental/agreement_sign_screen.dart';
 import '../rental/rental_repository.dart';
@@ -30,7 +30,7 @@ const _factLabelStyle = TextStyle(
   fontFamily: 'Noto Sans',
   fontSize: 14,
   fontWeight: FontWeight.w500,
-  color: NivasaColors.ink500,
+  color: PavioColors.ink500,
 );
 
 /// "$days left" for the hero's term countdown — under 45 days reads better as days than
@@ -284,12 +284,12 @@ class _LeaseScreenState extends State<LeaseScreen> {
                   if (_stale)
                     Padding(
                       padding: const EdgeInsets.fromLTRB(
-                        NivasaSpacing.s24,
-                        NivasaSpacing.s24,
-                        NivasaSpacing.s24,
+                        PavioSpacing.s24,
+                        PavioSpacing.s24,
+                        PavioSpacing.s24,
                         0,
                       ),
-                      child: NivasaStaleBanner(
+                      child: PavioStaleBanner(
                         lastSyncedAt: _lastSyncedAt,
                         onRetry: _load,
                       ),
@@ -298,50 +298,50 @@ class _LeaseScreenState extends State<LeaseScreen> {
                     child: RefreshIndicator(
                       onRefresh: _load,
                       child: ListView(
-                        padding: const EdgeInsets.all(NivasaSpacing.s24),
+                        padding: const EdgeInsets.all(PavioSpacing.s24),
                         children: [
                           _LeaseHero(
                             agreement: rental.agreement,
                             onReviewAndSign: _reviewAndSign,
                           ),
-                          const SizedBox(height: NivasaSpacing.s24),
-                          const NivasaSectionLabel('Your rental'),
-                          const SizedBox(height: NivasaSpacing.s12),
+                          const SizedBox(height: PavioSpacing.s24),
+                          const PavioSectionLabel('Your rental'),
+                          const SizedBox(height: PavioSpacing.s12),
                           _RentalFactsCard(
                             rental: rental,
                             openingAgreement: _openingAgreement,
                             onReadAgreement: _openAgreement,
                           ),
-                          const SizedBox(height: NivasaSpacing.s24),
-                          const NivasaSectionLabel('Renewal'),
-                          const SizedBox(height: NivasaSpacing.s12),
+                          const SizedBox(height: PavioSpacing.s24),
+                          const PavioSectionLabel('Renewal'),
+                          const SizedBox(height: PavioSpacing.s12),
                           if (_hasPending)
                             Container(
-                              padding: const EdgeInsets.all(NivasaSpacing.s16),
+                              padding: const EdgeInsets.all(PavioSpacing.s16),
                               decoration: BoxDecoration(
-                                color: NivasaColors.warningTint,
+                                color: PavioColors.warningTint,
                                 border: Border.all(
-                                  color: NivasaColors.warningTintBorder,
+                                  color: PavioColors.warningTintBorder,
                                 ),
                                 borderRadius: BorderRadius.circular(
-                                  NivasaRadius.card,
+                                  PavioRadius.card,
                                 ),
                               ),
                               child: Text(
                                 'A renewal request is pending — your property manager has been notified.',
-                                style: NivasaText.body.copyWith(
-                                  color: NivasaColors.warningTextOnTint,
+                                style: PavioText.body.copyWith(
+                                  color: PavioColors.warningTextOnTint,
                                 ),
                               ),
                             )
                           else
                             Container(
-                              padding: const EdgeInsets.all(NivasaSpacing.s16),
+                              padding: const EdgeInsets.all(PavioSpacing.s16),
                               decoration: BoxDecoration(
-                                color: NivasaColors.white,
-                                border: Border.all(color: NivasaColors.line),
+                                color: PavioColors.white,
+                                border: Border.all(color: PavioColors.line),
                                 borderRadius: BorderRadius.circular(
-                                  NivasaRadius.card,
+                                  PavioRadius.card,
                                 ),
                               ),
                               child: Column(
@@ -349,19 +349,19 @@ class _LeaseScreenState extends State<LeaseScreen> {
                                 children: [
                                   Text(
                                     _renewalIntro(rental.agreement),
-                                    style: NivasaText.body.copyWith(
-                                      color: NivasaColors.ink700,
+                                    style: PavioText.body.copyWith(
+                                      color: PavioColors.ink700,
                                     ),
                                   ),
-                                  const SizedBox(height: NivasaSpacing.s16),
+                                  const SizedBox(height: PavioSpacing.s16),
                                   _PreferredDateField(
                                     value: _preferredEndDate,
                                     onTap: _requesting
                                         ? null
                                         : _pickPreferredDate,
                                   ),
-                                  const SizedBox(height: NivasaSpacing.s12),
-                                  NivasaPrimaryButton(
+                                  const SizedBox(height: PavioSpacing.s12),
+                                  PavioPrimaryButton(
                                     label: _stale
                                         ? 'Reconnect to request a renewal'
                                         : 'Request renewal',
@@ -376,34 +376,34 @@ class _LeaseScreenState extends State<LeaseScreen> {
                               ),
                             ),
                           if (_error != null) ...[
-                            const SizedBox(height: NivasaSpacing.s16),
+                            const SizedBox(height: PavioSpacing.s16),
                             Text(
                               _error!,
-                              style: NivasaText.body.copyWith(
-                                color: NivasaColors.negativeFg,
+                              style: PavioText.body.copyWith(
+                                color: PavioColors.negativeFg,
                               ),
                             ),
                           ],
-                          const SizedBox(height: NivasaSpacing.s32),
+                          const SizedBox(height: PavioSpacing.s32),
                           Text(
                             'Request history',
-                            style: NivasaText.label.copyWith(
-                              color: NivasaColors.ink500,
+                            style: PavioText.label.copyWith(
+                              color: PavioColors.ink500,
                             ),
                           ),
-                          const SizedBox(height: NivasaSpacing.s8),
+                          const SizedBox(height: PavioSpacing.s8),
                           if (_requests.isEmpty)
                             Text(
                               'No renewal requests yet',
-                              style: NivasaText.body.copyWith(
-                                color: NivasaColors.ink500,
+                              style: PavioText.body.copyWith(
+                                color: PavioColors.ink500,
                               ),
                             )
                           else
                             ..._requests.map(
                               (r) => Padding(
                                 padding: const EdgeInsets.only(
-                                  bottom: NivasaSpacing.s8,
+                                  bottom: PavioSpacing.s8,
                                 ),
                                 child: Row(
                                   children: [
@@ -412,17 +412,17 @@ class _LeaseScreenState extends State<LeaseScreen> {
                                         r.requestedEndDate != null
                                             ? 'Requested end date: ${formatDisplayDate(r.requestedEndDate!)}'
                                             : 'Requested ${formatDisplayDate(r.createdAt)}',
-                                        style: NivasaText.body,
+                                        style: PavioText.body,
                                       ),
                                     ),
                                     Text(
                                       r.status == 'pending'
                                           ? 'Pending'
                                           : 'Acknowledged',
-                                      style: NivasaText.bodySmall.copyWith(
+                                      style: PavioText.bodySmall.copyWith(
                                         color: r.status == 'pending'
-                                            ? NivasaColors.warningTextOnTint
-                                            : NivasaColors.positiveTextOnTint,
+                                            ? PavioColors.warningTextOnTint
+                                            : PavioColors.positiveTextOnTint,
                                         fontWeight: FontWeight.w600,
                                       ),
                                     ),
@@ -448,11 +448,11 @@ class _LeaseLoadingSkeleton extends StatelessWidget {
   const _LeaseLoadingSkeleton();
 
   static Widget _card({required List<Widget> children}) => Container(
-    padding: const EdgeInsets.all(NivasaSpacing.s20),
+    padding: const EdgeInsets.all(PavioSpacing.s20),
     decoration: BoxDecoration(
-      color: NivasaColors.white,
-      border: Border.all(color: NivasaColors.line),
-      borderRadius: BorderRadius.circular(NivasaRadius.card),
+      color: PavioColors.white,
+      border: Border.all(color: PavioColors.line),
+      borderRadius: BorderRadius.circular(PavioRadius.card),
     ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -463,57 +463,57 @@ class _LeaseLoadingSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView(
-      padding: const EdgeInsets.all(NivasaSpacing.s24),
+      padding: const EdgeInsets.all(PavioSpacing.s24),
       children: [
         _card(
           children: const [
             Row(
               children: [
-                NivasaSkeleton(
+                PavioSkeleton(
                   width: 70,
                   height: 24,
-                  borderRadius: NivasaRadius.pill,
+                  borderRadius: PavioRadius.pill,
                 ),
                 Spacer(),
-                NivasaSkeleton(width: 90, height: 13),
+                PavioSkeleton(width: 90, height: 13),
               ],
             ),
-            SizedBox(height: NivasaSpacing.s16),
-            NivasaSkeleton(height: 6, borderRadius: NivasaRadius.pill),
-            SizedBox(height: NivasaSpacing.s8),
+            SizedBox(height: PavioSpacing.s16),
+            PavioSkeleton(height: 6, borderRadius: PavioRadius.pill),
+            SizedBox(height: PavioSpacing.s8),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                NivasaSkeleton(width: 70, height: 12),
-                NivasaSkeleton(width: 70, height: 12),
+                PavioSkeleton(width: 70, height: 12),
+                PavioSkeleton(width: 70, height: 12),
               ],
             ),
           ],
         ),
-        const SizedBox(height: NivasaSpacing.s24),
-        const NivasaSkeleton(width: 90, height: 11),
-        const SizedBox(height: NivasaSpacing.s12),
+        const SizedBox(height: PavioSpacing.s24),
+        const PavioSkeleton(width: 90, height: 11),
+        const SizedBox(height: PavioSpacing.s12),
         _card(
           children: const [
-            NivasaSkeleton(width: 200, height: 15),
-            SizedBox(height: NivasaSpacing.s16),
-            NivasaSkeleton(width: 140, height: 15),
-            SizedBox(height: NivasaSpacing.s16),
-            NivasaSkeleton(width: 100, height: 15),
-            SizedBox(height: NivasaSpacing.s16),
-            NivasaSkeleton(width: 160, height: 15),
+            PavioSkeleton(width: 200, height: 15),
+            SizedBox(height: PavioSpacing.s16),
+            PavioSkeleton(width: 140, height: 15),
+            SizedBox(height: PavioSpacing.s16),
+            PavioSkeleton(width: 100, height: 15),
+            SizedBox(height: PavioSpacing.s16),
+            PavioSkeleton(width: 160, height: 15),
           ],
         ),
-        const SizedBox(height: NivasaSpacing.s24),
-        const NivasaSkeleton(width: 70, height: 11),
-        const SizedBox(height: NivasaSpacing.s12),
+        const SizedBox(height: PavioSpacing.s24),
+        const PavioSkeleton(width: 70, height: 11),
+        const SizedBox(height: PavioSpacing.s12),
         _card(
           children: const [
-            NivasaSkeleton(height: 13),
-            SizedBox(height: NivasaSpacing.s8),
-            NivasaSkeleton(width: 220, height: 13),
-            SizedBox(height: NivasaSpacing.s16),
-            NivasaSkeleton(height: 52, borderRadius: NivasaRadius.button),
+            PavioSkeleton(height: 13),
+            SizedBox(height: PavioSpacing.s8),
+            PavioSkeleton(width: 220, height: 13),
+            SizedBox(height: PavioSpacing.s16),
+            PavioSkeleton(height: 52, borderRadius: PavioRadius.button),
           ],
         ),
       ],
@@ -532,26 +532,26 @@ class _LeaseHero extends StatelessWidget {
     final agreement = this.agreement;
     if (agreement == null) {
       return Container(
-        padding: const EdgeInsets.all(NivasaSpacing.s20),
+        padding: const EdgeInsets.all(PavioSpacing.s20),
         decoration: BoxDecoration(
-          color: NivasaColors.white,
-          border: Border.all(color: NivasaColors.line),
-          borderRadius: BorderRadius.circular(NivasaRadius.card),
+          color: PavioColors.white,
+          border: Border.all(color: PavioColors.line),
+          borderRadius: BorderRadius.circular(PavioRadius.card),
         ),
         child: Text(
           'No agreement on file yet',
-          style: NivasaText.body.copyWith(color: NivasaColors.ink500),
+          style: PavioText.body.copyWith(color: PavioColors.ink500),
         ),
       );
     }
     final term = agreement.status == 'signed' ? _leaseTerm(agreement) : null;
     return Container(
-      padding: const EdgeInsets.all(NivasaSpacing.s20),
+      padding: const EdgeInsets.all(PavioSpacing.s20),
       decoration: BoxDecoration(
-        color: NivasaColors.white,
-        border: Border.all(color: NivasaColors.line),
-        borderRadius: BorderRadius.circular(NivasaRadius.card),
-        boxShadow: NivasaElevation.e1,
+        color: PavioColors.white,
+        border: Border.all(color: PavioColors.line),
+        borderRadius: BorderRadius.circular(PavioRadius.card),
+        boxShadow: PavioElevation.e1,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -563,52 +563,52 @@ class _LeaseHero extends StatelessWidget {
               if (term != null)
                 Text(
                   term.remainingLabel,
-                  style: NivasaText.bodySmall.copyWith(
-                    color: NivasaColors.ink500,
+                  style: PavioText.bodySmall.copyWith(
+                    color: PavioColors.ink500,
                   ),
                 )
               else if (agreement.status == 'signed')
                 Text(
                   'Since ${formatDisplayDate(agreement.startDate)}',
-                  style: NivasaText.bodySmall.copyWith(
-                    color: NivasaColors.ink500,
+                  style: PavioText.bodySmall.copyWith(
+                    color: PavioColors.ink500,
                   ),
                 ),
             ],
           ),
           if (term != null) ...[
-            const SizedBox(height: NivasaSpacing.s16),
+            const SizedBox(height: PavioSpacing.s16),
             ClipRRect(
-              borderRadius: BorderRadius.circular(NivasaRadius.pill),
+              borderRadius: BorderRadius.circular(PavioRadius.pill),
               child: SizedBox(
                 height: 6,
                 child: LinearProgressIndicator(
                   value: term.progress,
-                  backgroundColor: NivasaColors.canvas,
+                  backgroundColor: PavioColors.canvas,
                   valueColor: const AlwaysStoppedAnimation(
-                    NivasaColors.primary700,
+                    PavioColors.primary700,
                   ),
                 ),
               ),
             ),
-            const SizedBox(height: NivasaSpacing.s8),
+            const SizedBox(height: PavioSpacing.s8),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
                   formatDisplayDate(agreement.startDate),
-                  style: NivasaText.caption,
+                  style: PavioText.caption,
                 ),
                 Text(
                   formatDisplayDate(agreement.endDate!),
-                  style: NivasaText.caption,
+                  style: PavioText.caption,
                 ),
               ],
             ),
           ],
           if (agreement.status == 'draft') ...[
-            const SizedBox(height: NivasaSpacing.s16),
-            NivasaPrimaryButton(
+            const SizedBox(height: PavioSpacing.s16),
+            PavioPrimaryButton(
               label: 'Review & sign',
               onPressed: onReviewAndSign,
             ),
@@ -640,9 +640,9 @@ class _RentalFactsCard extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: NivasaColors.white,
-        border: Border.all(color: NivasaColors.line),
-        borderRadius: BorderRadius.circular(NivasaRadius.card),
+        color: PavioColors.white,
+        border: Border.all(color: PavioColors.line),
+        borderRadius: BorderRadius.circular(PavioRadius.card),
       ),
       clipBehavior: Clip.antiAlias,
       child: Column(
@@ -652,19 +652,19 @@ class _RentalFactsCard extends StatelessWidget {
             value: bed != null
                 ? Text(
                     'Room ${bed.roomName} · Bed ${bed.label}',
-                    style: NivasaText.body.copyWith(
+                    style: PavioText.body.copyWith(
                       fontWeight: FontWeight.w600,
                     ),
                   )
                 : Text(
                     'Not assigned to a bed yet',
-                    style: NivasaText.body.copyWith(color: NivasaColors.ink500),
+                    style: PavioText.body.copyWith(color: PavioColors.ink500),
                   ),
           ),
           const Divider(
             height: 1,
-            indent: NivasaSpacing.s16,
-            color: NivasaColors.line,
+            indent: PavioSpacing.s16,
+            color: PavioColors.line,
           ),
           _FactRow(
             label: 'Rent',
@@ -677,7 +677,7 @@ class _RentalFactsCard extends StatelessWidget {
                       children: [
                         TextSpan(
                           text: _formatInr(billingProfile.amount),
-                          style: NivasaText.mono.copyWith(fontSize: 15),
+                          style: PavioText.monoLarge,
                         ),
                         TextSpan(
                           text:
@@ -689,13 +689,13 @@ class _RentalFactsCard extends StatelessWidget {
                   )
                 : Text(
                     'No billing set up yet',
-                    style: NivasaText.body.copyWith(color: NivasaColors.ink500),
+                    style: PavioText.body.copyWith(color: PavioColors.ink500),
                   ),
           ),
           const Divider(
             height: 1,
-            indent: NivasaSpacing.s16,
-            color: NivasaColors.line,
+            indent: PavioSpacing.s16,
+            color: PavioColors.line,
           ),
           _FactRow(
             label: 'Deposit',
@@ -705,43 +705,43 @@ class _RentalFactsCard extends StatelessWidget {
             value: agreement != null
                 ? Text(
                     _formatInr(agreement.securityDeposit),
-                    style: NivasaText.mono.copyWith(fontSize: 15),
+                    style: PavioText.monoLarge,
                   )
                 : Text(
                     '—',
-                    style: NivasaText.body.copyWith(color: NivasaColors.ink500),
+                    style: PavioText.body.copyWith(color: PavioColors.ink500),
                   ),
           ),
           const Divider(
             height: 1,
-            indent: NivasaSpacing.s16,
-            color: NivasaColors.line,
+            indent: PavioSpacing.s16,
+            color: PavioColors.line,
           ),
           _FactRow(
             label: 'Moved in',
             value: allocation != null
                 ? Text(
                     formatDisplayDate(allocation.checkInDate),
-                    style: NivasaText.body.copyWith(
+                    style: PavioText.body.copyWith(
                       fontWeight: FontWeight.w600,
                     ),
                   )
                 : Text(
                     'Not checked in yet',
-                    style: NivasaText.body.copyWith(color: NivasaColors.ink500),
+                    style: PavioText.body.copyWith(color: PavioColors.ink500),
                   ),
           ),
           if (showReadAgreement) ...[
             const Divider(
               height: 1,
-              indent: NivasaSpacing.s16,
-              color: NivasaColors.line,
+              indent: PavioSpacing.s16,
+              color: PavioColors.line,
             ),
             InkWell(
               onTap: openingAgreement ? null : onReadAgreement,
               child: Padding(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: NivasaSpacing.s16,
+                  horizontal: PavioSpacing.s16,
                 ),
                 child: SizedBox(
                   height: 52,
@@ -750,14 +750,14 @@ class _RentalFactsCard extends StatelessWidget {
                       Icon(
                         Icons.picture_as_pdf_outlined,
                         size: 20,
-                        color: NivasaColors.primary700,
+                        color: PavioColors.primary700,
                       ),
-                      const SizedBox(width: NivasaSpacing.s12),
+                      const SizedBox(width: PavioSpacing.s12),
                       Expanded(
                         child: Text(
                           openingAgreement ? 'Opening…' : 'Read the agreement',
-                          style: NivasaText.body.copyWith(
-                            color: NivasaColors.primary700,
+                          style: PavioText.body.copyWith(
+                            color: PavioColors.primary700,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -772,7 +772,7 @@ class _RentalFactsCard extends StatelessWidget {
                         const Icon(
                           Icons.chevron_right,
                           size: 20,
-                          color: NivasaColors.ink400,
+                          color: PavioColors.ink400,
                         ),
                     ],
                   ),
@@ -796,7 +796,7 @@ class _FactRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(
-        horizontal: NivasaSpacing.s16,
+        horizontal: PavioSpacing.s16,
         vertical: 14,
       ),
       child: Row(
@@ -825,31 +825,31 @@ class _PreferredDateField extends StatelessWidget {
           );
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(NivasaRadius.button),
+      borderRadius: BorderRadius.circular(PavioRadius.button),
       child: Container(
-        height: NivasaSpacing.buttonHeightMobile,
+        height: PavioSpacing.buttonHeightMobile,
         padding: const EdgeInsets.symmetric(horizontal: 14),
         decoration: BoxDecoration(
-          border: Border.all(color: NivasaColors.line, width: 1.5),
-          borderRadius: BorderRadius.circular(NivasaRadius.button),
+          border: Border.all(color: PavioColors.line, width: 1.5),
+          borderRadius: BorderRadius.circular(PavioRadius.button),
         ),
         child: Row(
           children: [
-            Icon(Icons.event_outlined, size: 19, color: NivasaColors.ink500),
-            const SizedBox(width: NivasaSpacing.s12),
+            Icon(Icons.event_outlined, size: 19, color: PavioColors.ink500),
+            const SizedBox(width: PavioSpacing.s12),
             Expanded(
               child: Text(
                 label,
-                style: NivasaText.body.copyWith(
+                style: PavioText.body.copyWith(
                   color: value == null
-                      ? NivasaColors.ink500
-                      : NivasaColors.ink900,
+                      ? PavioColors.ink500
+                      : PavioColors.ink900,
                 ),
               ),
             ),
             Text(
               value == null ? 'Optional' : 'Change',
-              style: _factLabelStyle.copyWith(color: NivasaColors.primary700),
+              style: _factLabelStyle.copyWith(color: PavioColors.primary700),
             ),
           ],
         ),
@@ -866,19 +866,19 @@ class _StatusPill extends StatelessWidget {
   Widget build(BuildContext context) {
     final (bg, border, text) = switch (status) {
       'signed' => (
-        NivasaColors.positiveTint,
-        NivasaColors.positiveTintBorder,
-        NivasaColors.positiveTextOnTint,
+        PavioColors.positiveTint,
+        PavioColors.positiveTintBorder,
+        PavioColors.positiveTextOnTint,
       ),
       'terminated' => (
-        NivasaColors.negativeTint,
-        NivasaColors.negativeTintBorder,
-        NivasaColors.negativeTextOnTint,
+        PavioColors.negativeTint,
+        PavioColors.negativeTintBorder,
+        PavioColors.negativeTextOnTint,
       ),
       _ => (
-        NivasaColors.warningTint,
-        NivasaColors.warningTintBorder,
-        NivasaColors.warningTextOnTint,
+        PavioColors.warningTint,
+        PavioColors.warningTintBorder,
+        PavioColors.warningTextOnTint,
       ),
     };
     return Container(
@@ -886,7 +886,7 @@ class _StatusPill extends StatelessWidget {
       decoration: BoxDecoration(
         color: bg,
         border: Border.all(color: border),
-        borderRadius: BorderRadius.circular(NivasaRadius.pill),
+        borderRadius: BorderRadius.circular(PavioRadius.pill),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -897,7 +897,7 @@ class _StatusPill extends StatelessWidget {
           ],
           Text(
             status[0].toUpperCase() + status.substring(1),
-            style: NivasaText.badge.copyWith(color: text),
+            style: PavioText.badge.copyWith(color: text),
           ),
         ],
       ),
@@ -915,16 +915,16 @@ class _ErrorState extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(NivasaSpacing.s24),
+        padding: const EdgeInsets.all(PavioSpacing.s24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
               message,
-              style: NivasaText.body.copyWith(color: NivasaColors.ink500),
+              style: PavioText.body.copyWith(color: PavioColors.ink500),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: NivasaSpacing.s16),
+            const SizedBox(height: PavioSpacing.s16),
             TextButton(onPressed: onRetry, child: const Text('Try again')),
           ],
         ),

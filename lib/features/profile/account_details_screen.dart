@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import '../../core/api_client.dart';
 import '../../core/cache_store.dart';
 import '../../core/cached_fetch.dart';
-import '../../theme/nivasa_colors.dart';
-import '../../theme/nivasa_spacing.dart';
-import '../../theme/nivasa_text_styles.dart';
-import '../../widgets/nivasa_button.dart';
-import '../../widgets/nivasa_menu_row.dart';
-import '../../widgets/nivasa_skeleton.dart';
-import '../../widgets/nivasa_stale_banner.dart';
+import '../../theme/pavio_colors.dart';
+import '../../theme/pavio_spacing.dart';
+import '../../theme/pavio_text_styles.dart';
+import '../../widgets/pavio_button.dart';
+import '../../widgets/pavio_menu_row.dart';
+import '../../widgets/pavio_skeleton.dart';
+import '../../widgets/pavio_stale_banner.dart';
 import '../auth/auth_repository.dart';
 import '../kyc/kyc_repository.dart';
 import '../kyc/kyc_screen.dart';
@@ -174,69 +174,69 @@ class _AccountDetailsScreenState extends State<AccountDetailsScreen> {
                   if (_stale)
                     Padding(
                       padding: const EdgeInsets.fromLTRB(
-                        NivasaSpacing.s24,
-                        NivasaSpacing.s24,
-                        NivasaSpacing.s24,
+                        PavioSpacing.s24,
+                        PavioSpacing.s24,
+                        PavioSpacing.s24,
                         0,
                       ),
-                      child: NivasaStaleBanner(
+                      child: PavioStaleBanner(
                         lastSyncedAt: _lastSyncedAt,
                         onRetry: _load,
                       ),
                     ),
                   Expanded(
                     child: SingleChildScrollView(
-                      padding: const EdgeInsets.all(NivasaSpacing.s24),
+                      padding: const EdgeInsets.all(PavioSpacing.s24),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Name', style: NivasaText.label),
-                          const SizedBox(height: NivasaSpacing.s8),
-                          Text(_profile!.name, style: NivasaText.body),
-                          const SizedBox(height: NivasaSpacing.s24),
-                          Text('Email', style: NivasaText.label),
-                          const SizedBox(height: NivasaSpacing.s8),
+                          Text('Name', style: PavioText.label),
+                          const SizedBox(height: PavioSpacing.s8),
+                          Text(_profile!.name, style: PavioText.body),
+                          const SizedBox(height: PavioSpacing.s24),
+                          Text('Email', style: PavioText.label),
+                          const SizedBox(height: PavioSpacing.s8),
                           Text(
                             _profile!.email ?? 'No email on file',
-                            style: NivasaText.body.copyWith(
-                              color: NivasaColors.ink500,
+                            style: PavioText.body.copyWith(
+                              color: PavioColors.ink500,
                             ),
                           ),
                           if (_profile!.propertyName != null) ...[
-                            const SizedBox(height: NivasaSpacing.s24),
-                            Text('Property', style: NivasaText.label),
-                            const SizedBox(height: NivasaSpacing.s8),
+                            const SizedBox(height: PavioSpacing.s24),
+                            Text('Property', style: PavioText.label),
+                            const SizedBox(height: PavioSpacing.s8),
                             Text(
                               [
                                 _profile!.propertyName,
                                 _profile!.propertyCity,
                               ].whereType<String>().join(', '),
-                              style: NivasaText.body.copyWith(
-                                color: NivasaColors.ink500,
+                              style: PavioText.body.copyWith(
+                                color: PavioColors.ink500,
                               ),
                             ),
                             if (_profile!.propertyAddress != null)
                               Text(
                                 _profile!.propertyAddress!,
-                                style: NivasaText.bodySmall.copyWith(
-                                  color: NivasaColors.ink500,
+                                style: PavioText.bodySmall.copyWith(
+                                  color: PavioColors.ink500,
                                 ),
                               ),
                           ],
-                          const SizedBox(height: NivasaSpacing.s24),
-                          Text('Phone', style: NivasaText.label),
-                          const SizedBox(height: NivasaSpacing.s8),
+                          const SizedBox(height: PavioSpacing.s24),
+                          Text('Phone', style: PavioText.label),
+                          const SizedBox(height: PavioSpacing.s8),
                           TextField(
                             controller: _phoneController,
                             keyboardType: TextInputType.phone,
-                            style: NivasaText.body,
+                            style: PavioText.body,
                           ),
-                          const SizedBox(height: NivasaSpacing.s24),
-                          Text('Permanent address', style: NivasaText.label),
-                          const SizedBox(height: NivasaSpacing.s8),
+                          const SizedBox(height: PavioSpacing.s24),
+                          Text('Permanent address', style: PavioText.label),
+                          const SizedBox(height: PavioSpacing.s8),
                           TextField(
                             controller: _permanentAddressController,
-                            style: NivasaText.body,
+                            style: PavioText.body,
                             minLines: 2,
                             maxLines: 4,
                             decoration: const InputDecoration(
@@ -244,23 +244,23 @@ class _AccountDetailsScreenState extends State<AccountDetailsScreen> {
                             ),
                           ),
                           if (_error != null) ...[
-                            const SizedBox(height: NivasaSpacing.s16),
+                            const SizedBox(height: PavioSpacing.s16),
                             Text(
                               _error!,
-                              style: NivasaText.body.copyWith(
-                                color: NivasaColors.negativeFg,
+                              style: PavioText.body.copyWith(
+                                color: PavioColors.negativeFg,
                               ),
                             ),
                           ],
-                          const SizedBox(height: NivasaSpacing.s24),
-                          NivasaPrimaryButton(
+                          const SizedBox(height: PavioSpacing.s24),
+                          PavioPrimaryButton(
                             label: 'Save',
                             loading: _saving,
                             loadingLabel: 'Saving…',
                             onPressed: _save,
                           ),
-                          const SizedBox(height: NivasaSpacing.s32),
-                          NivasaMenuRow(
+                          const SizedBox(height: PavioSpacing.s32),
+                          PavioMenuRow(
                             icon: Icons.lock_outline,
                             label: 'Change password',
                             onTap: () => Navigator.of(context).push(
@@ -270,12 +270,12 @@ class _AccountDetailsScreenState extends State<AccountDetailsScreen> {
                               ),
                             ),
                           ),
-                          const SizedBox(height: NivasaSpacing.s32),
+                          const SizedBox(height: PavioSpacing.s32),
                           Text(
                             'Identity verification',
-                            style: NivasaText.label,
+                            style: PavioText.label,
                           ),
-                          const SizedBox(height: NivasaSpacing.s8),
+                          const SizedBox(height: PavioSpacing.s8),
                           _KycStatusCard(
                             status: _kycStatus,
                             onVerify: _openKyc,
@@ -301,8 +301,8 @@ class _AccountDetailsLoadingSkeleton extends StatelessWidget {
   static Widget _labeled(double labelWidth, Widget value) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      NivasaSkeleton(width: labelWidth, height: 11),
-      const SizedBox(height: NivasaSpacing.s8),
+      PavioSkeleton(width: labelWidth, height: 11),
+      const SizedBox(height: PavioSpacing.s8),
       value,
     ],
   );
@@ -310,31 +310,31 @@ class _AccountDetailsLoadingSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(NivasaSpacing.s24),
+      padding: const EdgeInsets.all(PavioSpacing.s24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _labeled(40, const NivasaSkeleton(width: 150, height: 15)),
-          const SizedBox(height: NivasaSpacing.s24),
-          _labeled(40, const NivasaSkeleton(width: 180, height: 15)),
-          const SizedBox(height: NivasaSpacing.s24),
+          _labeled(40, const PavioSkeleton(width: 150, height: 15)),
+          const SizedBox(height: PavioSpacing.s24),
+          _labeled(40, const PavioSkeleton(width: 180, height: 15)),
+          const SizedBox(height: PavioSpacing.s24),
           _labeled(
             48,
-            const NivasaSkeleton(height: 52, borderRadius: NivasaRadius.input),
+            const PavioSkeleton(height: 52, borderRadius: PavioRadius.input),
           ),
-          const SizedBox(height: NivasaSpacing.s24),
+          const SizedBox(height: PavioSpacing.s24),
           _labeled(
             140,
-            const NivasaSkeleton(height: 80, borderRadius: NivasaRadius.input),
+            const PavioSkeleton(height: 80, borderRadius: PavioRadius.input),
           ),
-          const SizedBox(height: NivasaSpacing.s24),
-          const NivasaSkeleton(height: 52, borderRadius: NivasaRadius.button),
-          const SizedBox(height: NivasaSpacing.s32),
-          const NivasaSkeleton(height: 52, borderRadius: NivasaRadius.card),
-          const SizedBox(height: NivasaSpacing.s32),
+          const SizedBox(height: PavioSpacing.s24),
+          const PavioSkeleton(height: 52, borderRadius: PavioRadius.button),
+          const SizedBox(height: PavioSpacing.s32),
+          const PavioSkeleton(height: 52, borderRadius: PavioRadius.card),
+          const SizedBox(height: PavioSpacing.s32),
           _labeled(
             140,
-            const NivasaSkeleton(height: 70, borderRadius: NivasaRadius.card),
+            const PavioSkeleton(height: 70, borderRadius: PavioRadius.card),
           ),
         ],
       ),
@@ -354,41 +354,41 @@ class _KycStatusCard extends StatelessWidget {
     final (label, fg, tint, border) = switch (status?.status) {
       'verified' => (
         'Verified',
-        NivasaColors.positiveTextOnTint,
-        NivasaColors.positiveTint,
-        NivasaColors.positiveTintBorder,
+        PavioColors.positiveTextOnTint,
+        PavioColors.positiveTint,
+        PavioColors.positiveTintBorder,
       ),
       'pending' => (
         'Verification in progress',
-        NivasaColors.warningTextOnTint,
-        NivasaColors.warningTint,
-        NivasaColors.warningTintBorder,
+        PavioColors.warningTextOnTint,
+        PavioColors.warningTint,
+        PavioColors.warningTintBorder,
       ),
       'failed' => (
         'Verification failed — try again',
-        NivasaColors.negativeTextOnTint,
-        NivasaColors.negativeTint,
-        NivasaColors.negativeTintBorder,
+        PavioColors.negativeTextOnTint,
+        PavioColors.negativeTint,
+        PavioColors.negativeTintBorder,
       ),
       'expired' => (
         'OTP expired — try again',
-        NivasaColors.negativeTextOnTint,
-        NivasaColors.negativeTint,
-        NivasaColors.negativeTintBorder,
+        PavioColors.negativeTextOnTint,
+        PavioColors.negativeTint,
+        PavioColors.negativeTintBorder,
       ),
       _ => (
         'Not verified',
-        NivasaColors.offlineTextOnTint,
-        NivasaColors.offlineTint,
-        NivasaColors.offlineTintBorder,
+        PavioColors.offlineTextOnTint,
+        PavioColors.offlineTint,
+        PavioColors.offlineTintBorder,
       ),
     };
     return Container(
-      padding: const EdgeInsets.all(NivasaSpacing.s16),
+      padding: const EdgeInsets.all(PavioSpacing.s16),
       decoration: BoxDecoration(
         color: tint,
         border: Border.all(color: border),
-        borderRadius: BorderRadius.circular(NivasaRadius.card),
+        borderRadius: BorderRadius.circular(PavioRadius.card),
       ),
       child: Row(
         children: [
@@ -398,16 +398,16 @@ class _KycStatusCard extends StatelessWidget {
               children: [
                 Text(
                   label,
-                  style: NivasaText.body.copyWith(
+                  style: PavioText.body.copyWith(
                     color: fg,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
                 if (verified && status?.aadhaarLast4 != null) ...[
-                  const SizedBox(height: NivasaSpacing.s4),
+                  const SizedBox(height: PavioSpacing.s4),
                   Text(
                     'Aadhaar •••• ${status!.aadhaarLast4}',
-                    style: NivasaText.bodySmall.copyWith(color: fg),
+                    style: PavioText.bodySmall.copyWith(color: fg),
                   ),
                 ],
               ],
@@ -431,16 +431,16 @@ class _ErrorState extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(NivasaSpacing.s24),
+        padding: const EdgeInsets.all(PavioSpacing.s24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
               message,
-              style: NivasaText.body.copyWith(color: NivasaColors.ink500),
+              style: PavioText.body.copyWith(color: PavioColors.ink500),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: NivasaSpacing.s16),
+            const SizedBox(height: PavioSpacing.s16),
             TextButton(onPressed: onRetry, child: const Text('Try again')),
           ],
         ),

@@ -4,13 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
-import 'package:nivasaos_tenant_app/core/api_client.dart';
-import 'package:nivasaos_tenant_app/core/cache_store.dart';
-import 'package:nivasaos_tenant_app/core/session_store.dart';
-import 'package:nivasaos_tenant_app/features/auth/auth_repository.dart';
-import 'package:nivasaos_tenant_app/features/guests/guests_repository.dart';
-import 'package:nivasaos_tenant_app/features/guests/guests_screen.dart';
-import 'package:nivasaos_tenant_app/theme/nivasa_theme.dart';
+import 'package:pavio_tenant_app/core/api_client.dart';
+import 'package:pavio_tenant_app/core/cache_store.dart';
+import 'package:pavio_tenant_app/core/session_store.dart';
+import 'package:pavio_tenant_app/features/auth/auth_repository.dart';
+import 'package:pavio_tenant_app/features/guests/guests_repository.dart';
+import 'package:pavio_tenant_app/features/guests/guests_screen.dart';
+import 'package:pavio_tenant_app/theme/pavio_theme.dart';
 
 class _InMemorySecureStore implements SecureStore {
   final _values = <String, String>{};
@@ -41,18 +41,18 @@ http.Response _json(Map<String, dynamic> body, int status) => http.Response(
 );
 
 Widget _wrap(Widget child) =>
-    MaterialApp(theme: NivasaTheme.light(), home: child);
+    MaterialApp(theme: PavioTheme.light(), home: child);
 
 Future<AuthRepository> _connectedAuth() async {
   final store = _InMemorySecureStore();
-  await store.write('nivasaos.access_token', 'access-token');
-  await store.write('nivasaos.refresh_token', 'refresh-token');
+  await store.write('pavio.access_token', 'access-token');
+  await store.write('pavio.refresh_token', 'refresh-token');
   await store.write(
-    'nivasaos.access_token_expires_at',
+    'pavio.access_token_expires_at',
     DateTime.now().add(const Duration(minutes: 30)).toIso8601String(),
   );
   await store.write(
-    'nivasaos.user',
+    'pavio.user',
     jsonEncode({
       'user_id': 'account-1',
       'name': 'Amit Kumar',

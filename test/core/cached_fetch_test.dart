@@ -1,9 +1,9 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:nivasaos_tenant_app/core/api_client.dart';
-import 'package:nivasaos_tenant_app/core/cache_store.dart';
-import 'package:nivasaos_tenant_app/core/cached_fetch.dart';
+import 'package:pavio_tenant_app/core/api_client.dart';
+import 'package:pavio_tenant_app/core/cache_store.dart';
+import 'package:pavio_tenant_app/core/cached_fetch.dart';
 
 class _InMemoryCacheStore implements CacheStore {
   final _values = <String, String>{};

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/api_client.dart';
 import '../../core/date_utils.dart';
-import '../../theme/nivasa_colors.dart';
+import '../../theme/pavio_colors.dart';
 
 const complaintCategories = [
   'Electrical',
@@ -22,9 +22,9 @@ const complaintStatusLabels = {
 /// Shared between ComplaintsScreen's list rows and ComplaintDetailScreen's header, so
 /// the two can't drift on what each status looks like.
 (Color, Color) complaintStatusColors(String status) => switch (status) {
-  'resolved' => (NivasaColors.positiveTint, NivasaColors.positiveTextOnTint),
-  'in_progress' => (NivasaColors.infoTint, NivasaColors.infoTextOnTint),
-  _ => (NivasaColors.warningTint, NivasaColors.warningTextOnTint),
+  'resolved' => (PavioColors.positiveTint, PavioColors.positiveTextOnTint),
+  'in_progress' => (PavioColors.infoTint, PavioColors.infoTextOnTint),
+  _ => (PavioColors.warningTint, PavioColors.warningTextOnTint),
 };
 
 /// Just enough of the latest complaint_notes row to render 1e's "Ravi: plumber visiting

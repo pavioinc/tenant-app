@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import '../theme/nivasa_text_styles.dart';
+import '../theme/pavio_text_styles.dart';
 
 /// Obscured by default with a show/hide toggle — was previously a plain permanent
 /// `obscureText: true` duplicated identically in both Login and Signup, with no way to
 /// verify what was typed before submitting.
-class NivasaPasswordField extends StatefulWidget {
-  const NivasaPasswordField({super.key, required this.controller, this.hintText, this.errorText, this.autofillHints, this.onSubmitted});
+class PavioPasswordField extends StatefulWidget {
+  const PavioPasswordField({super.key, required this.controller, this.hintText, this.errorText, this.autofillHints, this.onSubmitted});
 
   final TextEditingController controller;
   final String? hintText;
@@ -14,10 +14,10 @@ class NivasaPasswordField extends StatefulWidget {
   final ValueChanged<String>? onSubmitted;
 
   @override
-  State<NivasaPasswordField> createState() => _NivasaPasswordFieldState();
+  State<PavioPasswordField> createState() => _PavioPasswordFieldState();
 }
 
-class _NivasaPasswordFieldState extends State<NivasaPasswordField> {
+class _PavioPasswordFieldState extends State<PavioPasswordField> {
   bool _obscure = true;
 
   @override
@@ -26,7 +26,7 @@ class _NivasaPasswordFieldState extends State<NivasaPasswordField> {
       controller: widget.controller,
       obscureText: _obscure,
       autofillHints: widget.autofillHints,
-      style: NivasaText.body,
+      style: PavioText.body,
       onSubmitted: widget.onSubmitted,
       decoration: InputDecoration(
         hintText: widget.hintText,

@@ -4,12 +4,12 @@ import '../../core/cache_store.dart';
 import '../../core/cached_fetch.dart';
 import '../../core/date_utils.dart';
 import '../../core/razorpay_checkout.dart';
-import '../../theme/nivasa_colors.dart';
-import '../../theme/nivasa_spacing.dart';
-import '../../theme/nivasa_text_styles.dart';
-import '../../widgets/nivasa_section_label.dart';
-import '../../widgets/nivasa_skeleton.dart';
-import '../../widgets/nivasa_stale_banner.dart';
+import '../../theme/pavio_colors.dart';
+import '../../theme/pavio_spacing.dart';
+import '../../theme/pavio_text_styles.dart';
+import '../../widgets/pavio_section_label.dart';
+import '../../widgets/pavio_skeleton.dart';
+import '../../widgets/pavio_stale_banner.dart';
 import '../auth/auth_repository.dart';
 import 'payments_repository.dart';
 
@@ -51,7 +51,7 @@ String _paymentSubtitle(TenantTransaction transaction) {
 /// due date + invoice count, gold only ever meaning "this is what you owe"), a "See the
 /// invoices" row promoted out of the summary box, and a Pay button pinned in the thumb
 /// zone (TT-5) instead of scrolling away with the rest of the page. ₹ figures now render
-/// in Noto Sans Mono, and with real digit grouping — NivasaText.mono's own doc comment
+/// in Noto Sans Mono, and with real digit grouping — PavioText.mono's own doc comment
 /// names "₹ amounts" as exactly what it's for.
 class PaymentsScreen extends StatefulWidget {
   const PaymentsScreen({
@@ -189,7 +189,7 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
           amountMinorUnits: invoice.amount,
           currency: invoice.currency,
         ),
-        name: 'NivasaOS',
+        name: 'Pavio',
         description: 'Rent payment',
         onSuccess: () {
           if (!mounted) return;
@@ -229,30 +229,30 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: NivasaColors.white,
+      backgroundColor: PavioColors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(
-          top: Radius.circular(NivasaRadius.bottomSheetTop),
+          top: Radius.circular(PavioRadius.bottomSheetTop),
         ),
       ),
       builder: (sheetContext) => SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(NivasaSpacing.s24),
+          padding: const EdgeInsets.all(PavioSpacing.s24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Invoices', style: NivasaText.h3),
-              const SizedBox(height: NivasaSpacing.s16),
+              Text('Invoices', style: PavioText.h3),
+              const SizedBox(height: PavioSpacing.s16),
               if (_invoices.isEmpty)
                 Text(
                   'Nothing to pay right now',
-                  style: NivasaText.body.copyWith(color: NivasaColors.ink500),
+                  style: PavioText.body.copyWith(color: PavioColors.ink500),
                 )
               else
                 ..._invoices.map(
                   (invoice) => Padding(
-                    padding: const EdgeInsets.only(bottom: NivasaSpacing.s12),
+                    padding: const EdgeInsets.only(bottom: PavioSpacing.s12),
                     child: Row(
                       children: [
                         Expanded(
@@ -261,15 +261,15 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
                             children: [
                               Text(
                                 _formatInr(invoice.amount),
-                                style: NivasaText.h3.copyWith(
+                                style: PavioText.h3.copyWith(
                                   fontFamily: 'Noto Sans Mono',
                                 ),
                               ),
-                              const SizedBox(height: NivasaSpacing.s4),
+                              const SizedBox(height: PavioSpacing.s4),
                               Text(
                                 'Due ${formatDisplayDate(invoice.dueDate)}',
-                                style: NivasaText.bodySmall.copyWith(
-                                  color: NivasaColors.ink500,
+                                style: PavioText.bodySmall.copyWith(
+                                  color: PavioColors.ink500,
                                 ),
                               ),
                             ],
@@ -317,12 +317,12 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
                   if (_stale)
                     Padding(
                       padding: const EdgeInsets.fromLTRB(
-                        NivasaSpacing.s24,
-                        NivasaSpacing.s24,
-                        NivasaSpacing.s24,
+                        PavioSpacing.s24,
+                        PavioSpacing.s24,
+                        PavioSpacing.s24,
                         0,
                       ),
-                      child: NivasaStaleBanner(
+                      child: PavioStaleBanner(
                         lastSyncedAt: _lastSyncedAt,
                         onRetry: _load,
                       ),
@@ -331,7 +331,7 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
                     child: RefreshIndicator(
                       onRefresh: _load,
                       child: ListView(
-                        padding: const EdgeInsets.all(NivasaSpacing.s24),
+                        padding: const EdgeInsets.all(PavioSpacing.s24),
                         children: [
                           if (_totalDue == 0)
                             const _NothingDueCard()
@@ -341,36 +341,36 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
                               invoices: _invoices,
                             ),
                           if (_totalDue > 0) ...[
-                            const SizedBox(height: NivasaSpacing.s16),
+                            const SizedBox(height: PavioSpacing.s16),
                             _SeeInvoicesButton(
                               count: _invoices.length,
                               onTap: _showInvoices,
                             ),
                           ],
-                          const SizedBox(height: NivasaSpacing.s24),
-                          const NivasaSectionLabel('Recent payments'),
-                          const SizedBox(height: NivasaSpacing.s12),
+                          const SizedBox(height: PavioSpacing.s24),
+                          const PavioSectionLabel('Recent payments'),
+                          const SizedBox(height: PavioSpacing.s12),
                           if (_transactionsError != null)
                             Text(
                               _transactionsError!,
-                              style: NivasaText.body.copyWith(
-                                color: NivasaColors.ink500,
+                              style: PavioText.body.copyWith(
+                                color: PavioColors.ink500,
                               ),
                             )
                           else if (payments.isEmpty)
                             Text(
                               'No recent activity',
-                              style: NivasaText.body.copyWith(
-                                color: NivasaColors.ink500,
+                              style: PavioText.body.copyWith(
+                                color: PavioColors.ink500,
                               ),
                             )
                           else
                             Container(
                               decoration: BoxDecoration(
-                                color: NivasaColors.white,
-                                border: Border.all(color: NivasaColors.line),
+                                color: PavioColors.white,
+                                border: Border.all(color: PavioColors.line),
                                 borderRadius: BorderRadius.circular(
-                                  NivasaRadius.card,
+                                  PavioRadius.card,
                                 ),
                               ),
                               clipBehavior: Clip.antiAlias,
@@ -382,7 +382,7 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
                                       const Divider(
                                         height: 1,
                                         indent: 36,
-                                        color: NivasaColors.line,
+                                        color: PavioColors.line,
                                       ),
                                   ],
                                 ],
@@ -416,34 +416,34 @@ class _PaymentsLoadingSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView(
-      padding: const EdgeInsets.all(NivasaSpacing.s24),
+      padding: const EdgeInsets.all(PavioSpacing.s24),
       children: [
         Container(
-          padding: const EdgeInsets.all(NivasaSpacing.s20),
+          padding: const EdgeInsets.all(PavioSpacing.s20),
           decoration: BoxDecoration(
-            color: NivasaColors.white,
-            border: Border.all(color: NivasaColors.line),
-            borderRadius: BorderRadius.circular(NivasaRadius.card),
+            color: PavioColors.white,
+            border: Border.all(color: PavioColors.line),
+            borderRadius: BorderRadius.circular(PavioRadius.card),
           ),
           child: const Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              NivasaSkeleton(width: 64, height: 11),
-              SizedBox(height: NivasaSpacing.s8),
-              NivasaSkeleton(width: 140, height: 36),
-              SizedBox(height: NivasaSpacing.s8),
-              NivasaSkeleton(width: 120, height: 13),
+              PavioSkeleton(width: 64, height: 11),
+              SizedBox(height: PavioSpacing.s8),
+              PavioSkeleton(width: 140, height: 36),
+              SizedBox(height: PavioSpacing.s8),
+              PavioSkeleton(width: 120, height: 13),
             ],
           ),
         ),
-        const SizedBox(height: NivasaSpacing.s16),
-        const NivasaSkeleton(height: 48, borderRadius: NivasaRadius.button),
-        const SizedBox(height: NivasaSpacing.s24),
-        const NivasaSkeleton(width: 130, height: 11),
-        const SizedBox(height: NivasaSpacing.s12),
+        const SizedBox(height: PavioSpacing.s16),
+        const PavioSkeleton(height: 48, borderRadius: PavioRadius.button),
+        const SizedBox(height: PavioSpacing.s24),
+        const PavioSkeleton(width: 130, height: 11),
+        const SizedBox(height: PavioSpacing.s12),
         for (var i = 0; i < 3; i++) ...[
-          if (i > 0) const SizedBox(height: NivasaSpacing.s12),
-          const NivasaSkeletonListTile(),
+          if (i > 0) const SizedBox(height: PavioSpacing.s12),
+          const PavioSkeletonListTile(),
         ],
       ],
     );
@@ -460,32 +460,32 @@ class _RentDueHero extends StatelessWidget {
   Widget build(BuildContext context) {
     final earliestDue = invoices.isEmpty ? null : invoices.first.dueDate;
     return Container(
-      padding: const EdgeInsets.all(NivasaSpacing.s20),
+      padding: const EdgeInsets.all(PavioSpacing.s20),
       decoration: BoxDecoration(
-        color: NivasaColors.gold100,
-        border: Border.all(color: NivasaColors.gold200),
-        borderRadius: BorderRadius.circular(NivasaRadius.card),
+        color: PavioColors.gold100,
+        border: Border.all(color: PavioColors.gold200),
+        borderRadius: BorderRadius.circular(PavioRadius.card),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             'Rent due',
-            style: NivasaText.label.copyWith(color: NivasaColors.gold800),
+            style: PavioText.label.copyWith(color: PavioColors.gold800),
           ),
-          const SizedBox(height: NivasaSpacing.s8),
+          const SizedBox(height: PavioSpacing.s8),
           Text(
             _formatInr(totalDue),
-            style: NivasaText.display.copyWith(
+            style: PavioText.display.copyWith(
               fontFamily: 'Noto Sans Mono',
-              color: NivasaColors.goldTextOn,
+              color: PavioColors.goldTextOn,
             ),
           ),
-          const SizedBox(height: NivasaSpacing.s8),
+          const SizedBox(height: PavioSpacing.s8),
           if (earliestDue != null)
             Text(
               '${formatDueDate(earliestDue)} · ${_invoiceCountLabel(invoices.length)}',
-              style: NivasaText.bodySmall.copyWith(color: NivasaColors.gold800),
+              style: PavioText.bodySmall.copyWith(color: PavioColors.gold800),
             ),
         ],
       ),
@@ -499,29 +499,29 @@ class _NothingDueCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(NivasaSpacing.s20),
+      padding: const EdgeInsets.all(PavioSpacing.s20),
       decoration: BoxDecoration(
-        color: NivasaColors.white,
-        border: Border.all(color: NivasaColors.line),
-        borderRadius: BorderRadius.circular(NivasaRadius.card),
+        color: PavioColors.white,
+        border: Border.all(color: PavioColors.line),
+        borderRadius: BorderRadius.circular(PavioRadius.card),
       ),
       child: Row(
         children: [
           const Icon(
             Icons.check_circle,
-            color: NivasaColors.positiveFg,
+            color: PavioColors.positiveFg,
             size: 28,
           ),
-          const SizedBox(width: NivasaSpacing.s12),
+          const SizedBox(width: PavioSpacing.s12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Nothing to Pay', style: NivasaText.h3),
-                const SizedBox(height: NivasaSpacing.s4),
+                Text('Nothing to Pay', style: PavioText.h3),
+                const SizedBox(height: PavioSpacing.s4),
                 Text(
                   "You're all caught up on rent.",
-                  style: NivasaText.body.copyWith(color: NivasaColors.ink500),
+                  style: PavioText.body.copyWith(color: PavioColors.ink500),
                 ),
               ],
             ),
@@ -542,12 +542,12 @@ class _SeeInvoicesButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(NivasaRadius.button),
+      borderRadius: BorderRadius.circular(PavioRadius.button),
       child: Container(
         height: 48,
         decoration: BoxDecoration(
-          border: Border.all(color: NivasaColors.primary700, width: 1.5),
-          borderRadius: BorderRadius.circular(NivasaRadius.button),
+          border: Border.all(color: PavioColors.primary700, width: 1.5),
+          borderRadius: BorderRadius.circular(PavioRadius.button),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -555,13 +555,13 @@ class _SeeInvoicesButton extends StatelessWidget {
             const Icon(
               Icons.receipt_long_outlined,
               size: 19,
-              color: NivasaColors.primary700,
+              color: PavioColors.primary700,
             ),
-            const SizedBox(width: NivasaSpacing.s8),
+            const SizedBox(width: PavioSpacing.s8),
             Text(
               'See the ${_invoiceCountLabel(count)}',
-              style: NivasaText.body.copyWith(
-                color: NivasaColors.primary700,
+              style: PavioText.body.copyWith(
+                color: PavioColors.primary700,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -581,7 +581,7 @@ class _PaymentRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(
-        horizontal: NivasaSpacing.s16,
+        horizontal: PavioSpacing.s16,
         vertical: 14,
       ),
       child: Row(
@@ -591,29 +591,29 @@ class _PaymentRow extends StatelessWidget {
             width: 8,
             height: 8,
             decoration: const BoxDecoration(
-              color: NivasaColors.positiveFg,
+              color: PavioColors.positiveFg,
               shape: BoxShape.circle,
             ),
           ),
-          const SizedBox(width: NivasaSpacing.s12),
+          const SizedBox(width: PavioSpacing.s12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   transaction.title,
-                  style: NivasaText.body.copyWith(fontWeight: FontWeight.w600),
+                  style: PavioText.body.copyWith(fontWeight: FontWeight.w600),
                 ),
                 const SizedBox(height: 2),
-                Text(_paymentSubtitle(transaction), style: NivasaText.caption),
+                Text(_paymentSubtitle(transaction), style: PavioText.caption),
               ],
             ),
           ),
           Text(
             _formatInr(transaction.amount),
-            style: NivasaText.mono.copyWith(
+            style: PavioText.mono.copyWith(
               fontSize: 15,
-              color: NivasaColors.ink900,
+              color: PavioColors.ink900,
             ),
           ),
         ],
@@ -641,24 +641,24 @@ class _PayBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.fromLTRB(
-        NivasaSpacing.s24,
-        NivasaSpacing.s12,
-        NivasaSpacing.s24,
-        NivasaSpacing.s24,
+        PavioSpacing.s24,
+        PavioSpacing.s12,
+        PavioSpacing.s24,
+        PavioSpacing.s24,
       ),
       decoration: const BoxDecoration(
-        color: NivasaColors.white,
-        border: Border(top: BorderSide(color: NivasaColors.line)),
+        color: PavioColors.white,
+        border: Border(top: BorderSide(color: PavioColors.line)),
       ),
       child: SizedBox(
         height: 52,
         child: ElevatedButton(
           style: ElevatedButton.styleFrom(
-            backgroundColor: NivasaColors.gold500,
-            foregroundColor: NivasaColors.goldTextOn,
+            backgroundColor: PavioColors.gold500,
+            foregroundColor: PavioColors.goldTextOn,
             elevation: 0,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(NivasaRadius.button),
+              borderRadius: BorderRadius.circular(PavioRadius.button),
             ),
           ),
           onPressed: loading ? null : onPressed,
@@ -668,7 +668,7 @@ class _PayBar extends StatelessWidget {
                   height: 20,
                   child: CircularProgressIndicator(
                     strokeWidth: 2.2,
-                    valueColor: AlwaysStoppedAnimation(NivasaColors.goldTextOn),
+                    valueColor: AlwaysStoppedAnimation(PavioColors.goldTextOn),
                   ),
                 )
               : Text(
@@ -677,7 +677,7 @@ class _PayBar extends StatelessWidget {
                     fontFamily: 'Noto Sans',
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
-                    color: NivasaColors.goldTextOn,
+                    color: PavioColors.goldTextOn,
                   ),
                 ),
         ),
@@ -696,16 +696,16 @@ class _ErrorState extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(NivasaSpacing.s24),
+        padding: const EdgeInsets.all(PavioSpacing.s24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
               message,
-              style: NivasaText.body.copyWith(color: NivasaColors.ink500),
+              style: PavioText.body.copyWith(color: PavioColors.ink500),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: NivasaSpacing.s16),
+            const SizedBox(height: PavioSpacing.s16),
             TextButton(onPressed: onRetry, child: const Text('Try again')),
           ],
         ),

@@ -4,18 +4,18 @@ import 'core/push_notifications.dart';
 import 'features/auth/auth_repository.dart';
 import 'features/auth/login_screen.dart';
 import 'features/home/home_screen.dart';
-import 'theme/nivasa_theme.dart';
+import 'theme/pavio_theme.dart';
 
 void main() {
-  runApp(const NivasaOSTenantApp());
+  runApp(const PavioTenantApp());
 }
 
-class NivasaOSTenantApp extends StatelessWidget {
-  const NivasaOSTenantApp({super.key});
+class PavioTenantApp extends StatelessWidget {
+  const PavioTenantApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(title: 'NivasaOS', theme: NivasaTheme.light(), home: const _SessionGate());
+    return MaterialApp(title: 'Pavio', theme: PavioTheme.light(), home: const _SessionGate());
   }
 }
 
@@ -37,7 +37,7 @@ class _SessionGate extends StatelessWidget {
         if (session == null) return LoginScreen(authRepository: auth);
         // Re-registers on every cold start with an existing session (not just right
         // after login/signup) — the app's FCM token can rotate independently of the
-        // NivasaOS session, so this is how a rotated token gets picked back up.
+        // Pavio session, so this is how a rotated token gets picked back up.
         unawaited(PushNotifications().register(session.accessToken));
         return HomeScreen(authRepository: auth);
       },

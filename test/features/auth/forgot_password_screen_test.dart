@@ -4,12 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
-import 'package:nivasaos_tenant_app/core/api_client.dart';
-import 'package:nivasaos_tenant_app/core/session_store.dart';
-import 'package:nivasaos_tenant_app/features/auth/auth_repository.dart';
-import 'package:nivasaos_tenant_app/features/auth/forgot_password_screen.dart';
-import 'package:nivasaos_tenant_app/features/auth/reset_password_screen.dart';
-import 'package:nivasaos_tenant_app/theme/nivasa_theme.dart';
+import 'package:pavio_tenant_app/core/api_client.dart';
+import 'package:pavio_tenant_app/core/session_store.dart';
+import 'package:pavio_tenant_app/features/auth/auth_repository.dart';
+import 'package:pavio_tenant_app/features/auth/forgot_password_screen.dart';
+import 'package:pavio_tenant_app/features/auth/reset_password_screen.dart';
+import 'package:pavio_tenant_app/theme/pavio_theme.dart';
 
 class _InMemorySecureStore implements SecureStore {
   final _values = <String, String>{};
@@ -25,7 +25,7 @@ class _InMemorySecureStore implements SecureStore {
 http.Response _json(Map<String, dynamic> body, int status) =>
     http.Response(jsonEncode(body), status, headers: {'content-type': 'application/json'});
 
-Widget _wrap(Widget child) => MaterialApp(theme: NivasaTheme.light(), home: child);
+Widget _wrap(Widget child) => MaterialApp(theme: PavioTheme.light(), home: child);
 
 AuthRepository _repo(http.Client client) =>
     AuthRepository(apiClient: ApiClient(httpClient: client), sessionStore: SessionStore(storage: _InMemorySecureStore()));

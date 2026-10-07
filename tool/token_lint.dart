@@ -1,5 +1,5 @@
 // Design token drift lint (2026-08-31) — the design review's own root-cause finding was
-// that hand-syncing tokens.css and nivasa_colors.dart is how the ink-500 WCAG fix went
+// that hand-syncing tokens.css and pavio_colors.dart is how the ink-500 WCAG fix went
 // missing on mobile for weeks (see project memory / the design review doc). Nothing
 // caught that at review time. This script is the closest thing this repo can have to
 // owner-dashboard's html-token-validator.py without a shared token toolchain: it doesn't
@@ -10,10 +10,10 @@
 // Checks every lib/**.dart file outside lib/theme/ (which legitimately defines the raw
 // values) for:
 //   1. BorderRadius.circular(<number>) / Radius.circular(<number>) — should reference
-//      NivasaRadius.*
-//   2. .copyWith(... fontSize: <number> ...) — should reach for a sized NivasaText.*
+//      PavioRadius.*
+//   2. .copyWith(... fontSize: <number> ...) — should reach for a sized PavioText.*
 //      style (body/bodySmall/badge/caption/label/...) instead of hand-tuning one
-//   3. Color(0x........) — should reference NivasaColors.*
+//   3. Color(0x........) — should reference PavioColors.*
 //
 // Run: dart run tool/token_lint.dart
 // Wired into .github/workflows/ci.yml, right after `flutter analyze`.
@@ -52,13 +52,13 @@ void main() {
     for (var i = 0; i < lines.length; i++) {
       final line = lines[i];
       if (_radiusLiteral.hasMatch(line)) {
-        violations.add(Violation(relativePath, line, i + 1, 'hardcoded radius — use NivasaRadius.*'));
+        violations.add(Violation(relativePath, line, i + 1, 'hardcoded radius — use PavioRadius.*'));
       }
       if (_fontSizeLiteral.hasMatch(line)) {
-        violations.add(Violation(relativePath, line, i + 1, 'hardcoded fontSize — use a sized NivasaText.* style'));
+        violations.add(Violation(relativePath, line, i + 1, 'hardcoded fontSize — use a sized PavioText.* style'));
       }
       if (_colorLiteral.hasMatch(line)) {
-        violations.add(Violation(relativePath, line, i + 1, 'hardcoded color literal — use NivasaColors.*'));
+        violations.add(Violation(relativePath, line, i + 1, 'hardcoded color literal — use PavioColors.*'));
       }
     }
   }

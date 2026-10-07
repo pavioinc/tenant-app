@@ -6,11 +6,11 @@ import '../../core/date_utils.dart';
 import '../../core/file_picker_service.dart';
 import '../../core/share_service.dart';
 import '../../core/url_opener.dart';
-import '../../theme/nivasa_colors.dart';
-import '../../theme/nivasa_spacing.dart';
-import '../../theme/nivasa_text_styles.dart';
-import '../../widgets/nivasa_skeleton.dart';
-import '../../widgets/nivasa_stale_banner.dart';
+import '../../theme/pavio_colors.dart';
+import '../../theme/pavio_spacing.dart';
+import '../../theme/pavio_text_styles.dart';
+import '../../widgets/pavio_skeleton.dart';
+import '../../widgets/pavio_stale_banner.dart';
 import '../auth/auth_repository.dart';
 import 'documents_repository.dart';
 
@@ -34,21 +34,21 @@ String _fileSizeLabel(int bytes) {
 ({Color bg, Color fg, IconData icon}) _fileVisual(TenantDocument document) {
   if (document.status == 'verified') {
     return (
-      bg: NivasaColors.positiveTint,
-      fg: NivasaColors.positiveTextOnTint,
+      bg: PavioColors.positiveTint,
+      fg: PavioColors.positiveTextOnTint,
       icon: Icons.verified,
     );
   }
   if (document.contentType == 'application/pdf') {
     return (
-      bg: NivasaColors.negativeTint,
-      fg: NivasaColors.negativeTextOnTint,
+      bg: PavioColors.negativeTint,
+      fg: PavioColors.negativeTextOnTint,
       icon: Icons.picture_as_pdf,
     );
   }
   return (
-    bg: NivasaColors.infoTint,
-    fg: NivasaColors.infoTextOnTint,
+    bg: PavioColors.infoTint,
+    fg: PavioColors.infoTextOnTint,
     icon: Icons.image,
   );
 }
@@ -257,7 +257,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
       appBar: AppBar(title: const Text('Documents')),
       body: SafeArea(
         child: _loading
-            ? const NivasaSkeletonList()
+            ? const PavioSkeletonList()
             : _error != null
             ? _ErrorState(message: _error!, onRetry: _load)
             : Column(
@@ -265,12 +265,12 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
                   if (_stale)
                     Padding(
                       padding: const EdgeInsets.fromLTRB(
-                        NivasaSpacing.s24,
-                        NivasaSpacing.s24,
-                        NivasaSpacing.s24,
+                        PavioSpacing.s24,
+                        PavioSpacing.s24,
+                        PavioSpacing.s24,
                         0,
                       ),
-                      child: NivasaStaleBanner(
+                      child: PavioStaleBanner(
                         lastSyncedAt: _lastSyncedAt,
                         onRetry: _load,
                       ),
@@ -283,28 +283,28 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
                               children: [
                                 Padding(
                                   padding: const EdgeInsets.all(
-                                    NivasaSpacing.s24,
+                                    PavioSpacing.s24,
                                   ),
                                   child: Text(
                                     'No documents yet — tap "Upload a document" to add an ID proof or other document.',
-                                    style: NivasaText.body.copyWith(
-                                      color: NivasaColors.ink500,
+                                    style: PavioText.body.copyWith(
+                                      color: PavioColors.ink500,
                                     ),
                                   ),
                                 ),
                               ],
                             )
                           : ListView(
-                              padding: const EdgeInsets.all(NivasaSpacing.s24),
+                              padding: const EdgeInsets.all(PavioSpacing.s24),
                               children: [
                                 Container(
                                   decoration: BoxDecoration(
-                                    color: NivasaColors.white,
+                                    color: PavioColors.white,
                                     border: Border.all(
-                                      color: NivasaColors.line,
+                                      color: PavioColors.line,
                                     ),
                                     borderRadius: BorderRadius.circular(
-                                      NivasaRadius.card,
+                                      PavioRadius.card,
                                     ),
                                   ),
                                   clipBehavior: Clip.antiAlias,
@@ -327,17 +327,17 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
                                           const Divider(
                                             height: 1,
                                             indent: 70,
-                                            color: NivasaColors.line,
+                                            color: PavioColors.line,
                                           ),
                                       ],
                                     ],
                                   ),
                                 ),
-                                const SizedBox(height: NivasaSpacing.s16),
+                                const SizedBox(height: PavioSpacing.s16),
                                 Text(
                                   'Documents you upload are visible to your property manager.',
-                                  style: NivasaText.bodySmall.copyWith(
-                                    color: NivasaColors.ink500,
+                                  style: PavioText.bodySmall.copyWith(
+                                    color: PavioColors.ink500,
                                   ),
                                 ),
                               ],
@@ -383,7 +383,7 @@ class _DocumentRow extends StatelessWidget {
             height: 40,
             decoration: BoxDecoration(
               color: visual.bg,
-              borderRadius: BorderRadius.circular(NivasaRadius.md),
+              borderRadius: BorderRadius.circular(PavioRadius.md),
             ),
             child: Icon(visual.icon, size: 21, color: visual.fg),
           ),
@@ -395,20 +395,20 @@ class _DocumentRow extends StatelessWidget {
               children: [
                 Text(
                   document.label,
-                  style: NivasaText.body.copyWith(fontWeight: FontWeight.w600),
+                  style: PavioText.body.copyWith(fontWeight: FontWeight.w600),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 3),
-                Text(subtitleParts.join(' · '), style: NivasaText.caption),
+                Text(subtitleParts.join(' · '), style: PavioText.caption),
                 if (document.status == 'rejected') ...[
                   const SizedBox(height: 3),
                   Text(
                     document.reviewNote != null
                         ? 'Rejected — ${document.reviewNote}'
                         : 'Rejected',
-                    style: NivasaText.caption.copyWith(
-                      color: NivasaColors.negativeFg,
+                    style: PavioText.caption.copyWith(
+                      color: PavioColors.negativeFg,
                     ),
                   ),
                 ],
@@ -416,10 +416,10 @@ class _DocumentRow extends StatelessWidget {
             ),
           ),
           PopupMenuButton<String>(
-            icon: const Icon(Icons.more_vert, color: NivasaColors.ink500),
-            color: NivasaColors.ink900,
+            icon: const Icon(Icons.more_vert, color: PavioColors.ink500),
+            color: PavioColors.ink900,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(NivasaRadius.lg),
+              borderRadius: BorderRadius.circular(PavioRadius.lg),
             ),
             onSelected: onMenuSelected,
             itemBuilder: (context) => [
@@ -430,7 +430,7 @@ class _DocumentRow extends StatelessWidget {
                 'delete',
                 Icons.delete_outline,
                 'Delete…',
-                color: NivasaColors.negativeTintBorder,
+                color: PavioColors.negativeTintBorder,
               ),
             ],
           ),
@@ -443,7 +443,7 @@ class _DocumentRow extends StatelessWidget {
     String value,
     IconData icon,
     String label, {
-    Color color = NivasaColors.white,
+    Color color = PavioColors.white,
   }) {
     return PopupMenuItem<String>(
       value: value,
@@ -451,10 +451,10 @@ class _DocumentRow extends StatelessWidget {
       child: Row(
         children: [
           Icon(icon, size: 19, color: color),
-          const SizedBox(width: NivasaSpacing.s12),
+          const SizedBox(width: PavioSpacing.s12),
           Text(
             label,
-            style: NivasaText.body.copyWith(color: color, fontSize: 15),
+            style: PavioText.body.copyWith(color: color),
           ),
         ],
       ),
@@ -472,14 +472,14 @@ class _UploadBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.fromLTRB(
-        NivasaSpacing.s24,
-        NivasaSpacing.s12,
-        NivasaSpacing.s24,
-        NivasaSpacing.s24,
+        PavioSpacing.s24,
+        PavioSpacing.s12,
+        PavioSpacing.s24,
+        PavioSpacing.s24,
       ),
       decoration: const BoxDecoration(
-        color: NivasaColors.white,
-        border: Border(top: BorderSide(color: NivasaColors.line)),
+        color: PavioColors.white,
+        border: Border(top: BorderSide(color: PavioColors.line)),
       ),
       child: SizedBox(
         height: 52,
@@ -491,7 +491,7 @@ class _UploadBar extends StatelessWidget {
                   height: 16,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation(NivasaColors.white),
+                    valueColor: AlwaysStoppedAnimation(PavioColors.white),
                   ),
                 )
               : const Icon(Icons.upload_outlined, size: 20),
@@ -512,16 +512,16 @@ class _ErrorState extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(NivasaSpacing.s24),
+        padding: const EdgeInsets.all(PavioSpacing.s24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
               message,
-              style: NivasaText.body.copyWith(color: NivasaColors.ink500),
+              style: PavioText.body.copyWith(color: PavioColors.ink500),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: NivasaSpacing.s16),
+            const SizedBox(height: PavioSpacing.s16),
             TextButton(onPressed: onRetry, child: const Text('Try again')),
           ],
         ),

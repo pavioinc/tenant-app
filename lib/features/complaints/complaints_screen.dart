@@ -3,13 +3,13 @@ import '../../core/api_client.dart';
 import '../../core/cache_store.dart';
 import '../../core/cached_fetch.dart';
 import '../../core/date_utils.dart';
-import '../../theme/nivasa_colors.dart';
-import '../../theme/nivasa_elevation.dart';
-import '../../theme/nivasa_spacing.dart';
-import '../../theme/nivasa_text_styles.dart';
-import '../../widgets/nivasa_button.dart';
-import '../../widgets/nivasa_skeleton.dart';
-import '../../widgets/nivasa_stale_banner.dart';
+import '../../theme/pavio_colors.dart';
+import '../../theme/pavio_elevation.dart';
+import '../../theme/pavio_spacing.dart';
+import '../../theme/pavio_text_styles.dart';
+import '../../widgets/pavio_button.dart';
+import '../../widgets/pavio_skeleton.dart';
+import '../../widgets/pavio_stale_banner.dart';
 import '../auth/auth_repository.dart';
 import '../rental/rental_repository.dart';
 import 'complaint_detail_screen.dart';
@@ -20,14 +20,14 @@ const _cardTitleStyle = TextStyle(
   fontSize: 16,
   fontWeight: FontWeight.w600,
   height: 1.35,
-  color: NivasaColors.ink900,
+  color: PavioColors.ink900,
 );
 const _cardSubtitleStyle = TextStyle(
   fontFamily: 'Noto Sans',
   fontSize: 14,
   fontWeight: FontWeight.w400,
   height: 1.5,
-  color: NivasaColors.ink700,
+  color: PavioColors.ink700,
 );
 
 enum _WhenFilter { open, resolved }
@@ -35,9 +35,9 @@ enum _WhenFilter { open, resolved }
 /// Which coloured spine a card gets — a second signal beyond the pill (1e's own reasoning:
 /// "the badge isn't the only signal").
 Color _spineColor(String status) => switch (status) {
-  'resolved' => NivasaColors.positiveFg,
-  'in_progress' => NivasaColors.infoFg,
-  _ => NivasaColors.warningFg,
+  'resolved' => PavioColors.positiveFg,
+  'in_progress' => PavioColors.infoFg,
+  _ => PavioColors.warningFg,
 };
 
 /// Redesigned (doc option "1e") from an unfiltered list of bordered cards into: an Open/
@@ -169,22 +169,22 @@ class _ComplaintsScreenState extends State<ComplaintsScreen> {
       appBar: AppBar(title: const Text('Maintenance')),
       body: SafeArea(
         child: _loading
-            ? const NivasaSkeletonList()
+            ? const PavioSkeletonList()
             : _error != null
             ? Center(
                 child: Padding(
-                  padding: const EdgeInsets.all(NivasaSpacing.s24),
+                  padding: const EdgeInsets.all(PavioSpacing.s24),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
                         _error!,
-                        style: NivasaText.body.copyWith(
-                          color: NivasaColors.ink500,
+                        style: PavioText.body.copyWith(
+                          color: PavioColors.ink500,
                         ),
                         textAlign: TextAlign.center,
                       ),
-                      const SizedBox(height: NivasaSpacing.s16),
+                      const SizedBox(height: PavioSpacing.s16),
                       TextButton(
                         onPressed: _load,
                         child: const Text('Try again'),
@@ -198,21 +198,21 @@ class _ComplaintsScreenState extends State<ComplaintsScreen> {
                   if (_stale)
                     Padding(
                       padding: const EdgeInsets.fromLTRB(
-                        NivasaSpacing.s24,
-                        NivasaSpacing.s24,
-                        NivasaSpacing.s24,
+                        PavioSpacing.s24,
+                        PavioSpacing.s24,
+                        PavioSpacing.s24,
                         0,
                       ),
-                      child: NivasaStaleBanner(
+                      child: PavioStaleBanner(
                         lastSyncedAt: _lastSyncedAt,
                         onRetry: _load,
                       ),
                     ),
                   Padding(
                     padding: const EdgeInsets.fromLTRB(
-                      NivasaSpacing.s24,
-                      NivasaSpacing.s16,
-                      NivasaSpacing.s24,
+                      PavioSpacing.s24,
+                      PavioSpacing.s16,
+                      PavioSpacing.s24,
                       0,
                     ),
                     child: _WhenSegmentedControl(
@@ -230,14 +230,14 @@ class _ComplaintsScreenState extends State<ComplaintsScreen> {
                               children: [
                                 Padding(
                                   padding: const EdgeInsets.all(
-                                    NivasaSpacing.s24,
+                                    PavioSpacing.s24,
                                   ),
                                   child: Text(
                                     _filter == _WhenFilter.open
                                         ? 'No open requests — tap "New request" to raise one.'
                                         : 'No resolved requests yet.',
-                                    style: NivasaText.body.copyWith(
-                                      color: NivasaColors.ink500,
+                                    style: PavioText.body.copyWith(
+                                      color: PavioColors.ink500,
                                     ),
                                   ),
                                 ),
@@ -245,14 +245,14 @@ class _ComplaintsScreenState extends State<ComplaintsScreen> {
                             )
                           : ListView.separated(
                               padding: const EdgeInsets.fromLTRB(
-                                NivasaSpacing.s24,
-                                NivasaSpacing.s20,
-                                NivasaSpacing.s24,
-                                NivasaSpacing.s24,
+                                PavioSpacing.s24,
+                                PavioSpacing.s20,
+                                PavioSpacing.s24,
+                                PavioSpacing.s24,
                               ),
                               itemCount: visibleItems.length,
                               separatorBuilder: (_, _) =>
-                                  const SizedBox(height: NivasaSpacing.s12),
+                                  const SizedBox(height: PavioSpacing.s12),
                               itemBuilder: (context, index) {
                                 final item = visibleItems[index];
                                 return _ComplaintCard(
@@ -301,8 +301,8 @@ class _WhenSegmentedControl extends StatelessWidget {
       height: 40,
       padding: const EdgeInsets.all(3),
       decoration: BoxDecoration(
-        color: NivasaColors.canvas,
-        borderRadius: BorderRadius.circular(NivasaRadius.button),
+        color: PavioColors.canvas,
+        borderRadius: BorderRadius.circular(PavioRadius.button),
       ),
       child: Row(
         children: [
@@ -329,16 +329,16 @@ class _WhenSegmentedControl extends StatelessWidget {
         duration: const Duration(milliseconds: 120),
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: active ? NivasaColors.white : null,
-          borderRadius: BorderRadius.circular(7),
-          boxShadow: active ? NivasaElevation.e1 : null,
+          color: active ? PavioColors.white : null,
+          borderRadius: BorderRadius.circular(PavioRadius.segment),
+          boxShadow: active ? PavioElevation.e1 : null,
         ),
         child: Text(
           label,
-          style: NivasaText.body.copyWith(
+          style: PavioText.body.copyWith(
             fontSize: 14,
             fontWeight: FontWeight.w600,
-            color: active ? NivasaColors.ink900 : NivasaColors.ink500,
+            color: active ? PavioColors.ink900 : PavioColors.ink500,
           ),
         ),
       ),
@@ -362,14 +362,14 @@ class _ComplaintCard extends StatelessWidget {
     final (badgeBg, badgeFg) = complaintStatusColors(complaint.status);
     final latestNote = complaint.latestNote;
     return InkWell(
-      borderRadius: BorderRadius.circular(NivasaRadius.card),
+      borderRadius: BorderRadius.circular(PavioRadius.card),
       onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
-          color: NivasaColors.white,
-          border: Border.all(color: NivasaColors.line),
-          borderRadius: BorderRadius.circular(NivasaRadius.card),
-          boxShadow: NivasaElevation.e1,
+          color: PavioColors.white,
+          border: Border.all(color: PavioColors.line),
+          borderRadius: BorderRadius.circular(PavioRadius.card),
+          boxShadow: PavioElevation.e1,
         ),
         clipBehavior: Clip.antiAlias,
         child: IntrinsicHeight(
@@ -379,7 +379,7 @@ class _ComplaintCard extends StatelessWidget {
               Container(width: 4, color: _spineColor(complaint.status)),
               Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.all(NivasaSpacing.s16),
+                  padding: const EdgeInsets.all(PavioSpacing.s16),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -393,19 +393,19 @@ class _ComplaintCard extends StatelessWidget {
                             decoration: BoxDecoration(
                               color: badgeBg,
                               borderRadius: BorderRadius.circular(
-                                NivasaRadius.pill,
+                                PavioRadius.pill,
                               ),
                             ),
                             child: Text(
                               complaintStatusLabels[complaint.status] ??
                                   complaint.status,
-                              style: NivasaText.badge.copyWith(color: badgeFg),
+                              style: PavioText.badge.copyWith(color: badgeFg),
                             ),
                           ),
                           const Spacer(),
                           Text(
                             formatRelativeDate(complaint.createdAt),
-                            style: NivasaText.caption,
+                            style: PavioText.caption,
                           ),
                         ],
                       ),
@@ -423,7 +423,7 @@ class _ComplaintCard extends StatelessWidget {
                             : complaint.category,
                         style: _cardSubtitleStyle,
                       ),
-                      const SizedBox(height: NivasaSpacing.s12),
+                      const SizedBox(height: PavioSpacing.s12),
                       if (latestNote != null)
                         Container(
                           padding: const EdgeInsets.symmetric(
@@ -431,9 +431,9 @@ class _ComplaintCard extends StatelessWidget {
                             vertical: 9,
                           ),
                           decoration: BoxDecoration(
-                            color: NivasaColors.surface,
+                            color: PavioColors.surface,
                             borderRadius: BorderRadius.circular(
-                              NivasaRadius.md,
+                              PavioRadius.md,
                             ),
                           ),
                           child: Row(
@@ -441,14 +441,14 @@ class _ComplaintCard extends StatelessWidget {
                               const Icon(
                                 Icons.chat_outlined,
                                 size: 16,
-                                color: NivasaColors.ink500,
+                                color: PavioColors.ink500,
                               ),
-                              const SizedBox(width: NivasaSpacing.s8),
+                              const SizedBox(width: PavioSpacing.s8),
                               Expanded(
                                 child: Text(
                                   '${latestNote.authorName ?? (latestNote.authorType == 'manager' ? 'Property manager' : 'You')}: ${latestNote.body}',
-                                  style: NivasaText.bodySmall.copyWith(
-                                    color: NivasaColors.ink700,
+                                  style: PavioText.bodySmall.copyWith(
+                                    color: PavioColors.ink700,
                                   ),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
@@ -457,7 +457,7 @@ class _ComplaintCard extends StatelessWidget {
                               const Icon(
                                 Icons.chevron_right,
                                 size: 18,
-                                color: NivasaColors.ink400,
+                                color: PavioColors.ink400,
                               ),
                             ],
                           ),
@@ -468,21 +468,21 @@ class _ComplaintCard extends StatelessWidget {
                             const Icon(
                               Icons.schedule,
                               size: 16,
-                              color: NivasaColors.ink400,
+                              color: PavioColors.ink400,
                             ),
-                            const SizedBox(width: NivasaSpacing.s8),
+                            const SizedBox(width: PavioSpacing.s8),
                             Expanded(
                               child: Text(
                                 'No reply yet',
-                                style: NivasaText.bodySmall.copyWith(
-                                  color: NivasaColors.ink500,
+                                style: PavioText.bodySmall.copyWith(
+                                  color: PavioColors.ink500,
                                 ),
                               ),
                             ),
                             const Icon(
                               Icons.chevron_right,
                               size: 18,
-                              color: NivasaColors.ink400,
+                              color: PavioColors.ink400,
                             ),
                           ],
                         ),
@@ -509,14 +509,14 @@ class _NewRequestBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.fromLTRB(
-        NivasaSpacing.s24,
-        NivasaSpacing.s12,
-        NivasaSpacing.s24,
-        NivasaSpacing.s24,
+        PavioSpacing.s24,
+        PavioSpacing.s12,
+        PavioSpacing.s24,
+        PavioSpacing.s24,
       ),
       decoration: const BoxDecoration(
-        color: NivasaColors.white,
-        border: Border(top: BorderSide(color: NivasaColors.line)),
+        color: PavioColors.white,
+        border: Border(top: BorderSide(color: PavioColors.line)),
       ),
       child: SizedBox(
         height: 52,
@@ -588,11 +588,11 @@ class _NewComplaintSheetState extends State<_NewComplaintSheet> {
         bottom: MediaQuery.of(context).viewInsets.bottom,
       ),
       child: Container(
-        padding: const EdgeInsets.all(NivasaSpacing.s24),
+        padding: const EdgeInsets.all(PavioSpacing.s24),
         decoration: const BoxDecoration(
-          color: NivasaColors.white,
+          color: PavioColors.white,
           borderRadius: BorderRadius.vertical(
-            top: Radius.circular(NivasaRadius.bottomSheetTop),
+            top: Radius.circular(PavioRadius.bottomSheetTop),
           ),
         ),
         child: Column(
@@ -603,14 +603,14 @@ class _NewComplaintSheetState extends State<_NewComplaintSheet> {
               child: Container(
                 width: 40,
                 height: 4,
-                margin: const EdgeInsets.only(bottom: NivasaSpacing.s16),
-                color: NivasaColors.line,
+                margin: const EdgeInsets.only(bottom: PavioSpacing.s16),
+                color: PavioColors.line,
               ),
             ),
-            Text('New request', style: NivasaText.h2),
-            const SizedBox(height: NivasaSpacing.s16),
-            Text('Category', style: NivasaText.label),
-            const SizedBox(height: NivasaSpacing.s8),
+            Text('New request', style: PavioText.h2),
+            const SizedBox(height: PavioSpacing.s16),
+            Text('Category', style: PavioText.label),
+            const SizedBox(height: PavioSpacing.s8),
             DropdownButtonFormField<String>(
               initialValue: _category,
               items: [
@@ -620,26 +620,26 @@ class _NewComplaintSheetState extends State<_NewComplaintSheet> {
               onChanged: (value) =>
                   setState(() => _category = value ?? _category),
             ),
-            const SizedBox(height: NivasaSpacing.s16),
-            Text('Description', style: NivasaText.label),
-            const SizedBox(height: NivasaSpacing.s8),
+            const SizedBox(height: PavioSpacing.s16),
+            Text('Description', style: PavioText.label),
+            const SizedBox(height: PavioSpacing.s8),
             TextField(
               controller: _descriptionController,
               maxLines: 3,
-              style: NivasaText.body,
+              style: PavioText.body,
               decoration: InputDecoration(
                 hintText: 'Describe the issue',
                 errorText: _error,
               ),
             ),
-            const SizedBox(height: NivasaSpacing.s24),
-            NivasaPrimaryButton(
+            const SizedBox(height: PavioSpacing.s24),
+            PavioPrimaryButton(
               label: 'Submit',
               loading: _submitting,
               loadingLabel: 'Submitting…',
               onPressed: _submit,
             ),
-            const SizedBox(height: NivasaSpacing.s8),
+            const SizedBox(height: PavioSpacing.s8),
           ],
         ),
       ),

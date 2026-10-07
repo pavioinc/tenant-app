@@ -8,8 +8,8 @@ import 'package:flutter/material.dart';
 /// repeating animation should check [reduceMotion] and skip/zero it rather than hard-
 /// coding a duration — one-shot transitions are left alone, matching the web file's own
 /// posture (`--motion-toggle` isn't zeroed under reduced motion either).
-class NivasaMotion {
-  NivasaMotion._();
+class PavioMotion {
+  PavioMotion._();
 
   static const spinner = Duration(milliseconds: 750);
   static const shimmer = Duration(milliseconds: 1300);

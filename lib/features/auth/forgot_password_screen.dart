@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../core/api_client.dart';
-import '../../theme/nivasa_colors.dart';
-import '../../theme/nivasa_spacing.dart';
-import '../../theme/nivasa_text_styles.dart';
-import '../../widgets/nivasa_button.dart';
+import '../../theme/pavio_colors.dart';
+import '../../theme/pavio_spacing.dart';
+import '../../theme/pavio_text_styles.dart';
+import '../../widgets/pavio_button.dart';
 import 'auth_repository.dart';
 import 'reset_password_screen.dart';
 
@@ -68,27 +68,27 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       appBar: AppBar(title: const Text('Forgot password')),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(NivasaSpacing.s24),
+          padding: const EdgeInsets.all(PavioSpacing.s24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 "Enter the email you signed up with. If it has an account, we'll send a reset code.",
-                style: NivasaText.body.copyWith(color: NivasaColors.ink500),
+                style: PavioText.body.copyWith(color: PavioColors.ink500),
               ),
-              const SizedBox(height: NivasaSpacing.s24),
-              Text('Email', style: NivasaText.label),
-              const SizedBox(height: NivasaSpacing.s8),
+              const SizedBox(height: PavioSpacing.s24),
+              Text('Email', style: PavioText.label),
+              const SizedBox(height: PavioSpacing.s8),
               TextField(
                 controller: _emailController,
                 keyboardType: TextInputType.emailAddress,
                 autofillHints: const [AutofillHints.email],
-                style: NivasaText.body,
+                style: PavioText.body,
                 decoration: InputDecoration(hintText: 'you@example.com', errorText: _error),
                 onSubmitted: (_) => _submit(),
               ),
-              const SizedBox(height: NivasaSpacing.s24),
-              NivasaPrimaryButton(label: 'Send reset code', loading: _submitting, loadingLabel: 'Sending…', onPressed: _submit),
+              const SizedBox(height: PavioSpacing.s24),
+              PavioPrimaryButton(label: 'Send reset code', loading: _submitting, loadingLabel: 'Sending…', onPressed: _submit),
             ],
           ),
         ),

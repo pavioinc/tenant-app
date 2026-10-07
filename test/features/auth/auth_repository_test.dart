@@ -2,9 +2,9 @@ import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
-import 'package:nivasaos_tenant_app/core/api_client.dart';
-import 'package:nivasaos_tenant_app/core/session_store.dart';
-import 'package:nivasaos_tenant_app/features/auth/auth_repository.dart';
+import 'package:pavio_tenant_app/core/api_client.dart';
+import 'package:pavio_tenant_app/core/session_store.dart';
+import 'package:pavio_tenant_app/features/auth/auth_repository.dart';
 
 class _InMemorySecureStore implements SecureStore {
   final _values = <String, String>{};
@@ -44,7 +44,7 @@ void main() {
       final session = await repo.signup(firstName: 'Amit', lastName: 'Kumar', email: 'amit@example.com', password: 'Correct-Horse-1!');
 
       expect(session.user.connected, false);
-      expect(await store.read('nivasaos.access_token'), 'access-token');
+      expect(await store.read('pavio.access_token'), 'access-token');
     });
 
     test('includes birthdate only when given', () async {
@@ -129,9 +129,9 @@ void main() {
   group('AuthRepository.refreshConnectionStatus', () {
     test('rotates the refresh token then re-reads /tenant/me, persisting the merged session', () async {
       final store = _InMemorySecureStore();
-      await store.write('nivasaos.access_token', 'old-access');
-      await store.write('nivasaos.refresh_token', 'old-refresh');
-      await store.write('nivasaos.user', jsonEncode({'user_id': 'account-1', 'name': 'Amit Kumar', 'role': 'tenant', 'connected': false}));
+      await store.write('pavio.access_token', 'old-access');
+      await store.write('pavio.refresh_token', 'old-refresh');
+      await store.write('pavio.user', jsonEncode({'user_id': 'account-1', 'name': 'Amit Kumar', 'role': 'tenant', 'connected': false}));
 
       final client = MockClient((request) async {
         if (request.url.path == '/api/auth/v1/refresh') {
@@ -163,7 +163,7 @@ void main() {
       expect(session.accessToken, 'new-access');
       expect(session.user.connected, true);
       expect(session.user.propertyId, 'prop-1');
-      expect(await store.read('nivasaos.access_token'), 'new-access');
+      expect(await store.read('pavio.access_token'), 'new-access');
     });
 
     test('throws StateError when there is no active session', () async {
@@ -177,9 +177,9 @@ void main() {
   group('AuthRepository.logout', () {
     test('clears the stored session even if the network call fails', () async {
       final store = _InMemorySecureStore();
-      await store.write('nivasaos.access_token', 'a');
-      await store.write('nivasaos.refresh_token', 'r');
-      await store.write('nivasaos.user', jsonEncode({'user_id': 'account-1', 'name': 'Amit', 'role': 'tenant', 'connected': false}));
+      await store.write('pavio.access_token', 'a');
+      await store.write('pavio.refresh_token', 'r');
+      await store.write('pavio.user', jsonEncode({'user_id': 'account-1', 'name': 'Amit', 'role': 'tenant', 'connected': false}));
 
       final client = MockClient((request) async => http.Response('', 500));
       final repo = AuthRepository(apiClient: ApiClient(httpClient: client), sessionStore: SessionStore(storage: store));

@@ -3,7 +3,7 @@ import '../../core/api_client.dart';
 import '../../core/push_notifications.dart';
 import '../../core/session_store.dart';
 
-/// Renters sign up directly with full name/email/password — a general NivasaOS platform
+/// Renters sign up directly with full name/email/password — a general Pavio platform
 /// account, not gated behind a pre-existing `tenants` row (see auth-service's
 /// tenantAuth.ts "tenant_accounts vs. tenants" reasoning). A fresh signup is
 /// "unconnected" until a property manager adds this same email via tenant-service, at

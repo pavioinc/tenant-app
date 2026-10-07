@@ -4,7 +4,7 @@
          show, even once a device token is registered. See lib/core/push_notifications.dart. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <application
-        android:label="NivasaOS"
+        android:label="Pavio"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

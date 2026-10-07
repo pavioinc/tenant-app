@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'nivasa_colors.dart';
+import 'pavio_colors.dart';
 
 const _fontSans = 'Noto Sans';
 const _fontMono = 'Noto Sans Mono';
@@ -9,8 +9,8 @@ const _fontMono = 'Noto Sans Mono';
 /// values to logical pixels at each style's font size (Flutter's TextStyle takes px, CSS
 /// used em). `height` in Flutter is a multiplier of fontSize, same semantics as CSS
 /// unitless line-height, so those values carry over unchanged.
-class NivasaText {
-  NivasaText._();
+class PavioText {
+  PavioText._();
 
   static const display = TextStyle(
     fontFamily: _fontSans,
@@ -18,7 +18,7 @@ class NivasaText {
     fontWeight: FontWeight.w800,
     height: 1.05,
     letterSpacing: -0.8,
-    color: NivasaColors.ink900,
+    color: PavioColors.ink900,
   );
 
   static const h1 = TextStyle(
@@ -27,7 +27,7 @@ class NivasaText {
     fontWeight: FontWeight.w800,
     height: 1.1,
     letterSpacing: -0.6,
-    color: NivasaColors.ink900,
+    color: PavioColors.ink900,
   );
 
   static const h2 = TextStyle(
@@ -36,7 +36,7 @@ class NivasaText {
     fontWeight: FontWeight.w700,
     height: 1.15,
     letterSpacing: -0.345,
-    color: NivasaColors.ink900,
+    color: PavioColors.ink900,
   );
 
   static const h3 = TextStyle(
@@ -44,7 +44,7 @@ class NivasaText {
     fontSize: 18,
     fontWeight: FontWeight.w600,
     height: 1.3,
-    color: NivasaColors.ink900,
+    color: PavioColors.ink900,
   );
 
   static const body = TextStyle(
@@ -52,7 +52,7 @@ class NivasaText {
     fontSize: 15,
     fontWeight: FontWeight.w400,
     height: 1.6,
-    color: NivasaColors.ink900,
+    color: PavioColors.ink900,
   );
 
   /// The de-facto "small body" step ~15 call sites were already reaching for by hand via
@@ -66,7 +66,7 @@ class NivasaText {
     fontSize: 13,
     fontWeight: FontWeight.w400,
     height: 1.6,
-    color: NivasaColors.ink900,
+    color: PavioColors.ink900,
   );
 
   /// Small bold label for status/role pills (e.g. Contacts' role chip, Lease's agreement
@@ -74,14 +74,14 @@ class NivasaText {
   /// brand color the pill needs. The other de-facto size step ~3 call sites were
   /// reaching for by hand via `body.copyWith(fontSize: 12, fontWeight: FontWeight.w600)`
   /// alongside bodySmall's 13px one.
-  static const badge = TextStyle(fontFamily: _fontSans, fontSize: 12, fontWeight: FontWeight.w600, color: NivasaColors.ink900);
+  static const badge = TextStyle(fontFamily: _fontSans, fontSize: 12, fontWeight: FontWeight.w600, color: PavioColors.ink900);
 
   static const label = TextStyle(
     fontFamily: _fontSans,
     fontSize: 13,
     fontWeight: FontWeight.w600,
     height: 1.4,
-    color: NivasaColors.ink700,
+    color: PavioColors.ink700,
   );
 
   static const caption = TextStyle(
@@ -89,16 +89,32 @@ class NivasaText {
     fontSize: 12,
     fontWeight: FontWeight.w500,
     height: 1.45,
-    color: NivasaColors.ink500,
+    color: PavioColors.ink500,
   );
 
   /// IDs, ₹ amounts, OTP digits, timestamps, transaction tokens — anything tabular or
   /// scanned digit-by-digit, per the doc's Typography section.
+  static const monoLarge = TextStyle(
+    fontFamily: _fontMono,
+    fontSize: 15,
+    fontWeight: FontWeight.w500,
+    letterSpacing: 0.26,
+    color: PavioColors.ink900,
+  );
+
+  static const sectionTitle = TextStyle(
+    fontFamily: _fontSans,
+    fontSize: 15,
+    fontWeight: FontWeight.w600,
+    height: 1.3,
+    color: PavioColors.ink900,
+  );
+
   static const mono = TextStyle(
     fontFamily: _fontMono,
     fontSize: 13,
     fontWeight: FontWeight.w500,
     letterSpacing: 0.26,
-    color: NivasaColors.ink900,
+    color: PavioColors.ink900,
   );
 }

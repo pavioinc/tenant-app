@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import '../../core/api_client.dart';
 import '../../core/cache_store.dart';
 import '../../core/cached_fetch.dart';
-import '../../theme/nivasa_colors.dart';
-import '../../theme/nivasa_spacing.dart';
-import '../../theme/nivasa_text_styles.dart';
-import '../../widgets/nivasa_button.dart';
-import '../../widgets/nivasa_skeleton.dart';
-import '../../widgets/nivasa_stale_banner.dart';
+import '../../theme/pavio_colors.dart';
+import '../../theme/pavio_spacing.dart';
+import '../../theme/pavio_text_styles.dart';
+import '../../widgets/pavio_button.dart';
+import '../../widgets/pavio_skeleton.dart';
+import '../../widgets/pavio_stale_banner.dart';
 import '../auth/auth_repository.dart';
 import 'vehicles_repository.dart';
 
@@ -19,7 +19,7 @@ const _vehicleTypeIcons = {
 IconData _vehicleIcon(String type) => _vehicleTypeIcons[type] ?? Icons.commute;
 
 /// Redesigned (doc option "1h") — plates move from `h3` proportional text into
-/// `NivasaText.mono` (the "scanned digit-by-digit" case its own doc comment names,
+/// `PavioText.mono` (the "scanned digit-by-digit" case its own doc comment names,
 /// never actually used here before this pass), each row gets a type icon and an
 /// overflow menu instead of a bare red delete icon, and — since this list is
 /// realistically one or two rows — "Add a vehicle" becomes an inline dashed row in the
@@ -154,7 +154,7 @@ class _VehiclesScreenState extends State<VehiclesScreen> {
       appBar: AppBar(title: const Text('Vehicles')),
       body: SafeArea(
         child: _loading
-            ? const NivasaSkeletonList()
+            ? const PavioSkeletonList()
             : _error != null
             ? _ErrorState(message: _error!, onRetry: _load)
             : Column(
@@ -162,12 +162,12 @@ class _VehiclesScreenState extends State<VehiclesScreen> {
                   if (_stale)
                     Padding(
                       padding: const EdgeInsets.fromLTRB(
-                        NivasaSpacing.s24,
-                        NivasaSpacing.s24,
-                        NivasaSpacing.s24,
+                        PavioSpacing.s24,
+                        PavioSpacing.s24,
+                        PavioSpacing.s24,
                         0,
                       ),
-                      child: NivasaStaleBanner(
+                      child: PavioStaleBanner(
                         lastSyncedAt: _lastSyncedAt,
                         onRetry: _load,
                       ),
@@ -176,22 +176,22 @@ class _VehiclesScreenState extends State<VehiclesScreen> {
                     child: RefreshIndicator(
                       onRefresh: _load,
                       child: ListView(
-                        padding: const EdgeInsets.all(NivasaSpacing.s24),
+                        padding: const EdgeInsets.all(PavioSpacing.s24),
                         children: [
                           if (_items.isEmpty)
                             Text(
                               'No vehicles yet — tap "Add a vehicle" below to add one.',
-                              style: NivasaText.body.copyWith(
-                                color: NivasaColors.ink500,
+                              style: PavioText.body.copyWith(
+                                color: PavioColors.ink500,
                               ),
                             )
                           else ...[
                             Container(
                               decoration: BoxDecoration(
-                                color: NivasaColors.white,
-                                border: Border.all(color: NivasaColors.line),
+                                color: PavioColors.white,
+                                border: Border.all(color: PavioColors.line),
                                 borderRadius: BorderRadius.circular(
-                                  NivasaRadius.card,
+                                  PavioRadius.card,
                                 ),
                               ),
                               clipBehavior: Clip.antiAlias,
@@ -206,13 +206,13 @@ class _VehiclesScreenState extends State<VehiclesScreen> {
                                       const Divider(
                                         height: 1,
                                         indent: 70,
-                                        color: NivasaColors.line,
+                                        color: PavioColors.line,
                                       ),
                                   ],
                                 ],
                               ),
                             ),
-                            const SizedBox(height: NivasaSpacing.s16),
+                            const SizedBox(height: PavioSpacing.s16),
                           ],
                           _AddVehicleDashedRow(onTap: _openAddSheet),
                         ],
@@ -243,13 +243,13 @@ class _VehicleRow extends StatelessWidget {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: NivasaColors.primary50,
-              borderRadius: BorderRadius.circular(NivasaRadius.md),
+              color: PavioColors.primary50,
+              borderRadius: BorderRadius.circular(PavioRadius.md),
             ),
             child: Icon(
               _vehicleIcon(vehicle.vehicleType),
               size: 21,
-              color: NivasaColors.primary700,
+              color: PavioColors.primary700,
             ),
           ),
           const SizedBox(width: 14),
@@ -260,7 +260,7 @@ class _VehicleRow extends StatelessWidget {
               children: [
                 Text(
                   vehicle.plateNumber,
-                  style: NivasaText.mono.copyWith(
+                  style: PavioText.mono.copyWith(
                     fontSize: 16,
                     letterSpacing: 0.5,
                   ),
@@ -271,16 +271,16 @@ class _VehicleRow extends StatelessWidget {
                     vehicleTypeLabel(vehicle.vehicleType),
                     if (vehicle.color != null) vehicle.color!,
                   ].join(' · '),
-                  style: NivasaText.caption,
+                  style: PavioText.caption,
                 ),
               ],
             ),
           ),
           PopupMenuButton<String>(
-            icon: const Icon(Icons.more_vert, color: NivasaColors.ink500),
-            color: NivasaColors.ink900,
+            icon: const Icon(Icons.more_vert, color: PavioColors.ink500),
+            color: PavioColors.ink900,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(NivasaRadius.lg),
+              borderRadius: BorderRadius.circular(PavioRadius.lg),
             ),
             onSelected: (_) => onDelete(),
             itemBuilder: (context) => [
@@ -292,13 +292,13 @@ class _VehicleRow extends StatelessWidget {
                     const Icon(
                       Icons.delete_outline,
                       size: 19,
-                      color: NivasaColors.negativeTintBorder,
+                      color: PavioColors.negativeTintBorder,
                     ),
-                    const SizedBox(width: NivasaSpacing.s12),
+                    const SizedBox(width: PavioSpacing.s12),
                     Text(
                       'Delete…',
-                      style: NivasaText.body.copyWith(
-                        color: NivasaColors.negativeTintBorder,
+                      style: PavioText.body.copyWith(
+                        color: PavioColors.negativeTintBorder,
                         fontSize: 15,
                       ),
                     ),
@@ -335,7 +335,7 @@ class _DashedRRectBorderPainter extends CustomPainter {
         size.width - _strokeWidth,
         size.height - _strokeWidth,
       ),
-      const Radius.circular(NivasaRadius.button),
+      const Radius.circular(PavioRadius.button),
     );
     final path = Path()..addRRect(rrect);
     final paint = Paint()
@@ -365,23 +365,23 @@ class _AddVehicleDashedRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return CustomPaint(
-      painter: const _DashedRRectBorderPainter(color: NivasaColors.ink300),
+      painter: const _DashedRRectBorderPainter(color: PavioColors.ink300),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(NivasaRadius.button),
+          borderRadius: BorderRadius.circular(PavioRadius.button),
           child: SizedBox(
             height: 48,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.add, size: 19, color: NivasaColors.primary700),
-                const SizedBox(width: NivasaSpacing.s8),
+                const Icon(Icons.add, size: 19, color: PavioColors.primary700),
+                const SizedBox(width: PavioSpacing.s8),
                 Text(
                   'Add a vehicle',
-                  style: NivasaText.body.copyWith(
-                    color: NivasaColors.primary700,
+                  style: PavioText.body.copyWith(
+                    color: PavioColors.primary700,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -457,11 +457,11 @@ class _AddVehicleSheetState extends State<_AddVehicleSheet> {
         bottom: MediaQuery.of(context).viewInsets.bottom,
       ),
       child: Container(
-        padding: const EdgeInsets.all(NivasaSpacing.s24),
+        padding: const EdgeInsets.all(PavioSpacing.s24),
         decoration: const BoxDecoration(
-          color: NivasaColors.white,
+          color: PavioColors.white,
           borderRadius: BorderRadius.vertical(
-            top: Radius.circular(NivasaRadius.bottomSheetTop),
+            top: Radius.circular(PavioRadius.bottomSheetTop),
           ),
         ),
         child: Column(
@@ -472,22 +472,22 @@ class _AddVehicleSheetState extends State<_AddVehicleSheet> {
               child: Container(
                 width: 40,
                 height: 4,
-                margin: const EdgeInsets.only(bottom: NivasaSpacing.s16),
-                color: NivasaColors.line,
+                margin: const EdgeInsets.only(bottom: PavioSpacing.s16),
+                color: PavioColors.line,
               ),
             ),
-            Text('Add vehicle', style: NivasaText.h2),
-            const SizedBox(height: NivasaSpacing.s16),
-            Text('Plate number', style: NivasaText.label),
-            const SizedBox(height: NivasaSpacing.s8),
+            Text('Add vehicle', style: PavioText.h2),
+            const SizedBox(height: PavioSpacing.s16),
+            Text('Plate number', style: PavioText.label),
+            const SizedBox(height: PavioSpacing.s8),
             TextField(
               controller: _plateController,
-              style: NivasaText.body,
+              style: PavioText.body,
               textCapitalization: TextCapitalization.characters,
             ),
-            const SizedBox(height: NivasaSpacing.s16),
-            Text('Type', style: NivasaText.label),
-            const SizedBox(height: NivasaSpacing.s8),
+            const SizedBox(height: PavioSpacing.s16),
+            Text('Type', style: PavioText.label),
+            const SizedBox(height: PavioSpacing.s8),
             DropdownButtonFormField<String>(
               initialValue: _vehicleType,
               items: [
@@ -497,22 +497,22 @@ class _AddVehicleSheetState extends State<_AddVehicleSheet> {
               onChanged: (value) =>
                   setState(() => _vehicleType = value ?? _vehicleType),
             ),
-            const SizedBox(height: NivasaSpacing.s16),
-            Text('Color (optional)', style: NivasaText.label),
-            const SizedBox(height: NivasaSpacing.s8),
+            const SizedBox(height: PavioSpacing.s16),
+            Text('Color (optional)', style: PavioText.label),
+            const SizedBox(height: PavioSpacing.s8),
             TextField(
               controller: _colorController,
-              style: NivasaText.body,
+              style: PavioText.body,
               decoration: InputDecoration(errorText: _error),
             ),
-            const SizedBox(height: NivasaSpacing.s24),
-            NivasaPrimaryButton(
+            const SizedBox(height: PavioSpacing.s24),
+            PavioPrimaryButton(
               label: 'Add',
               loading: _submitting,
               loadingLabel: 'Adding…',
               onPressed: _submit,
             ),
-            const SizedBox(height: NivasaSpacing.s8),
+            const SizedBox(height: PavioSpacing.s8),
           ],
         ),
       ),
@@ -530,16 +530,16 @@ class _ErrorState extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(NivasaSpacing.s24),
+        padding: const EdgeInsets.all(PavioSpacing.s24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
               message,
-              style: NivasaText.body.copyWith(color: NivasaColors.ink500),
+              style: PavioText.body.copyWith(color: PavioColors.ink500),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: NivasaSpacing.s16),
+            const SizedBox(height: PavioSpacing.s16),
             TextButton(onPressed: onRetry, child: const Text('Try again')),
           ],
         ),

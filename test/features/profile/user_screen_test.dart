@@ -4,20 +4,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
-import 'package:nivasaos_tenant_app/core/api_client.dart';
-import 'package:nivasaos_tenant_app/core/cache_store.dart';
-import 'package:nivasaos_tenant_app/core/push_notifications.dart';
-import 'package:nivasaos_tenant_app/core/session_store.dart';
-import 'package:nivasaos_tenant_app/features/auth/auth_repository.dart';
-import 'package:nivasaos_tenant_app/features/auth/login_screen.dart';
-import 'package:nivasaos_tenant_app/features/profile/account_details_screen.dart';
-import 'package:nivasaos_tenant_app/features/profile/app_feedback_screen.dart';
-import 'package:nivasaos_tenant_app/features/profile/emergency_contacts_screen.dart';
-import 'package:nivasaos_tenant_app/features/profile/legal_screens.dart';
-import 'package:nivasaos_tenant_app/features/profile/notifications_screen.dart';
-import 'package:nivasaos_tenant_app/features/profile/profile_repository.dart';
-import 'package:nivasaos_tenant_app/features/profile/user_screen.dart';
-import 'package:nivasaos_tenant_app/theme/nivasa_theme.dart';
+import 'package:pavio_tenant_app/core/api_client.dart';
+import 'package:pavio_tenant_app/core/cache_store.dart';
+import 'package:pavio_tenant_app/core/push_notifications.dart';
+import 'package:pavio_tenant_app/core/session_store.dart';
+import 'package:pavio_tenant_app/features/auth/auth_repository.dart';
+import 'package:pavio_tenant_app/features/auth/login_screen.dart';
+import 'package:pavio_tenant_app/features/profile/account_details_screen.dart';
+import 'package:pavio_tenant_app/features/profile/app_feedback_screen.dart';
+import 'package:pavio_tenant_app/features/profile/emergency_contacts_screen.dart';
+import 'package:pavio_tenant_app/features/profile/legal_screens.dart';
+import 'package:pavio_tenant_app/features/profile/notifications_screen.dart';
+import 'package:pavio_tenant_app/features/profile/profile_repository.dart';
+import 'package:pavio_tenant_app/features/profile/user_screen.dart';
+import 'package:pavio_tenant_app/theme/pavio_theme.dart';
 
 // logout() awaits PushNotifications.unregister(), which calls Firebase.initializeApp() —
 // unavailable in the widget-test environment. Same stub as the old settings_screen_test.dart.
@@ -57,7 +57,7 @@ http.Response _json(Map<String, dynamic> body, int status) => http.Response(
 );
 
 Widget _wrap(Widget child) =>
-    MaterialApp(theme: NivasaTheme.light(), home: child);
+    MaterialApp(theme: PavioTheme.light(), home: child);
 
 void _useTallSurface(WidgetTester tester) {
   tester.view.physicalSize = const Size(400, 1400);
@@ -87,19 +87,19 @@ Map<String, dynamic> _profileJson({
   'emergency_contact_phone': null,
   'emergency_contact_relationship': null,
   'account_full_name': 'Nijo George Payyappilly',
-  'account_email': 'nijo@nivasa.app',
+  'account_email': 'nijo@pavio.tech',
 };
 
 Future<AuthRepository> _connectedAuth({http.Client? client}) async {
   final store = _InMemorySecureStore();
-  await store.write('nivasaos.access_token', 'access-token');
-  await store.write('nivasaos.refresh_token', 'refresh-token');
+  await store.write('pavio.access_token', 'access-token');
+  await store.write('pavio.refresh_token', 'refresh-token');
   await store.write(
-    'nivasaos.access_token_expires_at',
+    'pavio.access_token_expires_at',
     DateTime.now().add(const Duration(minutes: 30)).toIso8601String(),
   );
   await store.write(
-    'nivasaos.user',
+    'pavio.user',
     jsonEncode({
       'user_id': 'account-1',
       'name': 'Nijo George Payyappilly',
@@ -119,14 +119,14 @@ Future<AuthRepository> _connectedAuth({http.Client? client}) async {
 
 Future<AuthRepository> _unconnectedAuth({http.Client? client}) async {
   final store = _InMemorySecureStore();
-  await store.write('nivasaos.access_token', 'access-token');
-  await store.write('nivasaos.refresh_token', 'refresh-token');
+  await store.write('pavio.access_token', 'access-token');
+  await store.write('pavio.refresh_token', 'refresh-token');
   await store.write(
-    'nivasaos.access_token_expires_at',
+    'pavio.access_token_expires_at',
     DateTime.now().add(const Duration(minutes: 30)).toIso8601String(),
   );
   await store.write(
-    'nivasaos.user',
+    'pavio.user',
     jsonEncode({
       'user_id': 'account-1',
       'name': 'Amit Kumar',
@@ -391,8 +391,9 @@ void main() {
       _useTallSurface(tester);
       final auth = await _unconnectedAuth();
       final client = MockClient((request) async {
-        if (request.url.path == '/api/auth/v1/logout')
+        if (request.url.path == '/api/auth/v1/logout') {
           return _json({'logged_out': true}, 200);
+        }
         throw StateError(
           'unexpected request: ${request.method} ${request.url.path}',
         );

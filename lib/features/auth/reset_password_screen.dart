@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 import '../../core/api_client.dart';
-import '../../theme/nivasa_colors.dart';
-import '../../theme/nivasa_spacing.dart';
-import '../../theme/nivasa_text_styles.dart';
-import '../../widgets/nivasa_button.dart';
-import '../../widgets/nivasa_password_field.dart';
+import '../../theme/pavio_colors.dart';
+import '../../theme/pavio_spacing.dart';
+import '../../theme/pavio_text_styles.dart';
+import '../../widgets/pavio_button.dart';
+import '../../widgets/pavio_password_field.dart';
 import 'auth_repository.dart';
 import 'login_screen.dart';
 
 /// Second half of the forgot-password flow — [ForgotPasswordScreen] pushes here after
 /// requesting a reset code. No deep-link handling yet (see auth-service's
 /// TENANT_PASSWORD_RESET_URL comment): the renter copies the code out of the email by
-/// hand into [_tokenController], same as a one-time-passcode flow. A real `nivasaos://`
+/// hand into [_tokenController], same as a one-time-passcode flow. A real `pavio://`
 /// link handler can pre-fill this field later without changing anything else here.
 class ResetPasswordScreen extends StatefulWidget {
   const ResetPasswordScreen({super.key, this.authRepository});
@@ -86,45 +86,45 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
       appBar: AppBar(title: const Text('Reset password')),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(NivasaSpacing.s24),
+          padding: const EdgeInsets.all(PavioSpacing.s24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 "Enter the code we emailed you, along with your new password.",
-                style: NivasaText.body.copyWith(color: NivasaColors.ink500),
+                style: PavioText.body.copyWith(color: PavioColors.ink500),
               ),
-              const SizedBox(height: NivasaSpacing.s24),
-              Text('Reset code', style: NivasaText.label),
-              const SizedBox(height: NivasaSpacing.s8),
+              const SizedBox(height: PavioSpacing.s24),
+              Text('Reset code', style: PavioText.label),
+              const SizedBox(height: PavioSpacing.s8),
               TextField(
                 controller: _tokenController,
-                style: NivasaText.body,
+                style: PavioText.body,
                 decoration: InputDecoration(hintText: 'Paste the code from your email', errorText: _tokenError),
               ),
-              const SizedBox(height: NivasaSpacing.s16),
-              Text('New password', style: NivasaText.label),
-              const SizedBox(height: NivasaSpacing.s8),
-              NivasaPasswordField(
+              const SizedBox(height: PavioSpacing.s16),
+              Text('New password', style: PavioText.label),
+              const SizedBox(height: PavioSpacing.s8),
+              PavioPasswordField(
                 controller: _passwordController,
                 autofillHints: const [AutofillHints.newPassword],
                 hintText: 'Enter a new password',
                 errorText: _passwordError,
               ),
-              const SizedBox(height: NivasaSpacing.s8),
-              Text('Minimum 8 characters, 1 lowercase letter, 1 uppercase letter, 1 number, and 1 special character', style: NivasaText.caption),
-              const SizedBox(height: NivasaSpacing.s16),
-              Text('Confirm new password', style: NivasaText.label),
-              const SizedBox(height: NivasaSpacing.s8),
-              NivasaPasswordField(
+              const SizedBox(height: PavioSpacing.s8),
+              Text('Minimum 8 characters, 1 lowercase letter, 1 uppercase letter, 1 number, and 1 special character', style: PavioText.caption),
+              const SizedBox(height: PavioSpacing.s16),
+              Text('Confirm new password', style: PavioText.label),
+              const SizedBox(height: PavioSpacing.s8),
+              PavioPasswordField(
                 controller: _confirmController,
                 autofillHints: const [AutofillHints.newPassword],
                 hintText: 'Re-enter new password',
                 errorText: _confirmError,
                 onSubmitted: (_) => _submit(),
               ),
-              const SizedBox(height: NivasaSpacing.s24),
-              NivasaPrimaryButton(label: 'Reset password', loading: _submitting, loadingLabel: 'Resetting…', onPressed: _submit),
+              const SizedBox(height: PavioSpacing.s24),
+              PavioPrimaryButton(label: 'Reset password', loading: _submitting, loadingLabel: 'Resetting…', onPressed: _submit),
             ],
           ),
         ),
