@@ -25,6 +25,8 @@ class PavioRadius {
   static const pill = 999.0;
   static const card = 12.0;
   static const button = 9.0;
+  static const segment = 7.0;
+  static const accentBar = 2.0;
   static const input = 9.0;
   static const bottomSheetTop = 16.0;
   static const phoneFrameCard = 16.0;

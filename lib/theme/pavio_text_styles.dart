@@ -94,6 +94,22 @@ class PavioText {
 
   /// IDs, ₹ amounts, OTP digits, timestamps, transaction tokens — anything tabular or
   /// scanned digit-by-digit, per the doc's Typography section.
+  static const monoLarge = TextStyle(
+    fontFamily: _fontMono,
+    fontSize: 15,
+    fontWeight: FontWeight.w500,
+    letterSpacing: 0.26,
+    color: PavioColors.ink900,
+  );
+
+  static const sectionTitle = TextStyle(
+    fontFamily: _fontSans,
+    fontSize: 15,
+    fontWeight: FontWeight.w600,
+    height: 1.3,
+    color: PavioColors.ink900,
+  );
+
   static const mono = TextStyle(
     fontFamily: _fontMono,
     fontSize: 13,

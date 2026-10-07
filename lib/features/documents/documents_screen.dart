@@ -454,7 +454,7 @@ class _DocumentRow extends StatelessWidget {
           const SizedBox(width: PavioSpacing.s12),
           Text(
             label,
-            style: PavioText.body.copyWith(color: color, fontSize: 15),
+            style: PavioText.body.copyWith(color: color),
           ),
         ],
       ),

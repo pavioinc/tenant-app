@@ -20,11 +20,11 @@ class PavioSectionLabel extends StatelessWidget {
           height: 14,
           decoration: BoxDecoration(
             color: PavioColors.primary700,
-            borderRadius: BorderRadius.circular(2),
+            borderRadius: BorderRadius.circular(PavioRadius.accentBar),
           ),
         ),
         const SizedBox(width: PavioSpacing.s8),
-        Text(label, style: PavioText.h3.copyWith(fontSize: 15)),
+        Text(label, style: PavioText.sectionTitle),
       ],
     );
   }

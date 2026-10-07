@@ -677,7 +677,7 @@ class _RentalFactsCard extends StatelessWidget {
                       children: [
                         TextSpan(
                           text: _formatInr(billingProfile.amount),
-                          style: PavioText.mono.copyWith(fontSize: 15),
+                          style: PavioText.monoLarge,
                         ),
                         TextSpan(
                           text:
@@ -705,7 +705,7 @@ class _RentalFactsCard extends StatelessWidget {
             value: agreement != null
                 ? Text(
                     _formatInr(agreement.securityDeposit),
-                    style: PavioText.mono.copyWith(fontSize: 15),
+                    style: PavioText.monoLarge,
                   )
                 : Text(
                     '—',

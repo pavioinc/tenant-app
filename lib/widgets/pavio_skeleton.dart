@@ -43,8 +43,8 @@ class PavioSkeleton extends StatefulWidget {
 
 class _PavioSkeletonState extends State<PavioSkeleton>
     with SingleTickerProviderStateMixin {
-  static const _base = Color(0xFFE4E2DC);
-  static const _highlight = Color(0xFFF1EFEA);
+  static const _base = PavioColors.skeletonBase;
+  static const _highlight = PavioColors.skeletonHighlight;
 
   late final AnimationController _controller = AnimationController(
     vsync: this,

@@ -330,7 +330,7 @@ class _WhenSegmentedControl extends StatelessWidget {
         alignment: Alignment.center,
         decoration: BoxDecoration(
           color: active ? PavioColors.white : null,
-          borderRadius: BorderRadius.circular(7),
+          borderRadius: BorderRadius.circular(PavioRadius.segment),
           boxShadow: active ? PavioElevation.e1 : null,
         ),
         child: Text(

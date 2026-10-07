@@ -35,6 +35,8 @@ class PavioColors {
   static const surface = Color(0xFFF6F5F1);
   static const canvas = Color(0xFFEEEDE8);
   static const white = Color(0xFFFFFFFF);
+  static const skeletonBase = Color(0xFFE4E2DC);
+  static const skeletonHighlight = Color(0xFFF1EFEA);
 
   // Semantic status — one meaning per color, reused across every status axis.
   static const positiveFg = Color(0xFF1E8E5A);
