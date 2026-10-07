@@ -120,8 +120,9 @@ class SessionStore {
     final accessToken = await _storage.read(_accessTokenKey);
     final refreshToken = await _storage.read(_refreshTokenKey);
     final userJson = await _storage.read(_userKey);
-    if (accessToken == null || refreshToken == null || userJson == null)
+    if (accessToken == null || refreshToken == null || userJson == null) {
       return null;
+    }
     final expiresAtRaw = await _storage.read(_accessTokenExpiresAtKey);
     return Session(
       accessToken: accessToken,

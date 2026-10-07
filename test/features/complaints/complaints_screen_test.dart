@@ -284,8 +284,9 @@ void main() {
           'created_at': '2026-08-14',
         }, 201);
       }
-      if (request.url.path.endsWith('/rental'))
+      if (request.url.path.endsWith('/rental')) {
         return _json(_rentalWithBed, 200);
+      }
       listCount += 1;
       if (listCount == 1) return _json({'complaints': []}, 200);
       return _json({

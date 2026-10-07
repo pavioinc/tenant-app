@@ -56,7 +56,7 @@ Future<_InMemorySecureStore> _storeWithSession({
       'name': 'Amit Kumar',
       'role': 'tenant',
       'connected': connected,
-      if (email != null) 'email': email,
+      'email': ?email,
       if (connected) 'org_id': 'org-1',
       if (connected) 'property_id': 'prop-1',
       if (connected) 'tenant_id': 'tenant-1',

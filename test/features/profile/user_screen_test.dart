@@ -391,8 +391,9 @@ void main() {
       _useTallSurface(tester);
       final auth = await _unconnectedAuth();
       final client = MockClient((request) async {
-        if (request.url.path == '/api/auth/v1/logout')
+        if (request.url.path == '/api/auth/v1/logout') {
           return _json({'logged_out': true}, 200);
+        }
         throw StateError(
           'unexpected request: ${request.method} ${request.url.path}',
         );

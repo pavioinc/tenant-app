@@ -149,8 +149,9 @@ void main() {
       _useTallSurface(tester);
       final auth = await _connectedAuth();
       final client = MockClient((request) async {
-        if (request.url.path == '/api/tenants/v1/tenant/me/rental')
+        if (request.url.path == '/api/tenants/v1/tenant/me/rental') {
           return _json(_rentalWithEverything, 200);
+        }
         if (request.url.path == '/api/billing/v1/tenant/me/billing-profile') {
           return _json({
             'billing_profile': {'amount': 800000, 'cycle_type': 'monthly'},
@@ -191,8 +192,9 @@ void main() {
           'agreement': null,
         }, 200);
       }
-      if (request.url.path == '/api/billing/v1/tenant/me/billing-profile')
+      if (request.url.path == '/api/billing/v1/tenant/me/billing-profile') {
         return _json({'billing_profile': null}, 200);
+      }
       if (request.url.path == '/api/tenants/v1/tenant/me/renewal-requests' &&
           request.method == 'GET') {
         return _json({'renewal_requests': []}, 200);
@@ -236,8 +238,9 @@ void main() {
     var posted = false;
     var requestCount = 0;
     final client = MockClient((request) async {
-      if (request.url.path == '/api/tenants/v1/tenant/me/rental')
+      if (request.url.path == '/api/tenants/v1/tenant/me/rental') {
         return _json(_rentalWithEverything, 200);
+      }
       if (request.url.path == '/api/billing/v1/tenant/me/billing-profile') {
         return _json({
           'billing_profile': {'amount': 800000, 'cycle_type': 'monthly'},
@@ -424,8 +427,9 @@ void main() {
       final auth = await _connectedAuth();
       final urlOpener = _FakeUrlOpener();
       final client = MockClient((request) async {
-        if (request.url.path == '/api/tenants/v1/tenant/me/rental')
+        if (request.url.path == '/api/tenants/v1/tenant/me/rental') {
           return _json(_rentalWithEverything, 200);
+        }
         if (request.url.path == '/api/billing/v1/tenant/me/billing-profile') {
           return _json({
             'billing_profile': {'amount': 800000, 'cycle_type': 'monthly'},
