@@ -367,8 +367,9 @@ channel — see notification-service/src/handlers.ts's `handleRentDueEvent` and
 providers.ts's `PushNotificationProvider`.
 
 **Client-side setup is done** (2026-08-23) — Firebase project `nivasaos` exists (its identifiers were intentionally kept through the
-Pavio rebrand; the new Pavio app IDs must be registered there and the config files
-re-downloaded), and both platforms are wired and verified end to end (real device
+Pavio rebrand; the Pavio Android and iOS apps are registered there and the config files
+re-downloaded; the iOS plist `BUNDLE_ID` is `com.pavio.TenantApp`, which still differs
+from the Xcode `PRODUCT_BUNDLE_IDENTIFIER` and needs aligning), and both platforms are wired and verified end to end (real device
 build + the native "Would Like to Send You Notifications" permission prompt firing on
 both a booted iOS simulator and an Android emulator):
 
