@@ -1,0 +1,19 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: tenant-app
+  title: Tenant App
+  description: Flutter mobile app for renters. Talks to the backend through api-gateway only.
+  annotations:
+    github.com/project-slug: pavioinc/tenant-app
+  tags:
+    - dart
+    - flutter
+    - mobile
+spec:
+  type: mobile-app
+  lifecycle: experimental
+  owner: user:default/ngpayyappilly
+  system: pavio
+  dependsOn:
+    - component:default/api-gateway
